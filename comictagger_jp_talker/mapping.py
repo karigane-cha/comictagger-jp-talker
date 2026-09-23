@@ -14,6 +14,8 @@ from comictagger_jp_talker.isbn import isbn13
 from comictagger_jp_talker.models import BookRecord, ContentDates
 
 _DIGITS = str.maketrans("０１２３４５６７８９", "0123456789")
+# Summary JSON can carry XML 1.0 control characters absent from valid SRU XML.
+_XML_UNSAFE = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\ud800-\udfff\ufffe\uffff]")
 _VOLUME = re.compile(
     r"^(?P<series>.+?)(?:[.．]\s*|\s+|\s*第)(?P<num>[0-9０-９]{1,3})(?:巻)?"
     r"(?:\s*(?:\([^()（）]+\)|（[^()（）]+）))?$"
@@ -217,7 +219,15 @@ def map_credits(record: BookRecord) -> list[Credit]:
     credits: list[Credit] = []
     for entries, creator_fallback in ((values, not record.responsibilities), (record.contributors, False)):
         for value in entries:
-            for credit in parse_responsibility(value, creator_fallback=creator_fallback):
+            explicit_roles = (
+                [role for name, role in record.creator_roles if name == value] if creator_fallback else []
+            )
+            parsed = (
+                [Credit(person=value, role=mapped) for role in explicit_roles for mapped in map_role(role)]
+                if explicit_roles
+                else parse_responsibility(value, creator_fallback=creator_fallback)
+            )
+            for credit in parsed:
                 if (credit.person, credit.role) not in {(c.person, c.role) for c in credits}:
                     credits.append(credit)
     return credits
@@ -357,7 +367,7 @@ def date_details(record: BookRecord, resolved: ResolvedDate) -> list[str]:
         details.extend(
             "デジタル版の日付: " + " / ".join(values) + " [" + uri + "]" for uri, values in different
         )
-    if different or resolved.source == "digital":
+    if (different or resolved.source == "digital") and resolved.source != "none":
         details.append(f"日付取得元: {resolved.source} / {resolved.source_uri} / {resolved.field}")
     if resolved.warning:
         details.append(resolved.warning)
@@ -373,6 +383,13 @@ def language_code(values: list[str]) -> str | None:
         if found and found.get("alpha_2"):
             return found["alpha_2"]
     return None  # Keep unsupported/multiple codes in the source record, not a false 'ja'.
+
+
+def _usable_abstracts(record: BookRecord) -> list[str]:
+    # NDL's provider terms prohibit reuse of J-STAGE dcterms:abstract.
+    if "R000000016" in record.providers or record.id.startswith("R000000016-"):
+        return []
+    return record.abstracts
 
 
 def to_metadata(
@@ -412,6 +429,7 @@ def to_metadata(
         ("NDL シリーズ表記（原データ）", record.series_titles),
         ("責任表示", record.responsibilities),
         ("著者原表記", record.creators),
+        ("著者役割（原データ）", [f"{name}: {role}" for name, role in record.creator_roles]),
         ("寄与者原表記", record.contributors),
         ("版", record.editions),
         ("資料種別", record.material_types),
@@ -440,10 +458,12 @@ def to_metadata(
         month=month,
         day=day,
         language=language_code(record.languages),
-        description="\n\n".join(record.abstracts) or None,
+        description="\n\n".join(
+            v for raw in _usable_abstracts(record) if (v := _XML_UNSAFE.sub("", raw))
+        ) or None,
         web_links=[parse_url(record.url)] if record.url else [],
         credits=map_credits(record),
-        tags=set(record.subjects[:10]) if subject_tags else set(),
+        tags=set([v for v in record.subjects if v.strip()][:10]) if subject_tags else set(),
         notes="\n".join(v for v in notes if v),
         format=" / ".join(record.editions + record.material_types) or None,
     )
@@ -470,7 +490,7 @@ def to_series(record: BookRecord, warning: str = "", *, date_source: str = "auto
     ):
         if values:
             details.append(label + ": " + " / ".join(values))
-    details.extend(record.abstracts)
+    details.extend(_usable_abstracts(record))
     if record.descriptions:
         details.append("書誌注記: " + " / ".join(record.descriptions))
     if warning:

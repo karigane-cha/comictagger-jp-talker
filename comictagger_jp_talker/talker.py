@@ -134,6 +134,8 @@ class JapaneseBooksTalker(ComicTalker):
         maximum = settings.get("jpbooks_maximum_records", 20)
         if not isinstance(maximum, int) or isinstance(maximum, bool) or not 1 <= maximum <= 100:
             raise ValueError("候補数は 1〜100 にしてください。")
+        if not isinstance(settings.get("jpbooks_subject_tags", False), bool):
+            raise ValueError("件名を Tags に出力する設定は boolean にしてください。")
 
     def parse_settings(self, settings: dict[str, Any]) -> dict[str, Any]:
         self._validate_settings(settings)
@@ -189,7 +191,7 @@ class JapaneseBooksTalker(ComicTalker):
             return self.source.search(query, refresh=refresh, on_rate_limit=on_rate_limit)
         # More specific searches first, relaxing issue/author only when there are no records.
         # Publisher/material restrictions are explicit user filters and never relaxed.
-        attempts = []
+        attempts = [query]
         if query.issue:
             attempts.append(replace(query, creator=""))
         if query.creator:

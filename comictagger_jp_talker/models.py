@@ -45,6 +45,8 @@ class BookRecord:
     # Original NDL dcndl:volume values, never the GenericMetadata.volume output field.
     volumes: list[str] = field(default_factory=list)
     creators: list[str] = field(default_factory=list)
+    # Explicit roles nested in dcterms:creator/foaf:Agent; keep separate from dc:creator literals.
+    creator_roles: list[tuple[str, str]] = field(default_factory=list)
     responsibilities: list[str] = field(default_factory=list)
     contributors: list[str] = field(default_factory=list)
     publishers: list[str] = field(default_factory=list)

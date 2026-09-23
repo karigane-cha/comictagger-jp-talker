@@ -95,7 +95,7 @@ def test_fallback_keeps_search_order(talker):
     talker._source.search.return_value = SearchPage([], 0)
     talker.creator = "作者"
     talker.search_for_series("漫画 74")
-    assert len(talker.source.search.call_args_list) == 3
+    assert len(talker.source.search.call_args_list) == 4
     assert all(call.args[0].sort_order == "oldest" for call in talker.source.search.call_args_list)
 
 
@@ -150,11 +150,15 @@ def test_search_priority_helper(talker, record):
     talker.search_metadata(md)
     assert talker.source.search.call_args.args[0].isbn == "9784885942877"
     talker.source.search.reset_mock()
-    talker.source.search.side_effect = [SearchPage([], 0), SearchPage([], 0), SearchPage([record], 1)]
+    talker.source.search.side_effect = [
+        SearchPage([], 0), SearchPage([], 0), SearchPage([], 0), SearchPage([record], 1)
+    ]
     md.gtin = None
     talker.search_metadata(md)
     queries = [c.args[0] for c in talker.source.search.call_args_list]
-    assert [(q.issue, q.creator) for q in queries] == [("74", ""), ("", "作者"), ("", "")]
+    assert [(q.issue, q.creator) for q in queries] == [
+        ("74", "作者"), ("74", ""), ("", "作者"), ("", "")
+    ]
 
 
 def test_literal_and_validation(talker):

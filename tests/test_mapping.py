@@ -234,7 +234,7 @@ def test_dates(record, issued, dates, expected):
 
 
 def test_unicode_preserved(record):
-    text = "漢字ひらがなカタカナ１２３・〜―（）髙﨑𠮷\U00020000\U000e0100"
+    text = "漢字ひらがなカタカナ１２３・〜―（）髙﨑𠮷\U00020000\U000e0100 は\u3099 e\u0301"
     assert to_metadata(replace(record, title=text)).title == text
     # Python surrogate code units can be held without mutation; invalid XML cannot serialize them.
     assert to_metadata(replace(record, title="文字\ud842\udfb7")).title == "文字\ud842\udfb7"

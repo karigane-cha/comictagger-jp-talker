@@ -148,6 +148,7 @@ def test_empty():
     "data,description",
     [
         (DIAGNOSTIC, "SRU diagnostics"),
+        (b"", "Invalid XML"),
         (b"<broken", "Invalid XML"),
         (b"<html/>", "Unsupported metadata"),
         (EMPTY.replace(b">0<", b">bad<"), "Malformed response"),
@@ -256,6 +257,8 @@ def test_rate_limit_callback_passed(source, monkeypatch):
     callback = RLCallBack(lambda a, b: None, 1)
     source.search(SearchQuery(title="漫画"), on_rate_limit=callback)
     assert limiter.call_args.kwargs == {"delay": True, "on_rate_limit": callback}
+    source.search(SearchQuery(title="漫画"), on_rate_limit=callback)
+    assert limiter.call_count == 1  # Cache hits never enter the network limiter.
 
 
 def test_ranking_and_editions(record):

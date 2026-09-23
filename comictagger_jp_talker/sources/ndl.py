@@ -152,6 +152,12 @@ def parse_record(rdf: ET.Element) -> BookRecord:
     for language in bib.findall("dcterms:language", NS):
         if language.get(RDF_RESOURCE):
             record.languages.append(language.attrib[RDF_RESOURCE])
+    for creator in bib.findall("dcterms:creator", NS):
+        name = creator.findtext("foaf:Agent/foaf:name", namespaces=NS)
+        if name:
+            record.creator_roles.extend(
+                (name.strip(), role) for role in _values(creator, "foaf:Agent/dcndl:role")
+            )
     record.isbns = [
         _value(n)
         for n in bib.findall("dcterms:identifier", NS)
@@ -383,9 +389,15 @@ class NDLSource:
         cache_key = hashlib.sha256(f"{self.maximum_records}:{cql}".encode()).hexdigest()
         with _LOCK:  # Serialize requests across Talker instances and protect SQLite connection handover.
             cached = [] if refresh else self.cache.get_search_results(SEARCH_CACHE, cache_key)
-            content = cached[0].data.data if cached else self._request(cql, on_rate_limit)
-            page = parse_sru(content)
+            if cached:
+                try:
+                    page = parse_sru(cached[0].data.data)
+                except TalkerDataError:
+                    logger.warning("Invalid cached NDL search response; refreshing %s", cache_key)
+                    cached = []
             if not cached:
+                content = self._request(cql, on_rate_limit)
+                page = parse_sru(content)
                 # Store even zero-result pages; ComicCacher otherwise has no negative-cache marker.
                 self.cache.add_search_results(
                     SEARCH_CACHE, cache_key, [CachedSeries(cache_key, content)], True

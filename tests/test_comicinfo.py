@@ -46,6 +46,16 @@ def test_cbz_comicinfo_roundtrip(tmp_path, record, tag, output, subtitle):
     with zipfile.ZipFile(path) as archive:
         root = ET.fromstring(archive.read("ComicInfo.xml"))
     assert root.findtext("LanguageISO") == "ja"
+    assert root.findtext("Title") == md.title
+    assert root.findtext("Series") == md.series
+    assert root.findtext("Publisher") == md.publisher
+    assert root.findtext("Year") == "2025"
+    assert root.findtext("Month") == "11"
+    assert root.findtext("Day") == "19"
+    assert root.findtext("Summary") == md.description
+    assert root.findtext("Web") == record.url
+    assert root.findtext("Format") == md.format
+    assert root.findtext("PageCount") == "1"  # Host counts the archive page.
     assert root.findtext("Number") == (None if output == "volume" else "74")
     assert root.findtext("Volume") == (None if output == "issue" else "74")
     assert "ISBN: 4-88594-287-X" in root.findtext("Notes")
@@ -53,6 +63,9 @@ def test_cbz_comicinfo_roundtrip(tmp_path, record, tag, output, subtitle):
     if tag == "cix":
         assert recovered.gtin == "9784885942877"
         assert root.findtext("GTIN") == "9784885942877"
+        assert root.findtext("Writer") == "架空太郎"
+        assert root.findtext("Penciller") == "架空花子"
+        assert root.findtext("Inker") == "架空花子"
         assert root.findtext("Translator") == "翻訳次郎"
         # The GUI re-reads the selected READ tags immediately after saving.
         # CIX writes GTIN correctly, but selecting CR to read hides it in the form.
