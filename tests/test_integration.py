@@ -66,3 +66,25 @@ def test_real_series_only_metadata_search(tmp_path):
         if talker._source is not None:
             talker.source.session.close()
             talker.source.cache.close()
+
+
+@pytest.mark.network
+@pytest.mark.skipif(os.getenv("JPBOOKS_RUN_NETWORK_TESTS") != "1", reason="opt-in NDL network test")
+def test_real_dotted_volume_delimiter_is_not_part_of_series(tmp_path):
+    source = NDLSource(tmp_path, maximum_records=1)
+    try:
+        page = source.search(SearchQuery(itemno="R100000002-I000001355589", mediatype=""), refresh=True)
+        assert page.records
+        record = page.records[0]
+        series = "こちら葛飾区亀有公園前派出所"
+        assert record.title == series + ". 第1巻"
+        assert record.volumes == ["第1巻"]
+        assert record.series_titles == ["ジャンプ・コミックス"]
+        assert infer_volume(record.title) == (series, "1")
+        metadata = to_metadata(record)
+        assert metadata.title == record.title
+        assert metadata.series == series
+        assert metadata.issue == "1"
+    finally:
+        source.session.close()
+        source.cache.close()

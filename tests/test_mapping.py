@@ -42,6 +42,65 @@ def test_volume(title, series, number):
 
 
 @pytest.mark.parametrize(
+    ("title", "series", "number"),
+    [
+        ("こちら葛飾区亀有公園前派出所. 1", "こちら葛飾区亀有公園前派出所", "1"),
+        ("こちら葛飾区亀有公園前派出所. 第1巻", "こちら葛飾区亀有公園前派出所", "1"),
+        ("作品名．1", "作品名", "1"),
+        ("作品名. 1", "作品名", "1"),
+        ("作品名． 1", "作品名", "1"),
+        ("作品名． 第１巻", "作品名", "1"),
+        ("パタリロ! : 選集. 1 (国王誕生の巻)", "パタリロ! : 選集", "1"),
+        ("パタリロ! : 選集 42(越後屋波多利郎江戸日記の巻)", "パタリロ! : 選集", "42"),
+        ("作品名 12（副題）", "作品名", "12"),
+        ("作品名! 1", "作品名!", "1"),
+        ("作品名? 1", "作品名?", "1"),
+        ("作品名 : 新シリーズ. 1", "作品名 : 新シリーズ", "1"),
+        ("作品名・新章. 1", "作品名・新章", "1"),
+        ("作品名.", "作品名.", None),
+        ("作品名．", "作品名．", None),
+        ("作品名!", "作品名!", None),
+        ("作品名?", "作品名?", None),
+        ("作品名 第1巻", "作品名", "1"),
+        ("作品名 第１巻", "作品名", "1"),
+        ("作品名 第12巻 (副題)", "作品名", "12"),
+        ("作品名．１２", "作品名", "12"),
+        ("20世紀少年", "20世紀少年", None),
+        ("作品名2024", "作品名2024", None),
+        ("作品名 2024年版", "作品名 2024年版", None),
+        ("作品名 1.5", "作品名 1.5", None),
+        ("作品名 1-2", "作品名 1-2", None),
+        ("作品名 1/2", "作品名 1/2", None),
+        ("作品名 (完全版)", "作品名 (完全版)", None),
+        ("作品名（新装版）", "作品名（新装版）", None),
+    ],
+)
+def test_volume_delimiter_is_removed_only_with_a_recognized_number(title, series, number):
+    assert infer_volume(title) == (series, number)
+
+
+def test_ndl_dotted_number_keeps_original_title_volume_and_imprint(record):
+    record = replace(
+        record,
+        title="こちら葛飾区亀有公園前派出所. 第1巻",
+        volumes=["第1巻"],
+        series_titles=["ジャンプ・コミックス"],
+    )
+
+    resolved = resolve_record_number(record)
+    metadata = to_metadata(record)
+
+    assert resolved.explicit == resolved.inferred == resolved.value == "1"
+    assert not resolved.conflict
+    assert metadata.title == record.title
+    assert metadata.series == "こちら葛飾区亀有公園前派出所"
+    assert metadata.issue == "1"
+    assert record.volumes == ["第1巻"]
+    assert "NDL 巻次（原データ）: 第1巻" in metadata.notes
+    assert "NDL シリーズ表記（原データ）: ジャンプ・コミックス" in metadata.notes
+
+
+@pytest.mark.parametrize(
     "title,series,number",
     [
         ("パタリロ! : 選集. 1 (国王誕生の巻)", "パタリロ! : 選集", "1"),

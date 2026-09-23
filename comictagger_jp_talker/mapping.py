@@ -17,7 +17,7 @@ _DIGITS = str.maketrans("０１２３４５６７８９", "0123456789")
 # Summary JSON can carry XML 1.0 control characters absent from valid SRU XML.
 _XML_UNSAFE = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\ud800-\udfff\ufffe\uffff]")
 _VOLUME = re.compile(
-    r"^(?P<series>.+?)(?:[.．]\s*|\s+|\s*第)(?P<num>[0-9０-９]{1,3})(?:巻)?"
+    r"^(?P<series>.+?)(?:[.．]\s*(?:第)?|\s+|\s*第)(?P<num>[0-9０-９]{1,3})(?:巻)?"
     r"(?:\s*(?:\([^()（）]+\)|（[^()（）]+）))?$"
 )
 
