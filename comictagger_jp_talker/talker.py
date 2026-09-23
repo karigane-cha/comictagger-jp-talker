@@ -180,8 +180,8 @@ class JapaneseBooksTalker(ComicTalker):
         return SearchQuery(
             title=title,
             issue=number or "",
-            creator=self.creator,
-            publisher=self.publisher,
+            creator=(self.creator or "").strip(),
+            publisher=(self.publisher or "").strip(),
             mediatype=self.mediatype,
             sort_order=self.search_order,
         )
@@ -239,13 +239,17 @@ class JapaneseBooksTalker(ComicTalker):
     ) -> SearchPage:
         """Programmatic helper, NOT a beta.9 host callback (the host never passes metadata)."""
         isbn = isbn_from_gtin(metadata.gtin) or normalize_isbn(metadata.identifier)
-        author = next((c.person for c in metadata.credits if c.role.casefold() == "writer"), "")
+        title = (metadata.series or "").strip() or (metadata.title or "").strip()
+        author = next((c.person for c in metadata.credits if c.role.casefold() == "writer"), "").strip()
+        number = str(metadata.volume) if metadata.volume is not None else metadata.issue or ""
+        if not isbn and not title and not number.strip():
+            raise TalkerDataError(self.name, 3, "ISBN またはタイトルを入力してください。")
         query = SearchQuery(
             isbn=isbn or "",
-            title=metadata.series or metadata.title or "",
-            issue=str(metadata.volume) if metadata.volume is not None else metadata.issue or "",
+            title=title,
+            issue=number.strip(),
             creator=author,
-            publisher=self.publisher,
+            publisher=(self.publisher or "").strip(),
             mediatype="" if isbn else self.mediatype,
             sort_order=self.search_order,
         )

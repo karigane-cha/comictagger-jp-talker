@@ -3,11 +3,18 @@
 import os
 
 import pytest
+from comicapi.genericmetadata import GenericMetadata
 
 from comictagger_jp_talker.isbn import isbn13
-from comictagger_jp_talker.mapping import is_digital_record, resolve_publication_date, to_metadata
+from comictagger_jp_talker.mapping import (
+    infer_volume,
+    is_digital_record,
+    resolve_publication_date,
+    to_metadata,
+)
 from comictagger_jp_talker.models import SearchQuery
 from comictagger_jp_talker.sources.ndl import NDLSource
+from comictagger_jp_talker.talker import JapaneseBooksTalker
 
 
 @pytest.mark.network
@@ -40,3 +47,22 @@ def test_real_paper_and_related_digital_dates(tmp_path):
     finally:
         source.session.close()
         source.cache.close()
+
+
+@pytest.mark.network
+@pytest.mark.skipif(os.getenv("JPBOOKS_RUN_NETWORK_TESTS") != "1", reason="opt-in NDL network test")
+def test_real_series_only_metadata_search(tmp_path):
+    series = "こちら葛飾区亀有公園前派出所"
+    talker = JapaneseBooksTalker("1.6.0b9", tmp_path)
+    talker.maximum_records = 10
+    try:
+        page = talker.search_metadata(GenericMetadata(series=series))
+        assert page.records
+        assert page.total > 0 and len(page.records) <= talker.maximum_records
+        assert any(infer_volume(record.title)[0].startswith(series) for record in page.records)
+        candidates = talker.search_for_series(series)
+        assert candidates and any(candidate.name.startswith(series) for candidate in candidates)
+    finally:
+        if talker._source is not None:
+            talker.source.session.close()
+            talker.source.cache.close()
