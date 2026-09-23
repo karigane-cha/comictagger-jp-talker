@@ -50,14 +50,17 @@ def test_edition_candidates_remain_distinct(record, editions):
     assert len(ranked) == 2
     md = to_metadata(candidate)
     assert md.series == "作品名" and md.title == "作品名. 1"
+    assert md.format is None
     assert "版: " + editions[0] in md.notes
-    assert "Edition: " + editions[0] in to_series(candidate).description
+    series = to_series(candidate)
+    assert "Edition: " + editions[0] in series.description
+    assert series.format is None
 
 
 @pytest.mark.parametrize(
     "raw",
     [
-        "0", "第0巻", "上", "下", "上巻", "下巻", "前編", "後編", "12.5", "1-2", "1/2",
+        "0", "第0巻", "０", "第０巻", "上", "下", "上巻", "下巻", "前編", "後編", "12.5", "1-2", "1/2",
         "別巻", "外伝", "番外編", "特別編", "完", "公式ファンブック", "短編集", "総集編",
     ],
 )
@@ -71,6 +74,8 @@ def test_noninteger_and_zero_volume_only_never_invents_a_number(record, raw):
     md = to_metadata(record, volume_output="volume")
     assert md.issue is None and "NDL 巻次（原データ）: " + raw in md.notes
     assert md.volume == (0 if explicit_volume_number(raw) == "0" else None)
+    if explicit_volume_number(raw) is None:
+        assert to_metadata(record).issue is None
     assert record.volumes == [raw]
 
 
@@ -200,8 +205,10 @@ def test_publisher_language_subject_and_format_policy(record):
     assert md.tags == {"漫画", "創作"}
     assert "726.1" not in md.tags and "Y84" not in md.tags
     assert record.ndc == ["726.1"] and record.classifications == ["Y84"]
-    assert md.format == "新装版 / 図書 http://ndl.go.jp/ndltype/Book"
+    assert md.format is None
     assert "版: 新装版" in md.notes and "資料種別: 図書" in md.notes
+    assert record.editions == ["新装版"]
+    assert record.material_types == ["図書 http://ndl.go.jp/ndltype/Book"]
 
 
 def test_empty_source_fields_do_not_add_labels(record):
@@ -424,11 +431,14 @@ def test_structured_creator_role_does_not_change_an_unroled_coauthor(record):
     assert to_metadata(record).credits == [Credit("A", "Other"), Credit("B", "Writer")]
 
 
-def test_format_can_match_a_kavita_special_keyword(record):
-    from comictagger_jp_talker.mapping import to_metadata
+def test_special_edition_is_kept_without_a_kavita_format(record):
+    from comictagger_jp_talker.mapping import to_metadata, to_series
 
     record = replace(record, editions=["Special"], material_types=[])
-    assert to_metadata(record).format == "Special"
+    md = to_metadata(record)
+    assert md.format is None
+    assert "版: Special" in md.notes
+    assert "Edition: Special" in to_series(record).description
 
 
 def test_jstage_abstract_is_not_copied_to_metadata_or_candidate(record):

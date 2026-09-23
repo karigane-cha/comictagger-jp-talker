@@ -42,6 +42,9 @@ from comictagger_jp_talker.models import SearchPage
         ("999", "999"),
         ("９９９巻（完）", "999"),
         ("0", "0"),
+        ("第0巻", "0"),
+        ("０", "0"),
+        ("第０巻", "0"),
     ],
 )
 def test_explicit_volume_number(raw, expected):
@@ -117,9 +120,8 @@ def test_explicit_subtitle_resolution(record, raw, explicit, value, conflict):
 @pytest.mark.parametrize("raw", ["2024", "２０２４", "第2024巻", "2024 (新版)"])
 def test_four_digit_explicit_values_remain_opaque(record, raw):
     md = to_metadata(replace(record, title="作品名", volumes=[raw]), volume_output="both")
-    assert md.volume is None
-    assert md.issue == raw  # Preserve the existing non-integer Issue label policy.
-    assert "Volume へ整数変換できない" in md.notes
+    assert md.volume is md.issue is None
+    assert "NDL 巻次（原データ）: " + raw in md.notes
 
 
 @pytest.mark.parametrize(
@@ -160,17 +162,57 @@ def test_output_modes(record, output, expected, raw):
     assert "NDL 巻次（原データ）: " + raw in md.notes
 
 
-@pytest.mark.parametrize("raw", ["上", "下", "前編", "後編", "外伝", "12.5"])
+@pytest.mark.parametrize(
+    "raw",
+    [
+        "上", "下", "上巻", "下巻", "前編", "後編", "外伝", "別巻", "番外編",
+        "特別編", "完", "1/2", "1-2", "1.5", "12.5",
+    ],
+)
 @pytest.mark.parametrize("output", ["volume", "issue", "both"])
 def test_noninteger_numbers(record, raw, output):
     record = replace(record, title="作品名", volumes=[raw])
-    assert resolve_record_number(record).value == raw
+    resolved = resolve_record_number(record)
+    assert resolved.explicit is resolved.inferred is resolved.value is None
+    assert not resolved.conflict
     md = to_metadata(record, volume_output=output)
-    assert md.volume is None
-    assert md.issue == (None if output == "volume" else raw)
-    assert raw in md.notes and record.volumes == [raw]
-    if output != "issue":
-        assert "Volume へ整数変換できない" in md.notes
+    assert md.volume is md.issue is None
+    assert "NDL 巻次（原データ）: " + raw in md.notes
+    assert record.volumes == [raw]
+
+
+@pytest.mark.parametrize("raw", ["上", "1/2"])
+def test_unknown_explicit_blocks_unverified_title_and_request_numbers(record, raw):
+    record = replace(record, title="作品名. 1", volumes=[raw])
+    resolved = resolve_record_number(record, "2")
+    assert resolved.explicit is None and resolved.inferred == "1"
+    assert resolved.requested == "2" and resolved.value is None
+    assert not resolved.conflict
+    md = to_metadata(record, existing_issue="2", volume_output="both")
+    assert md.volume is md.issue is None
+    assert "NDL 巻次（原データ）: " + raw in md.notes
+    assert "タイトル推定巻: 1" in md.notes
+    assert "巻番号の不一致" not in md.notes
+
+
+def test_unknown_request_is_not_logical_number(record):
+    record = replace(record, title="作品名", volumes=[])
+    resolved = resolve_record_number(record, "上")
+    assert resolved.requested is resolved.value is None
+    assert to_metadata(record, existing_issue="上", volume_output="both").issue is None
+
+
+@pytest.mark.parametrize("raw", ["0", "第0巻", "０", "第０巻"])
+@pytest.mark.parametrize(
+    "output,expected", [("volume", (0, None)), ("issue", (None, "0")), ("both", (0, "0"))]
+)
+def test_zero_volume_is_a_safe_logical_integer(record, raw, output, expected):
+    record = replace(record, title="作品名", volumes=[raw])
+    resolved = resolve_record_number(record)
+    assert (resolved.explicit, resolved.value, resolved.conflict) == ("0", "0", False)
+    md = to_metadata(record, volume_output=output)
+    assert (md.volume, md.issue) == expected
+    assert "NDL 巻次（原データ）: " + raw in md.notes
 
 
 @pytest.mark.parametrize("output", ["volume", "issue", "both"])

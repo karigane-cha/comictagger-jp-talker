@@ -38,6 +38,7 @@ def infer_volume(title: str) -> tuple[str, str | None]:
 
 
 def issue_number(value: str) -> str:
+    """Normalize a search/matching label; unknown text stays raw for comparison only."""
     match = re.fullmatch(r"\s*(?:第)?([0-9０-９]+)(?:巻)?\s*", value)
     return str(int(match[1].translate(_DIGITS))) if match else value
 
@@ -69,20 +70,22 @@ class ResolvedNumber:
 
 
 def resolve_record_number(record: BookRecord, existing_issue: str = "") -> ResolvedNumber:
-    """Keep NDL data intact; preserve explicit > existing > inferred unless sources conflict.
+    """Use only verified integer values; keep opaque NDL volumes in BookRecord.
 
     Matching callers first resolve WITHOUT existing_issue so a request cannot
     prove its own match. Requested values are never treated as source data.
+    An opaque explicit value blocks title/request fallback without claiming a
+    numeric conflict that cannot be established from that value.
     """
-    # Deduplicate after normalization. Retain unrecognized labels as opaque values:
-    # dropping them would hide conflicts (e.g. ["1", "上"]) and lose Issue labels.
+    # Retain opaque values here only to detect multiple distinct NDL statements.
+    # Never promote them to explicit or logical numbers.
     explicit_values = list(dict.fromkeys(explicit_volume_number(v) or v for v in record.volumes if v.strip()))
-    explicit = explicit_values[0] if len(explicit_values) == 1 else None
+    explicit = explicit_volume_number(explicit_values[0]) if len(explicit_values) == 1 else None
     inferred = infer_volume(record.title)[1]
-    requested = issue_number(existing_issue) if existing_issue.strip() else None
+    requested = explicit_volume_number(existing_issue) if existing_issue.strip() else None
     conflict = len(explicit_values) > 1 or bool(explicit and inferred and explicit != inferred)
     value, source = None, None
-    if not conflict:
+    if not conflict and not (explicit_values and explicit is None):
         for candidate, origin in ((explicit, "ndl"), (requested, "existing"), (inferred, "title")):
             if candidate:
                 value, source = candidate, origin
@@ -98,6 +101,13 @@ def number_details(record: BookRecord, resolved: ResolvedNumber) -> list[str]:
         details.append("タイトル推定巻: " + resolved.inferred)
     if resolved.requested:
         details.append("既存・要求巻: " + resolved.requested)
+    if (
+        record.volumes
+        and resolved.explicit is None
+        and not resolved.conflict
+        and (resolved.inferred or resolved.requested)
+    ):
+        details.append("NDL 巻次を整数として解釈できないため、推定・要求巻は未出力です。")
     if resolved.conflict:
         details.append(
             "巻番号の不一致: NDL 明示値とタイトル推定値、または複数の明示値が矛盾しています。"
@@ -422,8 +432,6 @@ def to_metadata(
     notes = ["NDL サーチの API を使用", record.url]
     notes.extend(number_details(record, resolved))
     notes.extend(date_details(record, resolved_date))
-    if volume_output in ("volume", "both") and logical_number and volume is None:
-        notes.append("Volume へ整数変換できない巻番号（未出力）: " + logical_number)
     for label, values in (
         ("ISBN", record.isbns),
         ("NDL シリーズ表記（原データ）", record.series_titles),
@@ -465,7 +473,7 @@ def to_metadata(
         credits=map_credits(record),
         tags=set([v for v in record.subjects if v.strip()][:10]) if subject_tags else set(),
         notes="\n".join(v for v in notes if v),
-        format=" / ".join(record.editions + record.material_types) or None,
+        format=None,
     )
 
 

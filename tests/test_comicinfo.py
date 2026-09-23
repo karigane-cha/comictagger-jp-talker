@@ -54,7 +54,7 @@ def test_cbz_comicinfo_roundtrip(tmp_path, record, tag, output, subtitle):
     assert root.findtext("Day") == "19"
     assert root.findtext("Summary") == md.description
     assert root.findtext("Web") == record.url
-    assert root.findtext("Format") == md.format
+    assert md.format is None and root.find("Format") is None
     assert root.findtext("PageCount") == "1"  # Host counts the archive page.
     assert root.findtext("Number") == (None if output == "volume" else "74")
     assert root.findtext("Volume") == (None if output == "issue" else "74")
@@ -81,6 +81,66 @@ def test_cbz_comicinfo_roundtrip(tmp_path, record, tag, output, subtitle):
     else:
         assert recovered.gtin is None  # beta.9's legacy CR writer has no GTIN mapping.
         assert root.find("GTIN") is None
+
+
+@pytest.mark.parametrize("raw", ["上", "1/2"])
+@pytest.mark.parametrize(
+    "edition,material", [("Special", "Book"), ("新装版", "図書 http://ndl.go.jp/ndltype/Book")]
+)
+def test_opaque_volume_and_ndl_format_sources_do_not_write_cix_tags(
+    tmp_path, record, raw, edition, material
+):
+    record = replace(record, title="作品名", volumes=[raw], editions=[edition], material_types=[material])
+    path = tmp_path / "safe.cbz"
+    cover = io.BytesIO()
+    Image.new("RGB", (16, 24), "white").save(cover, "PNG")
+    with zipfile.ZipFile(path, "w") as archive:
+        archive.writestr("001.png", cover.getvalue())
+    md = to_metadata(record, volume_output="both")
+    assert md.volume is md.issue is md.format is None
+    assert ComicArchive(path).write_tags(md, "cix")
+    with zipfile.ZipFile(path) as archive:
+        root = ET.fromstring(archive.read("ComicInfo.xml"))
+    assert root.find("Number") is root.find("Volume") is root.find("Format") is None
+    notes = root.findtext("Notes")
+    assert "NDL 巻次（原データ）: " + raw in notes
+    assert "版: " + edition in notes and "資料種別: " + material in notes
+
+
+@pytest.mark.xfail(
+    strict=True,
+    reason="ComicTagger 1.6.0b9 CIX writer omits integer Volume 0 via a truthiness check",
+)
+def test_zero_volume_is_written_as_zero_in_cix(tmp_path, record):
+    record = replace(record, title="作品名", volumes=["第０巻"])
+    path = tmp_path / "zero.cbz"
+    cover = io.BytesIO()
+    Image.new("RGB", (16, 24), "white").save(cover, "PNG")
+    with zipfile.ZipFile(path, "w") as archive:
+        archive.writestr("001.png", cover.getvalue())
+    md = to_metadata(record, volume_output="both")
+    assert (md.volume, md.issue, md.format) == (0, "0", None)
+    assert ComicArchive(path).write_tags(md, "cix")
+    with zipfile.ZipFile(path) as archive:
+        root = ET.fromstring(archive.read("ComicInfo.xml"))
+    assert root.findtext("Number") == "0"
+    assert root.findtext("Volume") == "0"
+
+
+def test_zero_issue_is_written_as_zero_in_cix(tmp_path, record):
+    record = replace(record, title="作品名", volumes=["第０巻"])
+    path = tmp_path / "zero-issue.cbz"
+    cover = io.BytesIO()
+    Image.new("RGB", (16, 24), "white").save(cover, "PNG")
+    with zipfile.ZipFile(path, "w") as archive:
+        archive.writestr("001.png", cover.getvalue())
+    md = to_metadata(record)  # Default Issue only mode.
+    assert (md.volume, md.issue) == (None, "0")
+    assert ComicArchive(path).write_tags(md, "cix")
+    with zipfile.ZipFile(path) as archive:
+        root = ET.fromstring(archive.read("ComicInfo.xml"))
+    assert root.findtext("Number") == "0"
+    assert root.find("Volume") is None
 
 
 def test_cix_role_storage_limits_and_source_notes(tmp_path, record):
