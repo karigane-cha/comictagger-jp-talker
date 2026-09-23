@@ -52,6 +52,74 @@ def test_explicit_volume_number(raw, expected):
 
 
 @pytest.mark.parametrize(
+    ("raw", "expected"),
+    [
+        ("volume 1", "1"),
+        ("Volume 1", "1"),
+        ("volume 12", "12"),
+        ("Volume 12", "12"),
+        ("volume １", "1"),
+        ("volume 0", "0"),
+        ("Volume 0", "0"),
+        ("volume ０", "0"),
+    ],
+)
+def test_english_explicit_volume_number(raw, expected):
+    assert explicit_volume_number(raw) == expected
+
+
+@pytest.mark.parametrize(
+    "raw",
+    [
+        "volume",
+        "Volume",
+        "volume one",
+        "volume A",
+        "volume 1.5",
+        "volume 1-2",
+        "volume 1/2",
+        "volume 2024",
+        "volume1",
+    ],
+)
+def test_english_explicit_volume_rejects_unsafe_values(raw):
+    assert explicit_volume_number(raw) is None
+
+
+@pytest.mark.parametrize(
+    ("mode", "volume", "issue"),
+    [("volume", 1, None), ("issue", None, "1"), ("both", 1, "1")],
+)
+def test_english_volume_record_keeps_raw_and_outputs_logical_number(record, mode, volume, issue):
+    title = "ご注文はうさぎですか? volume 1"
+    record = replace(record, title=title, volumes=["volume 1"], series_titles=["出版レーベル"])
+
+    resolved = resolve_record_number(record)
+    metadata = to_metadata(record, volume_output=mode)
+
+    assert (resolved.explicit, resolved.inferred, resolved.value, resolved.conflict) == ("1", "1", "1", False)
+    assert metadata.title == record.title == title
+    assert metadata.series == "ご注文はうさぎですか?"
+    assert (metadata.volume, metadata.issue) == (volume, issue)
+    assert record.volumes == ["volume 1"]
+    assert "NDL 巻次（原データ）: volume 1" in metadata.notes
+    assert "NDL シリーズ表記（原データ）: 出版レーベル" in metadata.notes
+    assert "巻番号の不一致" not in metadata.notes
+
+
+@pytest.mark.parametrize("raw", ["volume 1.5", "volume 1-2", "volume 1/2", "volume A", "volume 2024"])
+def test_unsafe_english_volume_record_is_unset(record, raw):
+    record = replace(record, title="作品名 " + raw, volumes=[raw])
+    resolved = resolve_record_number(record)
+    metadata = to_metadata(record, volume_output="both")
+
+    assert resolved.value is None
+    assert (metadata.volume, metadata.issue) == (None, None)
+    assert record.volumes == [raw]
+    assert "NDL 巻次（原データ）: " + raw in metadata.notes
+
+
+@pytest.mark.parametrize(
     "raw",
     [
         "上",
@@ -202,7 +270,7 @@ def test_unknown_request_is_not_logical_number(record):
     assert to_metadata(record, existing_issue="上", volume_output="both").issue is None
 
 
-@pytest.mark.parametrize("raw", ["0", "第0巻", "０", "第０巻"])
+@pytest.mark.parametrize("raw", ["0", "第0巻", "０", "第０巻", "volume 0", "Volume 0", "volume ０"])
 @pytest.mark.parametrize(
     "output,expected", [("volume", (0, None)), ("issue", (None, "0")), ("both", (0, "0"))]
 )

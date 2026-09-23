@@ -17,13 +17,14 @@ _DIGITS = str.maketrans("０１２３４５６７８９", "0123456789")
 # Summary JSON can carry XML 1.0 control characters absent from valid SRU XML.
 _XML_UNSAFE = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\ud800-\udfff\ufffe\uffff]")
 _VOLUME = re.compile(
-    r"^(?P<series>.+?)(?:[.．]\s*(?:第)?|\s+|\s*第)(?P<num>[0-9０-９]{1,3})(?:巻)?"
+    r"^(?P<series>.+?)(?:[.．]\s*(?:第)?|\s+(?i:volume)\s+|\s+|\s*第)"
+    r"(?P<num>[0-9０-９]{1,3})(?:巻)?"
     r"(?:\s*(?:\([^()（）]+\)|（[^()（）]+）))?$"
 )
 
 
 def infer_volume(title: str) -> tuple[str, str | None]:
-    """A delimited terminal 1–3 digit number, optionally followed by one subtitle.
+    """A delimited terminal 1–3 digit number, optionally prefixed by volume or followed by a subtitle.
 
     This is a fallback, not proof of a volume. Original title is always retained.
     Subtitle parentheses must match and cannot be nested or repeated.
@@ -44,7 +45,7 @@ def issue_number(value: str) -> str:
 
 
 _EXPLICIT_VOLUME = re.compile(
-    r"\s*(?:第)?(?P<num>[0-9０-９]{1,3})(?:巻)?"
+    r"\s*(?:(?i:volume)\s+|第)?(?P<num>[0-9０-９]{1,3})(?:巻)?"
     r"(?:\s*(?:\([^()（）]+\)|（[^()（）]+）))?\s*"
 )
 
@@ -52,7 +53,7 @@ _EXPLICIT_VOLUME = re.compile(
 def explicit_volume_number(value: str) -> str | None:
     """Extract an integer from NDL volume text without changing its source value.
 
-    Accept only 1–3 digits and one matching, non-nested subtitle block.
+    Accept only 1–3 digits, optionally after volume, and one matching, non-nested subtitle block.
     Unknown labels, ranges, decimals and year-like values are not integers.
     """
     match = _EXPLICIT_VOLUME.fullmatch(value)

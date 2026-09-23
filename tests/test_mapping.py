@@ -79,6 +79,42 @@ def test_volume_delimiter_is_removed_only_with_a_recognized_number(title, series
     assert infer_volume(title) == (series, number)
 
 
+@pytest.mark.parametrize(
+    ("title", "series", "number"),
+    [
+        ("ご注文はうさぎですか? volume 1", "ご注文はうさぎですか?", "1"),
+        ("作品名 Volume 2", "作品名", "2"),
+        ("作品名 volume 12", "作品名", "12"),
+        ("作品名 Volume 12", "作品名", "12"),
+        ("作品名 volume １", "作品名", "1"),
+        ("作品名 volume 0", "作品名", "0"),
+        ("作品名 Volume 0", "作品名", "0"),
+        ("作品名 volume ０", "作品名", "0"),
+        ("作品名! volume 1", "作品名!", "1"),
+        ("作品名? volume 1", "作品名?", "1"),
+        ("作品名 : 新章 volume 1", "作品名 : 新章", "1"),
+        ("作品名：新章 volume 1", "作品名：新章", "1"),
+        ("作品名・新章 volume 1", "作品名・新章", "1"),
+        ("作品名&新章 volume 1", "作品名&新章", "1"),
+        ("作品名＆新章 volume 1", "作品名＆新章", "1"),
+        ("作品名-新章 volume 1", "作品名-新章", "1"),
+        ("作品名～新章 volume 1", "作品名～新章", "1"),
+        ("作品名〜新章 volume 1", "作品名〜新章", "1"),
+        ("作品名 volume", "作品名 volume", None),
+        ("作品名 Volume", "作品名 Volume", None),
+        ("作品名 volume one", "作品名 volume one", None),
+        ("作品名 volume A", "作品名 volume A", None),
+        ("作品名 volume 1.5", "作品名 volume 1.5", None),
+        ("作品名 volume 1-2", "作品名 volume 1-2", None),
+        ("作品名 volume 1/2", "作品名 volume 1/2", None),
+        ("作品名 volume 2024", "作品名 volume 2024", None),
+        ("作品名volume1", "作品名volume1", None),
+    ],
+)
+def test_english_volume_marker_only_with_safe_integer(title, series, number):
+    assert infer_volume(title) == (series, number)
+
+
 def test_ndl_dotted_number_keeps_original_title_volume_and_imprint(record):
     record = replace(
         record,

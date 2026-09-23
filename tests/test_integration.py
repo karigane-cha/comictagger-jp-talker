@@ -7,9 +7,11 @@ from comicapi.genericmetadata import GenericMetadata
 
 from comictagger_jp_talker.isbn import isbn13
 from comictagger_jp_talker.mapping import (
+    explicit_volume_number,
     infer_volume,
     is_digital_record,
     resolve_publication_date,
+    resolve_record_number,
     to_metadata,
 )
 from comictagger_jp_talker.models import SearchQuery
@@ -85,6 +87,38 @@ def test_real_dotted_volume_delimiter_is_not_part_of_series(tmp_path):
         assert metadata.title == record.title
         assert metadata.series == series
         assert metadata.issue == "1"
+    finally:
+        source.session.close()
+        source.cache.close()
+
+
+@pytest.mark.network
+@pytest.mark.skipif(os.getenv("JPBOOKS_RUN_NETWORK_TESTS") != "1", reason="opt-in NDL network test")
+def test_real_english_volume_marker_is_not_part_of_series(tmp_path):
+    source = NDLSource(tmp_path, maximum_records=1)
+    try:
+        page = source.search(SearchQuery(itemno="R100000002-I023440575", mediatype=""), refresh=True)
+        assert page.records
+        record = page.records[0]
+        series = "ご注文はうさぎですか?"
+        assert record.title == series + " volume 1"
+        assert record.volumes == ["volume 1"]
+        assert record.series_titles == ["Manga time KR comics. Kirara menu ; 619"]
+        assert infer_volume(record.title) == (series, "1")
+        assert explicit_volume_number(record.volumes[0]) == "1"
+        resolved = resolve_record_number(record)
+        assert (resolved.explicit, resolved.inferred, resolved.value, resolved.conflict) == (
+            "1",
+            "1",
+            "1",
+            False,
+        )
+        metadata = to_metadata(record, volume_output="both")
+        assert metadata.title == record.title
+        assert metadata.series == series
+        assert (metadata.volume, metadata.issue) == (1, "1")
+        assert "NDL 巻次（原データ）: volume 1" in metadata.notes
+        assert "巻番号の不一致" not in metadata.notes
     finally:
         source.session.close()
         source.cache.close()
