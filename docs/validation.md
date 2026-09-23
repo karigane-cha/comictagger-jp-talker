@@ -1,5 +1,14 @@
 # Phase 1 検証記録
 
+## 0.1.11 の Release 準備
+
+NDL Search 単独の Phase 1 完了版。作品名の Series 推定、括弧付き副題と明示巻次の正規化、論理巻番号と Volume / Issue の分離、紙・電子の日付、責任表示、ISBN / GTIN、Notes の原値保持を含む。
+
+- 非整数巻次を安全に未出力とし、NDL の版表示・資料種別を ComicInfo Format へ変換しない。
+- 不明な creator role の Other fallback、破損キャッシュからの復旧、要約と制御文字の安全性を Phase 1 audit tests で確認。
+- `vX.Y.Z` の tag push でテスト、build、ComicTagger plugin ZIP の検証、GitHub Release と asset の作成を行う workflow を追加。
+- CIX writer の Volume=0 省略、複数 Publisher の役割未分離、複数言語の先頭のみ使用は既知の制約として維持。
+
 ## 0.1.10 の Phase 1 完了確認
 
 NDL Search 単独の Phase 1 を監査し、安全に確定できる書誌情報だけを ComicTagger へ出力する方針を確認。
