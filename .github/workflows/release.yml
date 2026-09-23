@@ -1,0 +1,173 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: windows-latest
+    env:
+      RELEASE_TAG: ${{ github.ref_name }}
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+
+      - name: Install test and build dependencies
+        run: python -m pip install -e '.[dev]'
+
+      - name: Verify tag matches package version
+        id: version
+        shell: pwsh
+        run: |
+          if ($env:RELEASE_TAG -notmatch '^v[0-9]+\.[0-9]+\.[0-9]+$') {
+            throw "Only stable vX.Y.Z release tags are supported: $env:RELEASE_TAG"
+          }
+          $tagVersion = $env:RELEASE_TAG.Substring(1)
+          $packageVersion = python -c "from importlib.metadata import version; print(version('comictagger-jp-talker'))"
+          if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($packageVersion)) {
+            throw "Failed to determine package version"
+          }
+          $packageVersion = $packageVersion.Trim()
+          if ($tagVersion -cne $packageVersion) {
+            throw "Tag version $tagVersion does not match package version $packageVersion"
+          }
+          "package_version=$packageVersion" >> $env:GITHUB_OUTPUT
+
+      - name: Ruff
+        run: python -m ruff check .
+
+      - name: Network-free tests
+        run: python -m pytest -m "not network"
+        env:
+          QT_QPA_PLATFORM: offscreen
+          PYTHONUTF8: '1'
+
+      - name: Clean old build artifacts
+        shell: pwsh
+        run: |
+          $workspace = [System.IO.Path]::GetFullPath($env:GITHUB_WORKSPACE).TrimEnd([char]'\')
+          foreach ($name in @('dist', 'build', 'comictagger_jp_talker.egg-info')) {
+            $target = [System.IO.Path]::GetFullPath((Join-Path $workspace $name))
+            if (-not $target.StartsWith($workspace + '\', [System.StringComparison]::OrdinalIgnoreCase)) {
+              throw "Unsafe build cleanup target: $target"
+            }
+            if (Test-Path -LiteralPath $target) {
+              Remove-Item -LiteralPath $target -Recurse -Force
+            }
+          }
+
+      - name: Build wheel and sdist
+        run: python -m build
+
+      - name: Build ComicTagger plugin ZIP
+        shell: pwsh
+        run: |
+          $wheels = @(Get-ChildItem -LiteralPath dist -Filter 'comictagger_jp_talker-*-py3-none-any.whl' -File)
+          if ($wheels.Count -ne 1) {
+            throw "Expected exactly one wheel, found $($wheels.Count)"
+          }
+          $sdists = @(Get-ChildItem -LiteralPath dist -Filter 'comictagger_jp_talker-*.tar.gz' -File)
+          if ($sdists.Count -ne 1) {
+            throw "Expected exactly one sdist, found $($sdists.Count)"
+          }
+          python scripts/build_plugin.py $wheels[0].FullName
+          if ($LASTEXITCODE -ne 0) {
+            throw "Failed to build ComicTagger plugin ZIP"
+          }
+
+      - name: Test built plugin with ComicTagger
+        run: python -m pytest tests/test_packaging.py::test_built_zip_in_isolated_host -q
+        env:
+          PYTHONUTF8: '1'
+
+      - name: Validate Release asset
+        id: plugin
+        shell: pwsh
+        env:
+          EXPECTED_VERSION: ${{ steps.version.outputs.package_version }}
+        run: |
+          $plugins = @(Get-ChildItem -LiteralPath dist -Filter 'jpbooks_talker-plugin-*.zip' -File)
+          if ($plugins.Count -ne 1) {
+            throw "Expected exactly one plugin ZIP, found $($plugins.Count)"
+          }
+          $plugin = $plugins[0]
+          $verify = @'
+          import sys
+          import zipfile
+          from email.parser import BytesParser
+          from pathlib import Path
+
+          path = Path(sys.argv[1])
+          expected_version = sys.argv[2]
+          if path.stat().st_size == 0:
+              raise ValueError("Plugin ZIP is empty")
+          with zipfile.ZipFile(path) as archive:
+              names = archive.namelist()
+              if archive.testzip() is not None:
+                  raise ValueError("Plugin ZIP has a corrupt entry")
+              metadata_files = [name for name in names if name.endswith(".dist-info/METADATA")]
+              if len(metadata_files) != 1:
+                  raise ValueError("Plugin ZIP must have exactly one package METADATA")
+              metadata = BytesParser().parsebytes(archive.read(metadata_files[0]))
+              if (metadata["Name"], metadata["Version"]) != ("comictagger-jp-talker", expected_version):
+                  raise ValueError("Plugin ZIP package metadata does not match the tag")
+              if "comictagger_jp_talker/talker.py" not in names:
+                  raise ValueError("Plugin ZIP does not contain the Talker package")
+              if not any(name.endswith(".dist-info/entry_points.txt") for name in names):
+                  raise ValueError("Plugin ZIP does not contain entry point metadata")
+              if any("__pycache__" in name or name.endswith(".pyc") or name.startswith("tests/")
+                     or name.startswith(".git/") for name in names):
+                  raise ValueError("Plugin ZIP contains build or test files")
+          '@
+          python -c $verify $plugin.FullName $env:EXPECTED_VERSION
+          if ($LASTEXITCODE -ne 0) {
+            throw "Plugin ZIP validation failed"
+          }
+          "path=$($plugin.FullName)" >> $env:GITHUB_OUTPUT
+
+      - name: Create Release or upload missing plugin ZIP
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PLUGIN_ZIP: ${{ steps.plugin.outputs.path }}
+        run: |
+          $plugin = Get-Item -LiteralPath $env:PLUGIN_ZIP
+          $existing = gh release view $env:RELEASE_TAG --json assets,isDraft 2>$null
+          if ($LASTEXITCODE -eq 0) {
+            $release = $existing | ConvertFrom-Json
+            $assets = @($release.assets | Where-Object { $_.name -eq $plugin.Name })
+            if ($assets.Count -eq 0) {
+              gh release upload $env:RELEASE_TAG $plugin.FullName
+              if ($LASTEXITCODE -ne 0) {
+                throw "Failed to upload plugin ZIP to the existing Release"
+              }
+            } else {
+              Write-Host "Release asset $($plugin.Name) already exists; leaving it unchanged"
+            }
+            if ($release.isDraft) {
+              gh release edit $env:RELEASE_TAG --draft=false
+              if ($LASTEXITCODE -ne 0) {
+                throw "Failed to publish the existing draft Release"
+              }
+            }
+          } else {
+            gh release create $env:RELEASE_TAG $plugin.FullName --title $env:RELEASE_TAG --generate-notes --verify-tag
+            if ($LASTEXITCODE -ne 0) {
+              throw "Failed to create Release with plugin ZIP"
+            }
+          }
