@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Synthetic metadata. Structure follows the NDL 2026 SRU response, not copied book content. -->
+<searchRetrieveResponse xmlns="http://www.loc.gov/zing/srw/">
+  <version>1.2</version><numberOfRecords>1</numberOfRecords><nextRecordPosition>0</nextRecordPosition>
+  <records><record>
+    <recordSchema>info:srw/schema/1/dc-v1.1</recordSchema><recordPacking>xml</recordPacking>
+    <recordData>
+      <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+        xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+        xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/"
+        xmlns:dcndl="http://ndl.go.jp/dcndl/terms/" xmlns:foaf="http://xmlns.com/foaf/0.1/">
+        <dcndl:BibAdminResource rdf:about="https://ndlsearch.ndl.go.jp/books/R100000002-Itest001">
+          <dcndl:bibRecordCategory>R100000002</dcndl:bibRecordCategory>
+          <dcndl:record rdf:resource="https://ndlsearch.ndl.go.jp/books/R100000002-Itest001#material"/>
+        </dcndl:BibAdminResource>
+        <dcndl:BibResource rdf:about="https://ndlsearch.ndl.go.jp/books/R100000002-Itest001#material">
+          <dcterms:title>架空の漫画・髙﨑𠮷野〜旅―（新版）. ７４</dcterms:title>
+          <dc:title><rdf:Description><rdf:value>架空の漫画・髙﨑𠮷野〜旅―（新版）</rdf:value>
+            <dcndl:transcription>カクウ ノ マンガ</dcndl:transcription></rdf:Description></dc:title>
+          <dcndl:seriesTitle><rdf:Description><rdf:value>架空の漫画</rdf:value></rdf:Description></dcndl:seriesTitle>
+          <dcndl:volume><rdf:Description><rdf:value>７４</rdf:value></rdf:Description></dcndl:volume>
+          <dcterms:creator><foaf:Agent><foaf:name>架空, 太郎, 1900-2000</foaf:name></foaf:Agent></dcterms:creator>
+          <dc:creator>架空太郎 原作</dc:creator><dc:creator>架空花子 作画</dc:creator>
+          <dcterms:contributor>翻訳次郎 訳</dcterms:contributor>
+          <dcterms:publisher><foaf:Agent><foaf:name>架空出版</foaf:name>
+            <dcndl:location>東京</dcndl:location></foaf:Agent></dcterms:publisher>
+          <dcterms:identifier rdf:datatype="http://ndl.go.jp/dcndl/terms/ISBN">4-88594-287-X</dcterms:identifier>
+          <dcterms:identifier rdf:datatype="http://ndl.go.jp/dcndl/terms/JPNO">12345678</dcterms:identifier>
+          <dcterms:issued rdf:datatype="http://purl.org/dc/terms/W3CDTF">2025</dcterms:issued>
+          <dcterms:date>2025.11.19</dcterms:date>
+          <dcterms:language rdf:datatype="http://purl.org/dc/terms/ISO639-2">jpn</dcterms:language>
+          <dcterms:abstract>テスト用あらすじ。漢字・ひらがな・カタカナ。</dcterms:abstract>
+          <dcterms:description>内容注記：フィクション</dcterms:description>
+          <dcterms:subject><rdf:Description><rdf:value>漫画</rdf:value></rdf:Description></dcterms:subject>
+          <dcterms:subject rdf:resource="http://id.ndl.go.jp/class/ndc10/726.1"/>
+          <dcterms:subject rdf:resource="http://id.ndl.go.jp/class/ndlc/Y84"/>
+          <dc:subject rdf:datatype="http://ndl.go.jp/dcndl/terms/NDC9">726.1</dc:subject>
+          <dcndl:edition>新装版</dcndl:edition>
+          <dcndl:materialType rdf:resource="http://ndl.go.jp/ndltype/Book" rdfs:label="図書"/>
+          <dcterms:rights>合成テストデータ</dcterms:rights>
+        </dcndl:BibResource>
+        <dcndl:BibResource rdf:about="https://ndlsearch.ndl.go.jp/books/R100000002-Itest001#material">
+          <dcndl:record rdf:resource="https://ndlsearch.ndl.go.jp/books/R100000002-Itest001#item"/>
+        </dcndl:BibResource>
+        <dcndl:Item rdf:about="https://ndlsearch.ndl.go.jp/books/R100000002-Itest001#item">
+          <dcterms:description>所蔵だけの注記：Summary に混ぜない</dcterms:description>
+          <dcterms:identifier rdf:datatype="http://ndl.go.jp/dcndl/terms/ISBN">9784101010137</dcterms:identifier>
+          <dcndl:holdingAgent><foaf:Agent><foaf:name>所蔵館：出版社に混ぜない</foaf:name></foaf:Agent></dcndl:holdingAgent>
+        </dcndl:Item>
+      </rdf:RDF>
+    </recordData>
+  </record></records>
+</searchRetrieveResponse>

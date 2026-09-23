@@ -1,0 +1,37 @@
+.venv/
+.tools/
+.research/
+.pytest_cache/
+.ruff_cache/
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.coverage
+htmlcov/
+
+# Local configuration and credentials
+.env
+.env.*
+!.env.example
+*.local
+*.secret
+secrets/
+credentials/
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Local logs and databases
+*.log
+*.sqlite
+*.sqlite3
+*.db
+
+# OS and editor files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
