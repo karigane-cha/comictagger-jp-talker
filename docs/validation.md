@@ -1,5 +1,15 @@
 # Phase 1 検証記録
 
+## 0.1.10 の Phase 1 完了確認
+
+NDL Search 単独の Phase 1 を監査し、安全に確定できる書誌情報だけを ComicTagger へ出力する方針を確認。
+
+- ISBN / GTIN、作品名の Series 推定、括弧付き副題、明示巻次とタイトル推定巻の照合、3 種類の Volume / Issue 出力を検証。
+- 紙・デジタル資料の日付、責任表示と構造化 creator role、未知の役割の Other、要約・制御文字・キャッシュ破損時の復旧を検証。
+- 解釈不能な非整数巻次は Volume / Issue へ出力せず、NDL 原値を BookRecord と Notes に保持。
+- NDL の版表示・資料種別から ComicInfo の Format を生成せず、原値を BookRecord・Notes・候補説明に保持。
+- ComicTagger 1.6.0b9 の CIX writer が Volume=0 を省略する既知の制約は xfail として記録。複数 Publisher の役割分離は未対応。
+
 ## 0.1.9 の追加検証
 
 NDL の明示巻次を専用 helper で正規化してから、タイトル推定値と比較する対応を追加。

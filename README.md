@@ -2,7 +2,7 @@
 
 日本で出版された漫画・書籍の書誌メタデータを取得する独立 Talker プラグインです。
 表示名は **Japanese Books**、Talker ID は **jpbooks**。
-バージョン 0.1.9 時点の取得元は **国立国会図書館サーチ（NDL Search）だけ**です。
+バージョン 0.1.10 時点の取得元は **国立国会図書館サーチ（NDL Search）だけ**です。
 HTTPS の SRU 1.2 API と DC-NDL RDF v3（`recordSchema=dcndl_v3`）を使用し、API キー・secret は不要です。
 要約の補完には、NDL の公式仕様書に記載された書誌詳細 JSON API も使用します。
 CBZ の読み書きと ComicInfo.xml 生成は ComicTagger の標準機構へ任せます。
@@ -34,7 +34,7 @@ API キー不要であることと、利用申請不要であることは別で�
 
 ### Windows の ComicTagger 配布版：ローカル プラグイン
 
-1. `jpbooks_talker-plugin-0.1.9.zip` を ComicTagger の **plugins フォルダー**へ置きます。
+1. `jpbooks_talker-plugin-0.1.10.zip` を ComicTagger の **plugins フォルダー**へ置きます。
    ZIP は展開しません。wheel（`.whl`）をそのまま置く方式も同じローダーで利用可能です。
 2. 標準設定パスは通常 `%LOCALAPPDATA%\ComicTagger\plugins` です。
    `--config <フォルダー>` を指定している場合は `<フォルダー>\plugins` になります。
@@ -60,7 +60,7 @@ python -m pip install .
 配布 wheel を使用する場合：
 
 ```powershell
-python -m pip install .\dist\comictagger_jp_talker-0.1.9-py3-none-any.whl
+python -m pip install .\dist\comictagger_jp_talker-0.1.10-py3-none-any.whl
 ```
 
 ### ISBN を ComicInfo.xml に保存するタグ形式
@@ -438,7 +438,7 @@ python -m pip install -e ".[dev]"
 python -m pytest
 python -m ruff check .
 python -m build
-python scripts/build_plugin.py dist/comictagger_jp_talker-0.1.9-py3-none-any.whl
+python scripts/build_plugin.py dist/comictagger_jp_talker-0.1.10-py3-none-any.whl
 ```
 
 テストは実際の ComicTagger beta.9 の型・ローダー・タグ writer を利用します。

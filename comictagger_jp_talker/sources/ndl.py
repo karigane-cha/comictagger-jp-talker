@@ -17,6 +17,7 @@ from comictalker.comiccacher import Series as CachedSeries
 from comictalker.comictalker import RLCallBack, TalkerDataError, TalkerNetworkError
 from comictalker.vendor.pyrate_limiter import Limiter, RequestRate
 
+from comictagger_jp_talker import __version__
 from comictagger_jp_talker.isbn import isbn13, normalize_isbn
 from comictagger_jp_talker.models import BookRecord, ContentDates, SearchPage, SearchQuery
 from comictagger_jp_talker.sources.ndl_summary import DETAIL_ENDPOINT, parse_summary
@@ -314,7 +315,7 @@ class NDLSource:
         self.cache_folder = cache_folder / "jpbooks-ndl-v1"
         self.cache_folder.mkdir(parents=True, exist_ok=True)
         self.session = requests.Session()
-        self.session.headers["User-Agent"] = "comictagger-jp-talker/0.1.7 (NDL Search SRU)"
+        self.session.headers["User-Agent"] = f"comictagger-jp-talker/{__version__} (NDL Search SRU)"
         with _LOCK:
             self.cache = ComicCacher(self.cache_folder, "jpbooks-ndl-v1")
 
