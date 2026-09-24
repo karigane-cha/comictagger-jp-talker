@@ -1,0 +1,8 @@
+PREFIX schema: <https://schema.org/>
+SELECT ?book ?title (LANG(?title) AS ?lang) (DATATYPE(?title) AS ?datatype) WHERE {
+  VALUES ?book { <https://mediaarts-db.artmuseums.go.jp/id/M381096> }
+  ?book schema:name ?title .
+  FILTER(CONTAINS(STR(?title), "ご注文"))
+  FILTER(REGEX(STR(?title), "うさぎ", "i"))
+  FILTER(CONTAINS(LCASE(STR(?title)), LCASE("ご注文")))
+} LIMIT 10

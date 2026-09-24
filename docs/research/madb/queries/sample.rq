@@ -1,0 +1,5 @@
+PREFIX class: <https://mediaarts-db.artmuseums.go.jp/data/class#>
+SELECT ?s ?p ?o WHERE {
+  { SELECT ?s WHERE { ?s a class:MangaBook } LIMIT 1 }
+  ?s ?p ?o
+} LIMIT 200

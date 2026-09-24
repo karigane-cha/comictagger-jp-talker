@@ -1,0 +1,8 @@
+PREFIX schema: <https://schema.org/>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+SELECT ?book ?relation ?node ?p ?o WHERE {
+  VALUES ?book { <https://mediaarts-db.artmuseums.go.jp/id/M381096> }
+  VALUES ?relation { dcterms:creator dcterms:publisher schema:provider }
+  ?book ?relation ?node . FILTER(isIRI(?node) || isBlank(?node))
+  ?node ?p ?o
+} ORDER BY ?node ?p ?o LIMIT 300

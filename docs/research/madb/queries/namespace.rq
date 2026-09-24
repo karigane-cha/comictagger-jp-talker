@@ -1,0 +1,12 @@
+SELECT ?book ?p ?o WHERE {
+  VALUES ?book {
+    <https://mediaarts-db.artmuseums.go.jp/id/M381096>
+    <https://mediaarts-db.bunka.go.jp/id/M381096>
+  }
+  VALUES ?p {
+    <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>
+    <http://schema.org/name>
+    <https://schema.org/name>
+  }
+  ?book ?p ?o
+} LIMIT 20

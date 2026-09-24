@@ -1,0 +1,128 @@
+{
+  "issue": {
+    "series": "架空の漫画・髙﨑𠮷野〜旅―（新版）",
+    "title": "架空の漫画・髙﨑𠮷野〜旅―（新版）. ７４",
+    "volume": null,
+    "issue": "74",
+    "publisher": "架空出版",
+    "year": 2025,
+    "month": 11,
+    "day": 19,
+    "gtin": "9784885942877",
+    "notes": "NDL サーチの API を使用\nhttps://ndlsearch.ndl.go.jp/books/R100000002-Itest001\nNDL 巻次（原データ）: ７４\nタイトル推定巻: 74\n既存・要求巻: 74\nISBN: 4-88594-287-X\nNDL シリーズ表記（原データ）: 架空の漫画\n責任表示: 架空太郎 原作 / 架空花子 作画\n著者原表記: 架空, 太郎, 1900-2000\n寄与者原表記: 翻訳次郎 訳\n版: 新装版\n資料種別: 図書 http://ndl.go.jp/ndltype/Book\nデータ提供元: R100000002\n利用条件: 合成テストデータ\n書誌注記: 内容注記：フィクション",
+    "format": null,
+    "description": "テスト用あらすじ。漢字・ひらがな・カタカナ。",
+    "tags": [],
+    "imprint": null,
+    "language": "ja",
+    "issue_id": "R100000002-Itest001",
+    "series_id": "R100000002-Itest001",
+    "credits": [
+      {
+        "person": "架空太郎",
+        "role": "Writer",
+        "primary": false,
+        "language": ""
+      },
+      {
+        "person": "架空花子",
+        "role": "Artist",
+        "primary": false,
+        "language": ""
+      },
+      {
+        "person": "翻訳次郎",
+        "role": "Translator",
+        "primary": false,
+        "language": ""
+      }
+    ],
+    "web_links": [
+      "https://ndlsearch.ndl.go.jp/books/R100000002-Itest001"
+    ]
+  },
+  "volume": {
+    "series": "架空の漫画・髙﨑𠮷野〜旅―（新版）",
+    "title": "架空の漫画・髙﨑𠮷野〜旅―（新版）. ７４",
+    "volume": 74,
+    "issue": null,
+    "publisher": "架空出版",
+    "year": 2025,
+    "month": 11,
+    "day": 19,
+    "gtin": "9784885942877",
+    "notes": "NDL サーチの API を使用\nhttps://ndlsearch.ndl.go.jp/books/R100000002-Itest001\nNDL 巻次（原データ）: ７４\nタイトル推定巻: 74\n既存・要求巻: 74\nISBN: 4-88594-287-X\nNDL シリーズ表記（原データ）: 架空の漫画\n責任表示: 架空太郎 原作 / 架空花子 作画\n著者原表記: 架空, 太郎, 1900-2000\n寄与者原表記: 翻訳次郎 訳\n版: 新装版\n資料種別: 図書 http://ndl.go.jp/ndltype/Book\nデータ提供元: R100000002\n利用条件: 合成テストデータ\n書誌注記: 内容注記：フィクション",
+    "format": null,
+    "description": "テスト用あらすじ。漢字・ひらがな・カタカナ。",
+    "tags": [],
+    "imprint": null,
+    "language": "ja",
+    "issue_id": "R100000002-Itest001",
+    "series_id": "R100000002-Itest001",
+    "credits": [
+      {
+        "person": "架空太郎",
+        "role": "Writer",
+        "primary": false,
+        "language": ""
+      },
+      {
+        "person": "架空花子",
+        "role": "Artist",
+        "primary": false,
+        "language": ""
+      },
+      {
+        "person": "翻訳次郎",
+        "role": "Translator",
+        "primary": false,
+        "language": ""
+      }
+    ],
+    "web_links": [
+      "https://ndlsearch.ndl.go.jp/books/R100000002-Itest001"
+    ]
+  },
+  "both": {
+    "series": "架空の漫画・髙﨑𠮷野〜旅―（新版）",
+    "title": "架空の漫画・髙﨑𠮷野〜旅―（新版）. ７４",
+    "volume": 74,
+    "issue": "74",
+    "publisher": "架空出版",
+    "year": 2025,
+    "month": 11,
+    "day": 19,
+    "gtin": "9784885942877",
+    "notes": "NDL サーチの API を使用\nhttps://ndlsearch.ndl.go.jp/books/R100000002-Itest001\nNDL 巻次（原データ）: ７４\nタイトル推定巻: 74\n既存・要求巻: 74\nISBN: 4-88594-287-X\nNDL シリーズ表記（原データ）: 架空の漫画\n責任表示: 架空太郎 原作 / 架空花子 作画\n著者原表記: 架空, 太郎, 1900-2000\n寄与者原表記: 翻訳次郎 訳\n版: 新装版\n資料種別: 図書 http://ndl.go.jp/ndltype/Book\nデータ提供元: R100000002\n利用条件: 合成テストデータ\n書誌注記: 内容注記：フィクション",
+    "format": null,
+    "description": "テスト用あらすじ。漢字・ひらがな・カタカナ。",
+    "tags": [],
+    "imprint": null,
+    "language": "ja",
+    "issue_id": "R100000002-Itest001",
+    "series_id": "R100000002-Itest001",
+    "credits": [
+      {
+        "person": "架空太郎",
+        "role": "Writer",
+        "primary": false,
+        "language": ""
+      },
+      {
+        "person": "架空花子",
+        "role": "Artist",
+        "primary": false,
+        "language": ""
+      },
+      {
+        "person": "翻訳次郎",
+        "role": "Translator",
+        "primary": false,
+        "language": ""
+      }
+    ],
+    "web_links": [
+      "https://ndlsearch.ndl.go.jp/books/R100000002-Itest001"
+    ]
+  }
+}

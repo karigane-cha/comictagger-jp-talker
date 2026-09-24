@@ -1,0 +1,16 @@
+PREFIX schema: <https://schema.org/>
+PREFIX class: <https://mediaarts-db.artmuseums.go.jp/data/class#>
+SELECT ?book ?title ?volume ?series ?seriesTitle ?work ?publisher ?label ?date ?creator WHERE {
+  ?book a class:MangaBook ; schema:isbn "9784832241190" .
+  OPTIONAL { ?book schema:name ?title . FILTER(LANG(?title) = "") }
+  OPTIONAL { ?book schema:volumeNumber ?volume }
+  OPTIONAL {
+    ?book schema:isPartOf ?series . ?series a class:MangaBookSeries .
+    OPTIONAL { ?series schema:name ?seriesTitle . FILTER(LANG(?seriesTitle) = "") }
+    OPTIONAL { ?series schema:isPartOf ?work . ?work a class:MangaWork }
+  }
+  OPTIONAL { ?book schema:publisher ?publisher }
+  OPTIONAL { ?book schema:brand ?label . FILTER(LANG(?label) = "") }
+  OPTIONAL { ?book schema:datePublished ?date }
+  OPTIONAL { ?book schema:creator ?creator . FILTER(LANG(?creator) = "") }
+} LIMIT 100

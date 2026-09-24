@@ -1,0 +1,5 @@
+PREFIX ma: <https://mediaarts-db.artmuseums.go.jp/data/property#>
+SELECT ?book ?p ?o WHERE {
+  VALUES ?book { <https://mediaarts-db.artmuseums.go.jp/id/M1032568> }
+  ?book ?p ?o
+} ORDER BY ?p ?o LIMIT 200

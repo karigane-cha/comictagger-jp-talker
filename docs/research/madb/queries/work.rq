@@ -1,0 +1,9 @@
+PREFIX schema: <https://schema.org/>
+PREFIX class: <https://mediaarts-db.artmuseums.go.jp/data/class#>
+SELECT ?book ?series ?work ?title WHERE {
+  VALUES ?book { <https://mediaarts-db.artmuseums.go.jp/id/M381096> }
+  ?book a class:MangaBook ; schema:isPartOf ?series .
+  ?series a class:MangaBookSeries ; schema:isPartOf ?work .
+  ?work a class:MangaWork .
+  OPTIONAL { ?work schema:name ?title }
+} LIMIT 20

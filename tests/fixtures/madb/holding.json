@@ -1,0 +1,72 @@
+{
+  "head": {
+    "vars": [
+      "p",
+      "o"
+    ]
+  },
+  "results": {
+    "bindings": [
+      {
+        "p": {
+          "type": "uri",
+          "value": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
+        },
+        "o": {
+          "type": "uri",
+          "value": "https://mediaarts-db.artmuseums.go.jp/data/class#Supplement"
+        }
+      },
+      {
+        "p": {
+          "type": "uri",
+          "value": "https://schema.org/identifier"
+        },
+        "o": {
+          "type": "literal",
+          "value": "S1"
+        }
+      },
+      {
+        "p": {
+          "type": "uri",
+          "value": "https://schema.org/name"
+        },
+        "o": {
+          "type": "literal",
+          "value": "Synthetic Library"
+        }
+      },
+      {
+        "p": {
+          "type": "uri",
+          "value": "https://mediaarts-db.artmuseums.go.jp/data/property#materialIdentifier"
+        },
+        "o": {
+          "type": "literal",
+          "value": "023440575"
+        }
+      },
+      {
+        "p": {
+          "type": "uri",
+          "value": "https://mediaarts-db.artmuseums.go.jp/data/property#ownerIdentifier"
+        },
+        "o": {
+          "type": "literal",
+          "value": "2"
+        }
+      },
+      {
+        "p": {
+          "type": "uri",
+          "value": "https://schema.org/note"
+        },
+        "o": {
+          "type": "literal",
+          "value": "20th printing"
+        }
+      }
+    ]
+  }
+}

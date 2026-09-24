@@ -2,10 +2,13 @@
 
 日本で出版された漫画・書籍の書誌メタデータを取得する独立 Talker プラグインです。
 表示名は **Japanese Books**、Talker ID は **jpbooks**。
-バージョン 0.1.12 時点の取得元は **国立国会図書館サーチ（NDL Search）だけ**です。
+通常のメタデータ取得元は **国立国会図書館サーチ（NDL Search）だけ**です。
 HTTPS の SRU 1.2 API と DC-NDL RDF v3（`recordSchema=dcndl_v3`）を使用し、API キー・secret は不要です。
 要約の補完には、NDL の公式仕様書に記載された書誌詳細 JSON API も使用します。
 CBZ の読み書きと ComicInfo.xml 生成は ComicTagger の標準機構へ任せます。
+
+Phase 2B-1 では内部の [MADB read-only source](docs/phase2b1_madb_source.md) を追加しています。
+通常の Talker 検索・設定・ComicInfo.xml 出力への接続と NDL/MADB merge は未実装です。
 
 ## 対応環境
 
@@ -34,7 +37,7 @@ API キー不要であることと、利用申請不要であることは別で�
 
 ### Windows の ComicTagger 配布版：ローカル プラグイン
 
-1. `jpbooks_talker-plugin-0.1.12.zip` を ComicTagger の **plugins フォルダー**へ置きます。
+1. ビルドで生成した `jpbooks_talker-plugin-<version>.zip` を ComicTagger の **plugins フォルダー**へ置きます。
    ZIP は展開しません。wheel（`.whl`）をそのまま置く方式も同じローダーで利用可能です。
 2. 標準設定パスは通常 `%LOCALAPPDATA%\ComicTagger\plugins` です。
    `--config <フォルダー>` を指定している場合は `<フォルダー>\plugins` になります。
@@ -60,7 +63,9 @@ python -m pip install .
 配布 wheel を使用する場合：
 
 ```powershell
-python -m pip install .\dist\comictagger_jp_talker-0.1.12-py3-none-any.whl
+$wheels = @(Get-ChildItem dist\comictagger_jp_talker-*-py3-none-any.whl)
+if ($wheels.Count -ne 1) { throw "Expected exactly one wheel" }
+python -m pip install $wheels[0].FullName
 ```
 
 ### ISBN を ComicInfo.xml に保存するタグ形式
@@ -438,7 +443,9 @@ python -m pip install -e ".[dev]"
 python -m pytest
 python -m ruff check .
 python -m build
-python scripts/build_plugin.py dist/comictagger_jp_talker-0.1.12-py3-none-any.whl
+$wheels = @(Get-ChildItem dist\comictagger_jp_talker-*-py3-none-any.whl)
+if ($wheels.Count -ne 1) { throw "Expected exactly one wheel" }
+python scripts/build_plugin.py $wheels[0].FullName
 ```
 
 テストは実際の ComicTagger beta.9 の型・ローダー・タグ writer を利用します。
@@ -446,8 +453,8 @@ fixture は公式の要素構造をもとに作った架空の書誌です。通
 GUI テストは PyQt6 の offscreen モードで標準ウィンドウを使用します。
 成果物の ZIP テストは、上記ビルド後に `python -m pytest` を再実行すると実行されます。
 
-オプトインのネットワーク テストは、各テストで SRU を **1 回**呼び出します。
-ISBN 検索と紙／デジタルの日付分離の 2 件を実行する場合は、合計 2 回です。
+オプトインのネットワーク テストは NDL と MADB の実 endpoint を呼び出します。
+MADB だけの実行方法と通信上限は [MADB source の実装記録](docs/phase2b1_madb_source.md) を参照してください。
 
 ```powershell
 $env:JPBOOKS_RUN_NETWORK_TESTS = "1"

@@ -1,0 +1,20 @@
+PREFIX class: <https://mediaarts-db.artmuseums.go.jp/data/class#>
+SELECT ?book ?p ?o WHERE {
+  VALUES ?book {
+    <https://mediaarts-db.artmuseums.go.jp/id/M381096>
+    <https://mediaarts-db.artmuseums.go.jp/id/M250454>
+    <https://mediaarts-db.artmuseums.go.jp/id/M299519>
+    <https://mediaarts-db.artmuseums.go.jp/id/M1076947>
+    <https://mediaarts-db.artmuseums.go.jp/id/M852457>
+    <https://mediaarts-db.artmuseums.go.jp/id/M1065430>
+    <https://mediaarts-db.artmuseums.go.jp/id/M292389>
+    <https://mediaarts-db.artmuseums.go.jp/id/M307396>
+    <https://mediaarts-db.artmuseums.go.jp/id/M256854>
+    <https://mediaarts-db.artmuseums.go.jp/id/M255124>
+    <https://mediaarts-db.artmuseums.go.jp/id/M437792>
+    <https://mediaarts-db.artmuseums.go.jp/id/M276768>
+    <https://mediaarts-db.artmuseums.go.jp/id/M242946>
+    <https://mediaarts-db.artmuseums.go.jp/id/M1032568>
+  }
+  ?book a class:MangaBook ; ?p ?o
+} ORDER BY ?book ?p ?o LIMIT 1000

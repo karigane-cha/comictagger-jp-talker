@@ -1,0 +1,445 @@
+{
+  "head": {
+    "vars": [
+      "p",
+      "o"
+    ]
+  },
+  "results": {
+    "bindings": [
+      {
+        "p": {
+          "type": "uri",
+          "value": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
+        },
+        "o": {
+          "type": "uri",
+          "value": "https://mediaarts-db.artmuseums.go.jp/data/class#MangaBook"
+        }
+      },
+      {
+        "p": {
+          "type": "uri",
+          "value": "https://schema.org/identifier"
+        },
+        "o": {
+          "type": "literal",
+          "value": "M1"
+        }
+      },
+      {
+        "p": {
+          "type": "uri",
+          "value": "https://schema.org/name"
+        },
+        "o": {
+          "type": "literal",
+          "value": "Synthetic title"
+        }
+      },
+      {
+        "p": {
+          "type": "uri",
+          "value": "https://schema.org/name"
+        },
+        "o": {
+          "type": "literal",
+          "value": "ヨミ",
+          "xml:lang": "ja-hrkt"
+        }
+      },
+      {
+        "p": {
+          "type": "uri",
+          "value": "https://schema.org/alternateName"
+        },
+        "o": {
+          "type": "literal",
+          "value": "Alternative"
+        }
+      },
+      {
+        "p": {
+          "type": "uri",
+          "value": "https://schema.org/alternativeHeadline"
+        },
+        "o": {
+          "type": "literal",
+          "value": "Subtitle"
+        }
+      },
+      {
+        "p": {
+          "type": "uri",
+          "value": "http://www.w3.org/2000/01/rdf-schema#label"
+        },
+        "o": {
+          "type": "literal",
+          "value": "Synthetic title volume 1"
+        }
+      },
+      {
+        "p": {
+          "type": "uri",
+          "value": "https://schema.org/volumeNumber"
+        },
+        "o": {
+          "type": "literal",
+          "value": "volume 1"
+        }
+      },
+      {
+        "p": {
+          "type": "uri",
+          "value": "https://schema.org/position"
+        },
+        "o": {
+          "type": "literal",
+          "value": "1.0",
+          "datatype": "http://www.w3.org/2001/XMLSchema#decimal"
+        }
+      },
+      {
+        "p": {
+          "type": "uri",
+          "value": "https://schema.org/isbn"
+        },
+        "o": {
+          "type": "literal",
+          "value": "4592880714"
+        }
+      },
+      {
+        "p": {
+          "type": "uri",
+          "value": "https://schema.org/isbn"
+        },
+        "o": {
+          "type": "literal",
+          "value": "9784592880714"
+        }
+      },
+      {
+        "p": {
+          "type": "uri",
+          "value": "https://schema.org/isbn"
+        },
+        "o": {
+          "type": "literal",
+          "value": "4091384757"
+        }
+      },
+      {
+        "p": {
+          "type": "uri",
+          "value": "https://schema.org/isbn"
+        },
+        "o": {
+          "type": "literal",
+          "value": "9784088466361"
+        }
+      },
+      {
+        "p": {
+          "type": "uri",
+          "value": "https://schema.org/isbn"
+        },
+        "o": {
+          "type": "literal",
+          "value": "4088466361"
+        }
+      },
+      {
+        "p": {
+          "type": "uri",
+          "value": "https://schema.org/isbn"
+        },
+        "o": {
+          "type": "literal",
+          "value": "(set)"
+        }
+      },
+      {
+        "p": {
+          "type": "uri",
+          "value": "https://schema.org/isbn"
+        },
+        "o": {
+          "type": "literal",
+          "value": "9.78402e+12"
+        }
+      },
+      {
+        "p": {
+          "type": "uri",
+          "value": "https://schema.org/brand"
+        },
+        "o": {
+          "type": "literal",
+          "value": "First label"
+        }
+      },
+      {
+        "p": {
+          "type": "uri",
+          "value": "https://schema.org/brand"
+        },
+        "o": {
+          "type": "literal",
+          "value": "Second label"
+        }
+      },
+      {
+        "p": {
+          "type": "uri",
+          "value": "https://schema.org/brand"
+        },
+        "o": {
+          "type": "literal",
+          "value": "150"
+        }
+      },
+      {
+        "p": {
+          "type": "uri",
+          "value": "https://schema.org/creator"
+        },
+        "o": {
+          "type": "literal",
+          "value": "[原作]Author"
+        }
+      },
+      {
+        "p": {
+          "type": "uri",
+          "value": "https://schema.org/creator"
+        },
+        "o": {
+          "type": "literal",
+          "value": "[作画]Artist"
+        }
+      },
+      {
+        "p": {
+          "type": "uri",
+          "value": "https://schema.org/creator"
+        },
+        "o": {
+          "type": "literal",
+          "value": "[未知]Unmapped"
+        }
+      },
+      {
+        "p": {
+          "type": "uri",
+          "value": "https://schema.org/creator"
+        },
+        "o": {
+          "type": "literal",
+          "value": "[[著Broken"
+        }
+      },
+      {
+        "p": {
+          "type": "uri",
+          "value": "https://schema.org/creator"
+        },
+        "o": {
+          "type": "literal",
+          "value": "ヨミ",
+          "xml:lang": "ja-hrkt"
+        }
+      },
+      {
+        "p": {
+          "type": "uri",
+          "value": "https://schema.org/contributor"
+        },
+        "o": {
+          "type": "literal",
+          "value": "[編]Editor"
+        }
+      },
+      {
+        "p": {
+          "type": "uri",
+          "value": "https://mediaarts-db.artmuseums.go.jp/data/property#originalWorkCreator"
+        },
+        "o": {
+          "type": "literal",
+          "value": "[原作]Original"
+        }
+      },
+      {
+        "p": {
+          "type": "uri",
+          "value": "http://purl.org/dc/terms/creator"
+        },
+        "o": {
+          "type": "uri",
+          "value": "https://mediaarts-db.artmuseums.go.jp/id/C2"
+        }
+      },
+      {
+        "p": {
+          "type": "uri",
+          "value": "http://purl.org/dc/terms/creator"
+        },
+        "o": {
+          "type": "uri",
+          "value": "https://mediaarts-db.artmuseums.go.jp/id/C3"
+        }
+      },
+      {
+        "p": {
+          "type": "uri",
+          "value": "https://schema.org/publisher"
+        },
+        "o": {
+          "type": "literal",
+          "value": "Publisher"
+        }
+      },
+      {
+        "p": {
+          "type": "uri",
+          "value": "http://purl.org/dc/terms/publisher"
+        },
+        "o": {
+          "type": "literal",
+          "value": "P123"
+        }
+      },
+      {
+        "p": {
+          "type": "uri",
+          "value": "https://schema.org/version"
+        },
+        "o": {
+          "type": "literal",
+          "value": "完全版"
+        }
+      },
+      {
+        "p": {
+          "type": "uri",
+          "value": "https://schema.org/datePublished"
+        },
+        "o": {
+          "type": "literal",
+          "value": "1968-1968-1968"
+        }
+      },
+      {
+        "p": {
+          "type": "uri",
+          "value": "https://schema.org/isPartOf"
+        },
+        "o": {
+          "type": "uri",
+          "value": "https://mediaarts-db.artmuseums.go.jp/id/C1"
+        }
+      },
+      {
+        "p": {
+          "type": "uri",
+          "value": "https://mediaarts-db.artmuseums.go.jp/data/property#seriesName"
+        },
+        "o": {
+          "type": "literal",
+          "value": "Other series statement"
+        }
+      },
+      {
+        "p": {
+          "type": "uri",
+          "value": "https://schema.org/inLanguage"
+        },
+        "o": {
+          "type": "literal",
+          "value": "日本語"
+        }
+      },
+      {
+        "p": {
+          "type": "uri",
+          "value": "https://schema.org/genre"
+        },
+        "o": {
+          "type": "literal",
+          "value": "マンガ単行本"
+        }
+      },
+      {
+        "p": {
+          "type": "uri",
+          "value": "https://schema.org/size"
+        },
+        "o": {
+          "type": "literal",
+          "value": "21cm"
+        }
+      },
+      {
+        "p": {
+          "type": "uri",
+          "value": "https://schema.org/numberOfPages"
+        },
+        "o": {
+          "type": "literal",
+          "value": "100p"
+        }
+      },
+      {
+        "p": {
+          "type": "uri",
+          "value": "https://mediaarts-db.artmuseums.go.jp/data/property#dataUrl"
+        },
+        "o": {
+          "type": "literal",
+          "value": "https://ndlsearch.ndl.go.jp/books/R100000002-Itest"
+        }
+      },
+      {
+        "p": {
+          "type": "uri",
+          "value": "https://mediaarts-db.artmuseums.go.jp/data/property#jpno"
+        },
+        "o": {
+          "type": "literal",
+          "value": "12345678"
+        }
+      },
+      {
+        "p": {
+          "type": "uri",
+          "value": "https://schema.org/productID"
+        },
+        "o": {
+          "type": "literal",
+          "value": "619"
+        }
+      },
+      {
+        "p": {
+          "type": "uri",
+          "value": "https://schema.org/provider"
+        },
+        "o": {
+          "type": "uri",
+          "value": "https://mediaarts-db.artmuseums.go.jp/ref/S1"
+        }
+      },
+      {
+        "p": {
+          "type": "uri",
+          "value": "https://example.invalid/unknown"
+        },
+        "o": {
+          "type": "bnode",
+          "value": "b1"
+        }
+      }
+    ]
+  }
+}

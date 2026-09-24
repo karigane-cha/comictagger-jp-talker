@@ -1,0 +1,62 @@
+{
+  "head": {
+    "vars": [
+      "p",
+      "o"
+    ]
+  },
+  "results": {
+    "bindings": [
+      {
+        "p": {
+          "type": "uri",
+          "value": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
+        },
+        "o": {
+          "type": "uri",
+          "value": "https://mediaarts-db.artmuseums.go.jp/data/class#Agent"
+        }
+      },
+      {
+        "p": {
+          "type": "uri",
+          "value": "https://schema.org/identifier"
+        },
+        "o": {
+          "type": "literal",
+          "value": "C2"
+        }
+      },
+      {
+        "p": {
+          "type": "uri",
+          "value": "https://schema.org/name"
+        },
+        "o": {
+          "type": "literal",
+          "value": "Artist"
+        }
+      },
+      {
+        "p": {
+          "type": "uri",
+          "value": "https://mediaarts-db.artmuseums.go.jp/data/property#additionalGenre"
+        },
+        "o": {
+          "type": "literal",
+          "value": "団体"
+        }
+      },
+      {
+        "p": {
+          "type": "uri",
+          "value": "https://mediaarts-db.artmuseums.go.jp/data/property#ndla"
+        },
+        "o": {
+          "type": "literal",
+          "value": "http://id.ndl.go.jp/auth/entity/123"
+        }
+      }
+    ]
+  }
+}

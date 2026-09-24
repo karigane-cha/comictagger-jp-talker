@@ -1,0 +1,41 @@
+{
+  "head": {
+    "vars": [
+      "book",
+      "identifier",
+      "isbn"
+    ]
+  },
+  "results": {
+    "bindings": [
+      {
+        "book": {
+          "type": "uri",
+          "value": "https://mediaarts-db.artmuseums.go.jp/id/M1"
+        },
+        "identifier": {
+          "type": "literal",
+          "value": "M1"
+        },
+        "isbn": {
+          "type": "literal",
+          "value": "4592880714"
+        }
+      },
+      {
+        "book": {
+          "type": "uri",
+          "value": "https://mediaarts-db.artmuseums.go.jp/id/M1"
+        },
+        "identifier": {
+          "type": "literal",
+          "value": "M1"
+        },
+        "isbn": {
+          "type": "literal",
+          "value": "9784592880714"
+        }
+      }
+    ]
+  }
+}

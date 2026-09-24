@@ -1,0 +1,6 @@
+PREFIX schema: <https://schema.org/>
+PREFIX class: <https://mediaarts-db.artmuseums.go.jp/data/class#>
+SELECT ?series ?p ?o WHERE {
+  <https://mediaarts-db.artmuseums.go.jp/id/M381096> schema:isPartOf ?series .
+  ?series a class:MangaBookSeries ; ?p ?o
+} ORDER BY ?p ?o LIMIT 300

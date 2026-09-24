@@ -1,0 +1,5 @@
+SELECT DISTINCT ?graph WHERE {
+  GRAPH ?graph {
+    <https://mediaarts-db.artmuseums.go.jp/id/M381096> ?p ?o
+  }
+} LIMIT 10

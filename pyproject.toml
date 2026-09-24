@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "comictagger-jp-talker"
-version = "0.1.12"
+dynamic = ["version"]
 description = "Japanese book metadata from NDL Search for ComicTagger 1.6"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -21,9 +21,12 @@ jpbooks = "comictagger_jp_talker.talker:JapaneseBooksTalker"
 [tool.setuptools.packages.find]
 include = ["comictagger_jp_talker*"]
 
+[tool.setuptools.dynamic]
+version = {attr = "comictagger_jp_talker.__version__"}
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-markers = ["network: opt-in real NDL request", "gui: offscreen ComicTagger standard UI test"]
+markers = ["network: opt-in real source request", "gui: offscreen ComicTagger standard UI test"]
 
 [tool.ruff]
 target-version = "py310"

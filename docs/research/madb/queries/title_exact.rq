@@ -1,0 +1,6 @@
+PREFIX schema: <https://schema.org/>
+PREFIX class: <https://mediaarts-db.artmuseums.go.jp/data/class#>
+SELECT ?book ?title ?volume WHERE {
+  ?book a class:MangaBook ; schema:name "ご注文はうさぎですか?" ; schema:name ?title .
+  OPTIONAL { ?book schema:volumeNumber ?volume }
+} ORDER BY ?book ?title LIMIT 40 OFFSET 0

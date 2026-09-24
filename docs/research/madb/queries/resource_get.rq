@@ -1,0 +1,3 @@
+SELECT ?p ?o WHERE {
+  <https://mediaarts-db.artmuseums.go.jp/id/M381096> ?p ?o
+} ORDER BY ?p ?o LIMIT 300

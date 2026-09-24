@@ -1,0 +1,9 @@
+SELECT ?class ?s WHERE {
+  VALUES ?class {
+    <https://mediaarts-db.artmuseums.go.jp/data/class#MangaWork>
+    <https://mediaarts-db.artmuseums.go.jp/data/class/MangaWork>
+    <https://mediaarts-db.bunka.go.jp/data/class#MangaWork>
+    <https://mediaarts-db.artmuseums.go.jp/data/class#Work>
+  }
+  ?s a ?class
+} LIMIT 10
