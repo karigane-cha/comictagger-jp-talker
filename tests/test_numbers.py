@@ -62,6 +62,16 @@ def test_explicit_volume_number(raw, expected):
         ("volume 0", "0"),
         ("Volume 0", "0"),
         ("volume ０", "0"),
+        ("vol.1", "1"),
+        ("vol. 1", "1"),
+        ("Vol.1", "1"),
+        ("Vol. 1", "1"),
+        ("VOL.1", "1"),
+        ("vol.31", "31"),
+        ("vol. 31", "31"),
+        ("Vol.31", "31"),
+        ("vol.0", "0"),
+        ("vol. 0", "0"),
     ],
 )
 def test_english_explicit_volume_number(raw, expected):
@@ -80,10 +90,55 @@ def test_english_explicit_volume_number(raw, expected):
         "volume 1/2",
         "volume 2024",
         "volume1",
+        "vol.",
+        "Vol",
+        "vol.one",
+        "vol.A",
+        "vol.1.5",
+        "vol.1-2",
+        "vol.1/2",
     ],
 )
 def test_english_explicit_volume_rejects_unsafe_values(raw):
     assert explicit_volume_number(raw) is None
+
+
+@pytest.mark.parametrize(
+    "title,raw,series,number",
+    [
+        ("My Girl. vol.31", "vol.31", "My Girl", "31"),
+        (
+            "ご注文はうさぎですか? : アンソロジーコミック. volume 1",
+            "volume 1",
+            "ご注文はうさぎですか? : アンソロジーコミック",
+            "1",
+        ),
+        ("ご注文はうさぎですか? = Is the order a rabbit? 7", "7", "ご注文はうさぎですか?", "7"),
+    ],
+)
+@pytest.mark.parametrize("mode", ["volume", "issue", "both"])
+def test_phase1_series_and_number_regressions(record, title, raw, series, number, mode):
+    record = replace(record, title=title, volumes=[raw], series_titles=["出版レーベル"])
+    originals = (record.title, record.volumes.copy(), record.series_titles.copy())
+
+    resolved = resolve_record_number(record)
+    metadata = to_metadata(record, volume_output=mode)
+
+    assert (resolved.explicit, resolved.inferred, resolved.value, resolved.conflict) == (
+        number,
+        number,
+        number,
+        False,
+    )
+    assert metadata.series == series
+    assert metadata.title == title
+    assert metadata.volume == (int(number) if mode in ("volume", "both") else None)
+    assert metadata.issue == (number if mode in ("issue", "both") else None)
+    assert (record.title, record.volumes, record.series_titles) == originals
+    assert "NDL 巻次（原データ）: " + raw in metadata.notes
+    assert "NDL シリーズ表記（原データ）: 出版レーベル" in metadata.notes
+    assert "NDL 巻次を整数として解釈できない" not in metadata.notes
+    assert "巻番号の不一致" not in metadata.notes
 
 
 @pytest.mark.parametrize(

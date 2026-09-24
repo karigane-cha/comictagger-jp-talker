@@ -122,3 +122,56 @@ def test_real_english_volume_marker_is_not_part_of_series(tmp_path):
     finally:
         source.session.close()
         source.cache.close()
+
+
+@pytest.mark.network
+@pytest.mark.skipif(os.getenv("JPBOOKS_RUN_NETWORK_TESTS") != "1", reason="opt-in NDL network test")
+@pytest.mark.parametrize(
+    "record_id,title,raw_volume,series,number",
+    [
+        ("R100000002-I030727178", "My Girl. vol.31", "vol.31", "My Girl", "31"),
+        (
+            "R100000002-I025437130",
+            "ご注文はうさぎですか? : アンソロジーコミック. volume 1",
+            "volume 1",
+            "ご注文はうさぎですか? : アンソロジーコミック",
+            "1",
+        ),
+        (
+            "R100000002-I029306375",
+            "ご注文はうさぎですか? = Is the order a rabbit? 7",
+            "7",
+            "ご注文はうさぎですか?",
+            "7",
+        ),
+    ],
+)
+def test_real_phase1_series_and_number_regressions(tmp_path, record_id, title, raw_volume, series, number):
+    source = NDLSource(tmp_path, maximum_records=1)
+    try:
+        page = source.search(SearchQuery(itemno=record_id, mediatype=""), refresh=True)
+        assert len(page.records) == 1
+        record = page.records[0]
+        assert record.id == record_id
+        assert record.url == f"https://ndlsearch.ndl.go.jp/books/{record_id}"
+        assert record.title == title
+        assert record.volumes == [raw_volume]
+        raw_values = (record.title, record.volumes.copy(), record.series_titles.copy())
+        assert infer_volume(record.title) == (series, number)
+        assert explicit_volume_number(raw_volume) == number
+        resolved = resolve_record_number(record)
+        assert (resolved.explicit, resolved.inferred, resolved.value, resolved.conflict) == (
+            number,
+            number,
+            number,
+            False,
+        )
+        metadata = to_metadata(record, volume_output="both")
+        assert metadata.series == series
+        assert (metadata.volume, metadata.issue) == (int(number), number)
+        assert "NDL 巻次（原データ）: " + raw_volume in metadata.notes
+        assert "NDL 巻次を整数として解釈できない" not in metadata.notes
+        assert (record.title, record.volumes, record.series_titles) == raw_values
+    finally:
+        source.session.close()
+        source.cache.close()

@@ -21,6 +21,25 @@ _VOLUME = re.compile(
     r"(?P<num>[0-9０-９]{1,3})(?:巻)?"
     r"(?:\s*(?:\([^()（）]+\)|（[^()（）]+）))?$"
 )
+_MARKED_VOLUME = re.compile(
+    r"^(?P<series>.+?)(?:[.．]\s*|\s+)(?i:vol\.\s*|volume\s+)"
+    r"(?P<num>[0-9０-９]{1,3})(?:巻)?"
+    r"(?:\s*(?:\([^()（）]+\)|（[^()（）]+）))?$"
+)
+_JAPANESE = re.compile(r"[\u3040-\u30ff\u3400-\u9fff]")
+_PARALLEL_TITLE = re.compile(r"(?P<left>.+?)\s+=\s+(?P<right>.+)")
+_LATIN_TITLE = re.compile(r"[A-Za-z0-9 .,!?;:'\"()&/\-~]+")
+
+
+def _strip_parallel_title(series: str) -> str:
+    """Remove only a spaced Japanese/Latin parallel title from an inferred series."""
+    match = _PARALLEL_TITLE.fullmatch(series)
+    if not match:
+        return series
+    left, right = match["left"], match["right"]
+    if _JAPANESE.search(left) and _LATIN_TITLE.fullmatch(right) and re.search(r"[A-Za-z]", right):
+        return left
+    return series
 
 
 def infer_volume(title: str) -> tuple[str, str | None]:
@@ -30,11 +49,11 @@ def infer_volume(title: str) -> tuple[str, str | None]:
     Subtitle parentheses must match and cannot be nested or repeated.
     Years, decimals, ranges and undelimited digits are left alone.
     """
-    match = _VOLUME.fullmatch(title)
+    match = _MARKED_VOLUME.fullmatch(title) or _VOLUME.fullmatch(title)
     if match and not re.search(r"[0-9０-９][.．]$", match["series"]):
         series = match["series"].rstrip()
         if series and not series[-1:].isdigit():
-            return series, str(int(match["num"].translate(_DIGITS)))
+            return _strip_parallel_title(series), str(int(match["num"].translate(_DIGITS)))
     return title, None
 
 
@@ -45,7 +64,7 @@ def issue_number(value: str) -> str:
 
 
 _EXPLICIT_VOLUME = re.compile(
-    r"\s*(?:(?i:volume)\s+|第)?(?P<num>[0-9０-９]{1,3})(?:巻)?"
+    r"\s*(?:(?i:vol\.)\s*|(?i:volume)\s+|第)?(?P<num>[0-9０-９]{1,3})(?:巻)?"
     r"(?:\s*(?:\([^()（）]+\)|（[^()（）]+）))?\s*"
 )
 
@@ -53,7 +72,7 @@ _EXPLICIT_VOLUME = re.compile(
 def explicit_volume_number(value: str) -> str | None:
     """Extract an integer from NDL volume text without changing its source value.
 
-    Accept only 1–3 digits, optionally after volume, and one matching, non-nested subtitle block.
+    Accept only 1–3 digits, optionally after vol./volume, and one matching, non-nested subtitle block.
     Unknown labels, ranges, decimals and year-like values are not integers.
     """
     match = _EXPLICIT_VOLUME.fullmatch(value)

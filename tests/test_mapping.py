@@ -115,6 +115,64 @@ def test_english_volume_marker_only_with_safe_integer(title, series, number):
     assert infer_volume(title) == (series, number)
 
 
+@pytest.mark.parametrize(
+    "title,series,number",
+    [
+        ("My Girl. vol.31", "My Girl", "31"),
+        ("My Girl. vol. 31", "My Girl", "31"),
+        ("My Girl. Vol.31", "My Girl", "31"),
+        ("My Girl. Vol. 31", "My Girl", "31"),
+        ("My Girl. VOL.1", "My Girl", "1"),
+        ("作品名 vol.1", "作品名", "1"),
+        ("作品名! vol.1", "作品名!", "1"),
+        ("作品名 : 新章 vol.1", "作品名 : 新章", "1"),
+        ("作品名．volume 2", "作品名", "2"),
+        ("作品名. Volume 12", "作品名", "12"),
+        ("作品名． Volume 1", "作品名", "1"),
+        (
+            "ご注文はうさぎですか? : アンソロジーコミック. volume 1",
+            "ご注文はうさぎですか? : アンソロジーコミック",
+            "1",
+        ),
+        ("ご注文はうさぎですか? = Is the order a rabbit? 7", "ご注文はうさぎですか?", "7"),
+        ("作品名 = English title 12", "作品名", "12"),
+        ("A = B 1", "A = B", "1"),
+        ("作品名 = 新装版 1", "作品名 = 新装版", "1"),
+        ("作品名=English 1", "作品名=English", "1"),
+    ],
+)
+def test_marked_volume_and_safe_parallel_title(title, series, number):
+    assert infer_volume(title) == (series, number)
+
+
+@pytest.mark.parametrize(
+    "title",
+    [
+        "My Girl.",
+        "作品名.",
+        "作品名．",
+        "作品名!",
+        "作品名?",
+        "A = B",
+        "作品名 = 新装版",
+        "作品名 volume",
+        "作品名 vol.",
+        "作品名 Vol",
+        "作品名 vol.one",
+        "作品名 vol.A",
+        "作品名 vol.1.5",
+        "作品名 vol.1-2",
+        "作品名 vol.1/2",
+    ],
+)
+def test_marker_and_punctuation_without_safe_volume_stay_raw(title):
+    assert infer_volume(title) == (title, None)
+
+
+def test_vol_marker_does_not_match_inside_a_word():
+    assert infer_volume("evolve 1") == ("evolve", "1")
+
+
 def test_ndl_dotted_number_keeps_original_title_volume_and_imprint(record):
     record = replace(
         record,
