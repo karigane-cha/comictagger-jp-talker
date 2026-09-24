@@ -1,5 +1,15 @@
 # Phase 1 検証記録
 
+## 0.1.12 のローカル build 検証
+
+2026-09-24。0.1.11 以降の Series 検索と巻番号推定の修正を含む。
+
+- `search_metadata()` の Series 入力・空白除去・fallback を検証。検索時の資料種別が `online` なら図書は対象外となるため、図書検索では設定を `books` にする。
+- 実書誌 `R100000002-I000001355589` の巻番号区切りと、`R100000002-I023440575` のタイトル／NDL 巻次 `volume 1` を確認。後者は Series=`ご注文はうさぎですか?`、明示巻・タイトル推定巻・論理巻番号=`1`、不一致なし。原タイトルと巻次は保持する。
+- `volume` / `Volume` に空白と 1 〜 3 桁の整数が続く場合だけ巻番号 marker として認識する。数字のない `volume`、小数・範囲・分数・4 桁は推定・出力せず、0 巻と Volume only / Issue only / Both を検証した。`vol.` は未対応。
+
+既知の制約として、ComicTagger 1.6.0b9 の CIX writer は整数 Volume=0 を省略する。非整数巻次は Volume / Issue へ出力しない。複数 Publisher の役割分離は未対応。
+
 ## 0.1.11 の Release 準備
 
 NDL Search 単独の Phase 1 完了版。作品名の Series 推定、括弧付き副題と明示巻次の正規化、論理巻番号と Volume / Issue の分離、紙・電子の日付、責任表示、ISBN / GTIN、Notes の原値保持を含む。

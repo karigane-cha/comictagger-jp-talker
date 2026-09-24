@@ -2,7 +2,7 @@
 
 日本で出版された漫画・書籍の書誌メタデータを取得する独立 Talker プラグインです。
 表示名は **Japanese Books**、Talker ID は **jpbooks**。
-バージョン 0.1.11 時点の取得元は **国立国会図書館サーチ（NDL Search）だけ**です。
+バージョン 0.1.12 時点の取得元は **国立国会図書館サーチ（NDL Search）だけ**です。
 HTTPS の SRU 1.2 API と DC-NDL RDF v3（`recordSchema=dcndl_v3`）を使用し、API キー・secret は不要です。
 要約の補完には、NDL の公式仕様書に記載された書誌詳細 JSON API も使用します。
 CBZ の読み書きと ComicInfo.xml 生成は ComicTagger の標準機構へ任せます。
@@ -34,7 +34,7 @@ API キー不要であることと、利用申請不要であることは別で�
 
 ### Windows の ComicTagger 配布版：ローカル プラグイン
 
-1. `jpbooks_talker-plugin-0.1.11.zip` を ComicTagger の **plugins フォルダー**へ置きます。
+1. `jpbooks_talker-plugin-0.1.12.zip` を ComicTagger の **plugins フォルダー**へ置きます。
    ZIP は展開しません。wheel（`.whl`）をそのまま置く方式も同じローダーで利用可能です。
 2. 標準設定パスは通常 `%LOCALAPPDATA%\ComicTagger\plugins` です。
    `--config <フォルダー>` を指定している場合は `<フォルダー>\plugins` になります。
@@ -60,7 +60,7 @@ python -m pip install .
 配布 wheel を使用する場合：
 
 ```powershell
-python -m pip install .\dist\comictagger_jp_talker-0.1.11-py3-none-any.whl
+python -m pip install .\dist\comictagger_jp_talker-0.1.12-py3-none-any.whl
 ```
 
 ### ISBN を ComicInfo.xml に保存するタグ形式
@@ -341,16 +341,15 @@ Preferences の Japanese Books 設定にある **Volume number output** で選�
 直接選択して要求巻なしで取得する場合は、巻番号以外の情報を取得して手動で確認できます。
 
 明示巻次は `explicit_volume_number()` で 1 〜 3 桁の整数を抽出してから比較します。
-全角数字・先頭のゼロ・`第2巻`、`1 (国王誕生の巻)`、`第１巻（国王誕生の巻）` に対応します。
+全角数字・先頭のゼロ・`第2巻`、`1 (国王誕生の巻)`、`第１巻（国王誕生の巻）`、`volume 1` / `Volume 1` に対応します。
 半角／全角の対応する丸括弧を 1 組だけ許可し、補足の意味は推測しません。
 例えば `1` と `1 (国王誕生の巻)` は同じ `1` として重複除去するため、不一致にはなりません。
 Notes の NDL 巻次には正規化前の原文を保持します。
 「上」「下」「前編」「後編」「外伝」や `12.5` は整数へ変換しません。
-これらは `issue` / `both` の Number に原表記を保持し、Volume へは出力しません。
-範囲・分数・英字付き巻次・4 桁以上の値・ネストや複数の括弧も整数への正規化対象外です。
-`2024` 等も Volume へ変換せず、Issue では既存の文字列保持方針に従って原表記を残します。
+範囲・分数・不明な英字付き巻次・4 桁以上の値・ネストや複数の括弧も整数への正規化対象外です。
+`2024` 等を含む解釈不能な巻次は Volume / Issue の両方を未出力とし、原表記を BookRecord と Notes に保持します。
 認識できない値を捨てて一致扱いにはしないため、`1` と「上」の組み合わせ等は引き続き不一致になります。
-`volume` では両フィールドが空欄となり、Notes に原表記と整数変換できない旨を残します。
+出力モードにかかわらず、解釈不能な明示巻次があれば推定・要求巻を代用せず、Notes に原表記と整数変換できない旨を残します。
 再検索用の `search_metadata()` は既存 Volume を優先し、なければ Issue を検索条件に使います。
 `SearchQuery.issue` は検索時の巻番号条件であり、出力する Issue とは独立しています。
 
@@ -410,7 +409,8 @@ Notes と候補詳細には「NDL シリーズ表記（原データ）」とし�
 古いキャッシュも取得時に新しい規則で変換するため、キャッシュ削除は不要です。
 保存済みのタグには再フェッチして変更内容を確認し、Save Tags で反映してください。
 
-末尾巻次の推測は `作品. 74` / `作品 74` / `作品第74巻` 等の区切られた 1 〜 3 桁だけです。
+末尾巻次の推測は `作品. 74` / `作品 74` / `作品第74巻` / `作品 volume 74` 等の区切られた 1 〜 3 桁だけです。
+`volume` は空白と整数が続く場合だけ巻番号表現として消費し、数字がなければ Series に残します。`vol.` は未対応です。
 巻番号の後ろに丸括弧の補足が 1 つある形式にも対応します。半角／全角の括弧と、括弧前の空白の有無を扱います。
 例えば `パタリロ! : 選集. 1 (国王誕生の巻)` は Series が `パタリロ! : 選集`、論理巻番号が `1` になります。
 シリーズ名の記号、完全な Title、NDL の巻次原文は保持します。
@@ -438,7 +438,7 @@ python -m pip install -e ".[dev]"
 python -m pytest
 python -m ruff check .
 python -m build
-python scripts/build_plugin.py dist/comictagger_jp_talker-0.1.11-py3-none-any.whl
+python scripts/build_plugin.py dist/comictagger_jp_talker-0.1.12-py3-none-any.whl
 ```
 
 テストは実際の ComicTagger beta.9 の型・ローダー・タグ writer を利用します。
