@@ -1,4 +1,67 @@
-# Phase 1 検証記録
+# 検証記録
+
+## 0.2.0 の検証
+
+2026-09-27 (JST)、正式 Release preparation で再実行した結果。
+production の基準は main の `d352379`（Phase 2B-1 MADB foundation と Phase 1 Series 修正を含む）。
+この preparation の変更は文書のみで、production Python、workflow、Phase 2A evidence は変更していない。
+package version は **0.2.0**。正準定義は `comictagger_jp_talker/__init__.py` の `__version__`、
+setuptools は `pyproject.toml` の dynamic version でこれを参照する。
+
+### ローカル環境と結果
+
+Windows、CPython 3.12.14、ComicTagger 1.6.0b9、comicinfoxml 0.5.1。
+`.venv/Scripts/python.exe` を使用し、pytest の一時領域と cache を `.tools/` 内に指定した。
+
+| 検証 | 今回の結果 |
+|---|---|
+| `python -m ruff check .` | 成功 |
+| `python -m ruff format --check .` | 既存 baseline の 12 ファイルが整形対象、31 ファイルが整形済み。改行混在・既存のリスト整形・Phase 2A 文書内の Python code fence 等の差。今回それらは変更していない |
+| `python -m pytest -m "not network"` | **1151 passed / 10 deselected / 1 xfailed**、18.56 秒。skip なし。xfail は CIX writer の `Volume=0` 省略 |
+| `JPBOOKS_RUN_NETWORK_TESTS=1 python -m pytest -m network` | **10 passed / 1152 deselected**、80.20 秒。NDL 8 件、MADB 2 件。全 suite を 1 回実行し、環境変数は終了後に解除 |
+| `git diff --check` | 成功 |
+| `python -m build` | 成功。旧 dist / generated egg-info を削除、build 不在を確認してから隔離環境で sdist → wheel を生成 |
+| `python scripts/build_plugin.py <自動検出した wheel>` | wheel / sdist が各 1 件であることを確認し、plugin ZIP を生成 |
+| `python -m pytest tests/test_packaging.py::test_built_zip_in_isolated_host -q` | **1 passed**、8.88 秒。実 ZIP を beta.9 loader で読み込み、loader の sys.path 後処理後も mock NDL 検索・取得成功 |
+| wheel / sdist metadata | Name=`comictagger-jp-talker`、Version=`0.2.0` |
+| local plugin ZIP | 52,055 bytes、有効な ZIP、`archive.testzip() is None`、package METADATA は 1 件 |
+
+生成物:
+
+- `dist/comictagger_jp_talker-0.2.0-py3-none-any.whl`
+- `dist/comictagger_jp_talker-0.2.0.tar.gz`
+- `dist/jpbooks_talker-plugin-0.2.0.zip`
+
+ZIP の entry point、`talker.py`、現在の `mapping.py`、MADB の `madb.py` / `madb_models.py` /
+`madb_parser.py` / `madb_queries.py` を確認。全 package Python source を作業領域の source と照合した。
+tests、research datasets、`.git`、`__pycache__`、`.pyc` は含まれない。
+成果物と一時 Release notes は `.gitignore` 対象で、preparation commit には文書だけを含める。
+Release asset は既存の tag workflow が生成する plugin ZIP だけ。
+最終公開状況は [v0.2.0 Release](https://github.com/karigane-cha/comictagger-jp-talker/releases/tag/v0.2.0) と
+[GitHub Actions](https://github.com/karigane-cha/comictagger-jp-talker/actions) を参照する。
+
+### Phase 2B-1 MADB network verification
+
+`tests/test_madb_integration.py` の 2 件が成功。
+ISBN `9784832241190` から MangaBook `M381096` を検索し、Book と MangaBookSeries `C334830` を取得、
+bundle の completeness=`complete` を確認した。
+ISBN-13 `9784592880714` から ISBN-10-only の `M299519`（`4592880714`）も検出した。
+通常 Talker lookup は NDL Search のみで、MADB 自動アクセス、GenericMetadata mapping、
+NDL/MADB linkage / merge、Phase 2B-2 は未実装という境界を unit tests でも維持している。
+
+### Series inference の NDL network regression
+
+`tests/test_integration.py::test_real_phase1_series_and_number_regressions` の 3 実例が成功。
+
+| NDL record | raw title | raw volume | 最終 Series | 明示巻 / 推定巻 / 論理巻 | conflict |
+|---|---|---|---|---|---|
+| `R100000002-I030727178` | `My Girl. vol.31` | `vol.31` | `My Girl` | `31` / `31` / `31` | False |
+| `R100000002-I025437130` | `ご注文はうさぎですか? : アンソロジーコミック. volume 1` | `volume 1` | `ご注文はうさぎですか? : アンソロジーコミック` | `1` / `1` / `1` | False |
+| `R100000002-I029306375` | `ご注文はうさぎですか? = Is the order a rabbit? 7` | `7` | `ご注文はうさぎですか?` | `7` / `7` / `7` | False |
+
+raw title / volumes / series_titles は不変。原巻次を Notes に保持し、整数変換できない旨の警告は出ない。
+Volume only / Issue only / Both、0 巻、非整数抑止、こち亀・パタリロ!・既存の `volume 1`、
+全角数字と正式な記号の保持は non-network suite で確認した。
 
 ## 0.1.12 のローカル build 検証
 
@@ -175,7 +238,7 @@ SRU の古いキャッシュも新しいマッピングで読み直すため、�
 
 検証日：2026-09-19。ComicTagger 本体は変更していない。
 
-## 検証環境
+### 0.1.0 初回実装時の検証環境
 
 - Windows、CPython 3.12.14
 - ComicTagger 1.6.0b9（公式 beta.9 タグのソースをインストール）
@@ -183,7 +246,7 @@ SRU の古いキャッシュも新しいマッピングで読み直すため、�
 - pytest 9.1.1、setuptools 84.0.0、build 1.6.1
 - 新規プラグイン 0.1.0（editable install と生成 ZIP の両方）
 
-## 実行した検証と結果
+### 0.1.0 初回実装時の検証と結果
 
 | 検証 | 結果 |
 |---|---|
@@ -216,7 +279,7 @@ Qt の offscreen 環境ではシステム フォントの自動発見に制約�
 テスト側だけでインストール済み Meiryo を読み込み、画面キャプチャで日本語も確認した。
 本体やプラグインによるフォント設定変更はしていない。
 
-## Definition of Done の対応
+### 0.1.0 初回実装時の Definition of Done
 
 | 項目 | 状態 |
 |---|---|
@@ -233,7 +296,7 @@ Qt の offscreen 環境ではシステム フォントの自動発見に制約�
 | 16. unit tests | 111 passed（通常ネットワーク テスト 1 件 skip） |
 | 17–18. README / 利用条件 | README と公式リンクを追加 |
 
-## 利用者環境での手動確認
+### 0.1.0 初回実装時の手動確認事項
 
 1. 利用中の **Windows 配布版 ComicTagger.exe beta.9** の正しい plugins フォルダーへ ZIP を置き、
    再起動後に Japanese Books が表示されること。本検証は Python パッケージ版の beta.9 で行っており、
@@ -244,7 +307,7 @@ Qt の offscreen 環境ではシステム フォントの自動発見に制約�
    Kavita への API 接続・実機検証は行っていない。
 5. 実利用の目的・提供機関に合う NDL メタデータ利用条件を確認すること。
 
-## 既知の制限
+### 0.1.0 初回実装時の既知の制限
 
 beta.9 の標準検索メソッドに既存 GTIN や metadata が渡らないため、
 GTIN の自動優先検索は補助メソッド経由のみ。標準 UI では ISBN を検索欄へ入力する。
@@ -252,9 +315,9 @@ GTIN の自動優先検索は補助メソッド経由のみ。標準 UI では I
 CR の GTIN/Translator 非対応は CIX で対応する。本体の変更や独自 writer では回避しない。
 1 書誌 1 候補、件数上限、NDL 叢書名の意味、曖昧な巻次・著者役割等の制約は README 参照。
 
-## 追加ファイル
+### 0.1.0 初回実装時の追加ファイル
 
-すべて新規。既存ファイルの削除・置換はない。
+初回実装時はすべて新規。既存ファイルの削除・置換はなかった。
 
 - `pyproject.toml`, `MANIFEST.in`, `.gitignore`, `LICENSE`, `README.md`
 - `comictagger_jp_talker/{__init__,talker,models,isbn,mapping}.py`
@@ -266,4 +329,4 @@ CR の GTIN/Translator 非対応は CIX で対応する。本体の変更や独�
 
 調査用 checkout・Python／依存環境・一時キャッシュは `.research`, `.tools`, `.venv` に分離して
 `.gitignore` 対象とし、配布 wheel には含めない。
-GitHub Actions の設定ファイルは追加済みだが、リモート CI そのものはまだ実行していない。
+0.1.0 初回検証時点では GitHub Actions の設定ファイルを追加済みだったが、リモート CI 自体は未実行だった。

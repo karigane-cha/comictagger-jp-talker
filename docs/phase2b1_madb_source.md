@@ -1,9 +1,10 @@
 # Phase 2B-1: MADB read-only source
 
 Phase 1 の正式リリース 0.1.12 を基準に、内部 source layer を追加した。
-ローカル package version は 0.2.0。正準定義は `comictagger_jp_talker/__init__.py` の
+Phase 2B-1 は v0.2.0 に含まれる内部 foundation。package version は 0.2.0。正準定義は `comictagger_jp_talker/__init__.py` の
 `__version__` で、setuptools の dynamic version と既存 plugin builder がこれを参照する。
-新しい production dependency、ユーザー設定、Release 操作は追加していない。
+新しい production dependency、ユーザー設定は追加していない。
+この文書作成時点では Release 操作を対象外としていた。v0.2.0 の Release 検証は [検証記録](validation.md) を参照する。
 
 設計根拠は [Phase 2A 仕様書](phase2_madb_spec.md)、[実例台帳](research/madb/examples.md)、
 [実測記録](research/madb/evidence.json)、[query](research/madb/queries/)。
@@ -102,6 +103,9 @@ byte / row cap を超えた応答も truncated error とし、不完全 JSON の
 NDL/MADB merge、GenericMetadata mapping、Series / Imprint / Credits / Publisher / Date の上書きは未実装。
 title fuzzy search、電子／紙判定、RecordMatch、MangaWork model / lookup も未実装。
 通常の Japanese Books 検索・fetch・status は NDL のみ。MADB 停止の影響を受けない。
+NDL の `BookRecord` を MADB に転用せず、専用の source-specific models を使う。
+MADB 通信は明示的な `MADBSource` の使用時だけで、通常 Talker / ComicInfo.xml への接続は未実装。
+MangaWork は延期し、Phase 2B-2 の linkage / comparison もこの Release には含めない。
 Series の `hasPart` や Work を required join にしない。
 
 ## 検証手順

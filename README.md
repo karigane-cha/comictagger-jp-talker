@@ -37,7 +37,8 @@ API キー不要であることと、利用申請不要であることは別で�
 
 ### Windows の ComicTagger 配布版：ローカル プラグイン
 
-1. ビルドで生成した `jpbooks_talker-plugin-<version>.zip` を ComicTagger の **plugins フォルダー**へ置きます。
+1. [GitHub Releases](https://github.com/karigane-cha/comictagger-jp-talker/releases) から
+   `jpbooks_talker-plugin-<version>.zip` を取得し、ComicTagger の **plugins フォルダー**へ置きます。
    ZIP は展開しません。wheel（`.whl`）をそのまま置く方式も同じローダーで利用可能です。
 2. 標準設定パスは通常 `%LOCALAPPDATA%\ComicTagger\plugins` です。
    `--config <フォルダー>` を指定している場合は `<フォルダー>\plugins` になります。
@@ -346,7 +347,8 @@ Preferences の Japanese Books 設定にある **Volume number output** で選�
 直接選択して要求巻なしで取得する場合は、巻番号以外の情報を取得して手動で確認できます。
 
 明示巻次は `explicit_volume_number()` で 1 〜 3 桁の整数を抽出してから比較します。
-全角数字・先頭のゼロ・`第2巻`、`1 (国王誕生の巻)`、`第１巻（国王誕生の巻）`、`volume 1` / `Volume 1` に対応します。
+全角数字・先頭のゼロ・`第2巻`、`1 (国王誕生の巻)`、`第１巻（国王誕生の巻）`、`volume 1` / `Volume 1`、
+`vol.1` / `vol. 1` / `Vol.1` / `Vol. 1` に対応します。
 半角／全角の対応する丸括弧を 1 組だけ許可し、補足の意味は推測しません。
 例えば `1` と `1 (国王誕生の巻)` は同じ `1` として重複除去するため、不一致にはなりません。
 Notes の NDL 巻次には正規化前の原文を保持します。
@@ -414,11 +416,17 @@ Notes と候補詳細には「NDL シリーズ表記（原データ）」とし�
 古いキャッシュも取得時に新しい規則で変換するため、キャッシュ削除は不要です。
 保存済みのタグには再フェッチして変更内容を確認し、Save Tags で反映してください。
 
-末尾巻次の推測は `作品. 74` / `作品 74` / `作品第74巻` / `作品 volume 74` 等の区切られた 1 〜 3 桁だけです。
-`volume` は空白と整数が続く場合だけ巻番号表現として消費し、数字がなければ Series に残します。`vol.` は未対応です。
+末尾巻次の推測は `作品. 74` / `作品 74` / `作品第74巻` / `作品 volume 74` / `作品 vol.74` 等の区切られた 1 〜 3 桁だけです。
+`volume` は空白と整数、`vol.` は整数（間の空白も可）が続く場合だけ巻番号表現として消費し、英字の大小を区別しません。
+marker 直前の `.` / `．` は巻次の区切りとして消費します。`My Girl. vol.31` は Series が `My Girl`、論理巻番号が `31` になります。
+巻番号のない `My Girl.` や `作品名．`、数字のない `volume` / `vol.` は保持します。
 巻番号の後ろに丸括弧の補足が 1 つある形式にも対応します。半角／全角の括弧と、括弧前の空白の有無を扱います。
 例えば `パタリロ! : 選集. 1 (国王誕生の巻)` は Series が `パタリロ! : 選集`、論理巻番号が `1` になります。
 シリーズ名の記号、完全な Title、NDL の巻次原文は保持します。
+巻次を分離した後、空白を伴う `日本語タイトル = English title` 形式だけを保守的に分離します。
+左辺にひらがな・カタカナ・漢字を含み、右辺が ASCII 英字を含む英数字・空白・許可した記号で構成される場合が対象です。
+`ご注文はうさぎですか? = Is the order a rabbit? 7` は Series が `ご注文はうさぎですか?`、論理巻番号が `7` になります。
+`A = B 1`、`作品名 = 新装版 1`、`作品名=English 1` の `=` は保持します。
 ネスト・複数・空・左右が不一致の括弧、小数、範囲、4 桁の数字は推定対象外です。
 `20世紀少年`、`3月のライオン`、`7SEEDS`、`86―エイティシックス―` は変更しません。
 ただし末尾数字が作品名そのものかどうかを完全には判断できません。Title の原文は常に保持します。
@@ -477,12 +485,13 @@ CI ではこの環境変数を設定しません。詳細な確認元と制約�
 - CR のみでは GTIN・Translator を専用要素へ保存できません。CIX をご利用ください。
 - NDL 書誌の分類から漫画ジャンルを自動推定せず、Kavita での表示結果は手動確認が必要です。
 
-今後、**MADB** を取得元にした場合、`BookSource.search/get` と `BookRecord` を再利用するアダプターを候補とします。
-追加時に公式 API・ID 体系・利用条件を調査し、ソース付き ID とフィールド別出典を導入するか検討します。
-MADB が漫画作品として明示するシリーズは、NDL の `series_titles` と別の、作品 ID・出典を伴う項目で扱います。
-作品との対応を確認した情報だけを高信頼ソースとし、タイトルからの推測より優先する設計です。
-既存値の扱いは明示的に定め、出版シリーズ名を作品の別名へ自動転用しません。
-ISBN 一致だけで紙・電子・異版を合成せず、候補選択を残す方針です。
+Phase 2B-1 で内部の **MADBSource** を実装済みです。NDL の `BookRecord` を再利用せず、
+MADB 専用の source-specific RDF models を使います。通信は明示的に `MADBSource` を使用した場合だけで、
+通常の NDL lookup は MADB endpoint へアクセスしません。利用者向けの MADB 設定はまだありません。
+MADB → GenericMetadata mapping、NDL/MADB RecordMatch / linkage / merge、
+Series comparison / provenance / conflict resolution は未実装で、Phase 2B-2 の実装予定です。
+MADB の Series / Imprint / Credits の上書き、MangaWork lookup、title fuzzy search、電子／紙判定も未実装です。
+詳しい境界は [MADB source の実装記録](docs/phase2b1_madb_source.md) を参照してください。
 その後 **openBD**、**Google Books API**、**Rakuten Books** を取得元に追加することを検討します。
 
 ## ライセンス
