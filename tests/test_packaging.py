@@ -76,7 +76,9 @@ def get(session, url, **kwargs):
         }]}).encode()
         return detail
     return response
-with patch.object(requests.Session, "get", get):
+with patch.object(requests.Session, "get", get), patch.object(
+    requests.Session, "post", side_effect=AssertionError("Normal ZIP lookup must not access MADB")
+):
     candidates = talker.search_for_series("488594287X")
     assert len(candidates) == 1
     assert not candidates[0].aliases
@@ -119,24 +121,41 @@ with patch.object(requests.Session, "get", get):
         raise AssertionError("Expected invalid ISBN error")
 print("ZIP: Japanese Books loaded and fetched with beta.9")
 """
+    # Use a separate isolated process: the host restores module search paths and
+    # can discover installed entry points, so a later import there could silently
+    # test the editable install. Do not preload optional modules into the host test.
+    linkage_code = """
+import sys
+from unittest.mock import patch
+import requests
+sys.path.insert(0, sys.argv[1])
+with patch.object(requests.Session, "request", side_effect=AssertionError("No import-time network")):
+    from comictagger_jp_talker.linkage import LinkageResult, LinkageStatus, RecordMatch, compare_candidates
+    from comictagger_jp_talker.provenance import FieldEvidence, SeriesComparison
+    from comictagger_jp_talker.models import BookRecord
+    assert ".zip" in compare_candidates.__code__.co_filename
+    assert compare_candidates(BookRecord("test", "Title"), []).status == LinkageStatus.UNMATCHED
+print("ZIP: optional linkage API imported and evaluated without network")
+"""
     env = dict(os.environ, PYTHONUTF8="1")
-    result = subprocess.run(
-        [
-            sys.executable,
-            "-X",
-            "utf8",
-            "-I",
-            "-c",
-            code,
-            str(artifact),
-            str(tmp_path),
-            str(root / "tests/fixtures/ndl.xml"),
-        ],
-        cwd=tmp_path,
-        env=env,
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        timeout=30,
-    )
-    assert result.returncode == 0, result.stdout + result.stderr
+    for snippet in (linkage_code, code):
+        result = subprocess.run(
+            [
+                sys.executable,
+                "-X",
+                "utf8",
+                "-I",
+                "-c",
+                snippet,
+                str(artifact),
+                str(tmp_path),
+                str(root / "tests/fixtures/ndl.xml"),
+            ],
+            cwd=tmp_path,
+            env=env,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            timeout=30,
+        )
+        assert result.returncode == 0, result.stdout + result.stderr

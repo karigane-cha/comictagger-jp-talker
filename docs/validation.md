@@ -1,5 +1,100 @@
 # 検証記録
 
+## 0.2.1 development / Phase 2B-2
+
+2026-09-27 (JST)。開始時の作業ツリーはクリーン、main / origin/main / v0.2.0 は
+`0fcaa7a`。fetch と fast-forward pull 後も最新であることを確認し、
+`feat/phase2b2-linkage` を作成した。main は Release より後のコミットではなく、
+Phase 2B-1 と Series 修正を含む Release 本体と同一だった。
+GitHub API で v0.2.0 の draft=false / prerelease=false、
+published_at=`2026-09-26T17:30:42Z` を確認した。
+canonical version は `comictagger_jp_talker/__init__.py` の **0.2.0 → 0.2.1**。
+pyproject.toml の dynamic version は変更していない。commit / push / tag / Release は実施しない。
+
+追加内容と規則は [Phase 2B-2 実装記録](phase2b2_linkage.md) を参照。
+`linkage.py`、`provenance.py`、synthetic / integration tests を追加し、
+README と built ZIP load test を更新した。MADB source 4 ファイル、NDL source、
+mapping.py、talker.py は差分なし。通常 GenericMetadata / ComicInfo.xml に MADB 値を反映しない。
+
+### 環境と結果
+
+Windows、CPython 3.12.14、ComicTagger 1.6.0b9。`.venv/Scripts/python.exe` を使用。
+一時領域と pytest cache は `.tools/` 配下。network tests の rate limiter は有効のまま。
+
+| 検証 | 結果 |
+|---|---|
+| 新規 synthetic / mock integration | 79 件。direct URL、ISBN 原文・正規化・10/13 等価性、重複、矛盾、失敗、切り詰め、Series 全 state、provenance、入力と metadata の不変性 |
+| `python -m ruff check .` | 成功 |
+| `python -m ruff format --check .` | 既存 baseline の 11 ファイルが整形対象。今回変更・追加した Python 6 ファイルはすべて成功 |
+| `python -m pytest -m "not network"` | **1230 passed / 12 deselected / 1 xfailed**、19.12 秒。skip なし。xfail は既知の CIX Volume=0 省略 |
+| `JPBOOKS_RUN_NETWORK_TESTS=1 python -m pytest -m network` | **12 passed / 1227 deselected**、120.77 秒。既存 NDL 8 件、MADB source 2 件、新規 linkage 2 件。終了後に環境変数を解除 |
+| `git diff --check` | 成功 |
+| `python -m build` | 隔離環境で sdist → wheel の生成成功。package metadata は 0.2.1 |
+| plugin ZIP | 自動検出した単一 wheel から既存 scripts/build_plugin.py で生成成功 |
+| 全 production source の比較 | wheel / plugin ZIP / sdist 内の package Python が作業ツリーと byte 単位で一致 |
+| `tests/test_packaging.py::test_built_zip_in_isolated_host` | 成功。beta.9 loader と通常 NDL lookup、別の隔離プロセスでの linkage module import、MADB の POST 禁止を検証 |
+
+format baseline は mapping.py、talker.py、docs/phase2_madb_spec.md、tests の
+test_comicinfo.py、test_madb.py、test_madb_boundary.py、test_mapping.py、test_ndl.py、
+test_numbers.py、test_phase1_audit.py、test_talker.py。既存の改行混在・リスト整形・
+文書内 code fence 等で、対象は今回変更していない。
+変更前は __init__.py も含む 12 ファイルであり、version 更新時に同ファイルの改行を LF に揃えた。
+
+初回 network suite は sandbox の WinError 10013 で通信できず、許可後に全件成功した。
+成功時に pytest cache の nodeids 書き込みで WinError 5 の警告が 1 件あったが、
+endpoint / assertion の失敗はない。後続の non-network suite は別の cache で警告なし。
+旧配布物の削除・build 成果物の読み取りにも sandbox のアクセス拒否があったため、
+許可後に指定した生成ディレクトリだけを再清掃して build / 検証した。
+最初の隔離 build は依存取得段階で失敗し、日本語エラー出力の decode error も発生した。
+再実行は PYTHONUTF8=1 と通信許可を使用して成功した。
+ZIP 検証では host が module 探索状態を復元した後の import が editable install を参照し得るため、
+optional API の import / pure comparison と、通常の host load / NDL lookup を別プロセスで検証する。
+host test の前に optional module を読み込まず、通常の発見経路を維持した。
+
+### 実 endpoint での観測
+
+| 組み合わせ | linkage | Series |
+|---|---|---|
+| M1032568 / R100000002-I033625982 | matched / exact。direct_ndl_url と isbn_normalized の両方を確認 | NDL_ONLY。MADB に Series relation なし |
+| M381096 / R100000002-I023440575 | ISBN discovery から matched。ISBN-only の strong | C334830 の日本語名と ja-hrkt 読みを保持し MULTIPLE |
+
+C334830 の比較 key は `ご注文はうさぎですか?` と `ゴチュウモン ワ ウサギ デスカ`。
+NDL の推定 Series は前者と一致するが、言語選択を導入していないので BOTH_AGREE と断定しない。
+BOTH_AGREE / BOTH_CONFLICT / NDL_ONLY / MADB_ONLY / NONE / MULTIPLE / UNAVAILABLE は
+synthetic tests でそれぞれ確認した。取得元の原文と RDF language / datatype は保持する。
+
+### Phase 1 regression と出力境界
+
+| NDL title | 比較 layer の Series | 論理巻 | 結果 |
+|---|---|---|---|
+| My Girl. vol.31 | My Girl | 31 | 成功 |
+| ご注文はうさぎですか? : アンソロジーコミック. volume 1 | ご注文はうさぎですか? : アンソロジーコミック | 1 | 成功 |
+| ご注文はうさぎですか? = Is the order a rabbit? 7 | ご注文はうさぎですか? | 7 | 成功 |
+| ブルーロック = BLUELOCK. 1 | ブルーロック | 1 | 成功 |
+
+すべて既存 infer_volume / resolve_record_number と通常 mapping の結果を照合。
+先頭 3 件は既存の実 NDL network regression も成功。ブルーロックは synthetic / audit で検証。
+固定 Phase 1 fixture の全番号モードと、linkage 実行前後の GenericMetadata 全フィールドの不変性を確認した。
+通常 Talker の自動 MADB access は NO。MADB mapping、Series overwrite、Imprint mapping、
+Credits merge、automatic metadata merge は NOT IMPLEMENTED。
+
+### 配布物
+
+- `dist/comictagger_jp_talker-0.2.1-py3-none-any.whl`
+- `dist/comictagger_jp_talker-0.2.1.tar.gz`
+- `dist/jpbooks_talker-plugin-0.2.1.zip`
+
+旧 dist / generated egg-info を安全に削除し、build の不在も確認した。
+wheel / sdist は各 1 件、ZIP は 57,230 bytes、archive.testzip() は None。
+METADATA Version=0.2.1、jpbooks entry point、RecordMatch / LinkageResult / FieldEvidence /
+SeriesComparison、confidence / state definitions、URL / ISBN 比較、MADB source、修正済み mapping.py を確認。
+tests、research data、.git、__pycache__、.pyc は ZIP に含まれない。
+成果物と一時 helper は gitignore 対象で、ソース変更として追加していない。
+
+Phase 2C の候補は controlled Series supplement、merge policy、provenance-aware field selection、
+Imprint candidate evaluation、Credits comparison、利用者向け MADB integration policy。
+今回は実装せず、開始条件は Phase 2B-2 文書に記載した。
+
 ## 0.2.0 の検証
 
 2026-09-27 (JST)、正式 Release preparation で再実行した結果。

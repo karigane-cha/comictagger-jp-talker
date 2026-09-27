@@ -488,8 +488,10 @@ CI ではこの環境変数を設定しません。詳細な確認元と制約�
 Phase 2B-1 で内部の **MADBSource** を実装済みです。NDL の `BookRecord` を再利用せず、
 MADB 専用の source-specific RDF models を使います。通信は明示的に `MADBSource` を使用した場合だけで、
 通常の NDL lookup は MADB endpoint へアクセスしません。利用者向けの MADB 設定はまだありません。
-MADB → GenericMetadata mapping、NDL/MADB RecordMatch / linkage / merge、
-Series comparison / provenance / conflict resolution は未実装で、Phase 2B-2 の実装予定です。
+0.2.1 development の Phase 2B-2 では、明示的に呼ぶ内部 API として NDL/MADB RecordMatch / linkage、
+Series comparison、provenance、conflict state を追加しました。資料の対応と値の一致・不一致を記録します。
+通常の Talker で MADB metadata を利用する機能、GenericMetadata mapping、自動 merge、
+不一致の解決・値の採用は未実装です。詳細は [Phase 2B-2 の実装記録](docs/phase2b2_linkage.md) を参照してください。
 MADB の Series / Imprint / Credits の上書き、MangaWork lookup、title fuzzy search、電子／紙判定も未実装です。
 詳しい境界は [MADB source の実装記録](docs/phase2b1_madb_source.md) を参照してください。
 その後 **openBD**、**Google Books API**、**Rakuten Books** を取得元に追加することを検討します。
