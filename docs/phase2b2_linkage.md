@@ -1,7 +1,7 @@
 # Phase 2B-2: NDL / MADB linkage と Series comparison
 
-0.2.1 development。0.2.0 の正式 Release、Phase 2B-1 の source foundation、
-Phase 1 の Series 修正を基点にした内部 API。今回 Release は行わない。
+v0.2.1 に含まれる内部 API。0.2.0 の正式 Release、Phase 2B-1 の source foundation、
+Phase 1 の Series 修正を基点とする。Release 前の検証は [検証記録](validation.md) を参照。
 目的は同一資料の対応関係と Series の一致・不一致を観測すること。
 値の採用、上書き、GenericMetadata / ComicInfo.xml への MADB mapping は含まない。
 
@@ -140,6 +140,9 @@ NDL は record ID / URL、raw title、推定 Series、transform=`mapping.infer_v
 **言語選択は未実装。** `ja-hrkt` の読みや英語名も全件保持し、異なる名前なら MULTIPLE。
 Phase 2A の C334830 は日本語名と読みの両方を持つため、日本語名が一致しても MULTIPLE になる。
 これは別作品という断定ではなく、比較値を選ぶ方針が未決定という保守的な状態である。
+同一 Series resource に複数名称がある場合も、安全側に倒して MULTIPLE として保持する。
+M381096 → C334830 の MULTIPLE は、意味的に複数の Series relation があることを示さない。
+display name と reading の意味分類は Phase 2C 前に追加検討が必要で、v0.2.1 では実装しない。
 異なる Series URI に同名が付く場合も、関係自体の複数性を残す。
 未取得を NDL_ONLY / NONE と扱わず、空文字の原値と未取得を区別する。
 

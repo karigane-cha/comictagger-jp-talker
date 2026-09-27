@@ -224,7 +224,8 @@ dateDigitized は v2 の入力互換用に保持。available は公開可能期�
 
 以下は Phase 2 実装前の調査時点の候補設計であり、履歴として保持しています。
 現在の調査仕様は [Phase 2A 仕様書](phase2_madb_spec.md)、実装と統合境界は
-[Phase 2B-1 実装記録](phase2b1_madb_source.md) を参照してください。
+[Phase 2B-1 実装記録](phase2b1_madb_source.md) と、v0.2.1 の
+[Phase 2B-2 linkage / comparison 実装記録](phase2b2_linkage.md) を参照してください。
 
 まず公式 API・利用条件・書誌単位と作品単位の ID を調査する。今回の NDL コードから推測しない。
 `BookSource` protocol の別実装と `BookRecord` の変換アダプターを追加する構成を候補とする。

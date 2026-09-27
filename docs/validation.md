@@ -1,5 +1,108 @@
 # 検証記録
 
+## v0.2.1 Release 前の再検証
+
+2026-09-27 (JST)。`feat/phase2b2-linkage` の実装コミット
+`4d6e4c328c4720664ef0a282162c82fa42dc26d2` を対象に、今回あらためて全検証を実行した。
+開始時の作業ツリーはクリーンで、実装は origin の feature branch にも存在していた。
+merge-base は v0.2.0 の commit `0fcaa7aff44782e75c294dd260c7d9be1f0555e8`。
+local / remote の v0.2.1 tag が未作成であることを確認した。
+
+package version は開始時・終了時とも **0.2.1**。正準定義は
+`comictagger_jp_talker/__init__.py` の `__version__`、pyproject.toml の dynamic version を維持する。
+今回は production logic、tests、workflow、version を変更せず、Release 用の文書だけを更新する。
+すでにある実装コミットを再作成せず、文書の追加コミットを main へ fast-forward 統合する。
+
+### 実装と境界の再確認
+
+`linkage.py` の RecordMatch / LinkageResult / confidence / structured error、
+`provenance.py` の FieldEvidence / SeriesComparison を source と tests で確認した。
+v0.2.0 から mapping.py、sources/ndl.py、sources/madb.py と関連 source models / parser / queries、
+talker.py に差分はない。Series 推定は既存 infer_volume / resolve_record_number を再利用する。
+
+direct NDL URL は exact、一意な有効 ISBN は strong、重複候補は ambiguous、
+別 NDL record への direct URL は unsafe。URL 一致と ISBN 不一致は exact identity と
+ISBN conflict を同時保持する。正常 0 件の unmatched と取得失敗の unavailable を区別し、
+truncated search から ISBN-only の一意性を主張しない。ISBN-10 / 13 の等価性は既存 utility を使う。
+
+Series は NDL の推定値と MADB の schema:isPartOf → MangaBookSeries → schema:name を、
+strip() と Unicode 完全一致だけで比較する。BOTH_AGREE / BOTH_CONFLICT / NDL_ONLY /
+MADB_ONLY / NONE / MULTIPLE / UNAVAILABLE と、raw 値・record ID / URI・関連 URI・変換経路の
+provenance 保持を検証した。意味的な名前分類や aggressive normalization は追加していない。
+
+通常 Japanese Books の source は NDL Search のみ。自動 MADB access は **NO**。
+固定 fixture と照合前後の GenericMetadata 比較で title / series / issue / volume / credits /
+publisher / date / gtin / description / notes / web_links の output semantics が不変であることを確認した。
+GenericMetadata MADB mapping、Series overwrite、Imprint mapping、Credits / Publisher / Date merge、
+automatic metadata merge、MangaWork、title fuzzy linkage、Phase 2C は **NOT IMPLEMENTED**。
+
+### 今回のローカル実測結果
+
+Windows、CPython 3.12.14、ComicTagger 1.6.0b9。`.venv/Scripts/python.exe` を使用。
+一時領域と cache は前回と別の `.tools/pytest-release021-*` に配置した。
+
+| 検証 | 今回の結果 |
+|---|---|
+| `python -m ruff check .` | 成功 |
+| `python -m ruff format --check .` | 既存 baseline の **11 files would be reformatted / 37 files already formatted**。全体成功とは扱わない |
+| 変更 Python files の format check | `git diff --name-only v0.2.0..HEAD` から抽出した **6 files already formatted** |
+| `python -m pytest -m "not network"` | **1230 passed / 12 deselected / 1 xfailed**、18.15 秒。skip なし。79 件の linkage synthetic / mock integration を含む |
+| `JPBOOKS_RUN_NETWORK_TESTS=1 python -m pytest -m network` | **12 passed / 1231 deselected**、61.58 秒。今回の network suite は 1 回だけ実行 |
+| pytest warning | **なし**。前回の cache 書き込み warning は新しい cache path では再現しなかった |
+| `git diff --check` | 成功 |
+| `python -m build` | clean build 成功。隔離環境で sdist → wheel を生成 |
+| local artifact metadata | wheel / sdist / plugin ZIP の Name=comictagger-jp-talker、Version=0.2.1 |
+| local plugin ZIP | **57,530 bytes**、archive.testzip() は None、METADATA は 1 件、jpbooks entry point を確認 |
+| source equality | wheel / sdist / ZIP 内の全 production Python が作業ツリーと byte 単位で一致 |
+| `tests/test_packaging.py::test_built_zip_in_isolated_host` | **1 passed**、9.67 秒。新しく build した ZIP で beta.9 load、通常 NDL lookup、optional linkage API を検証 |
+
+変更 Python 6 ファイルは __init__.py / linkage.py / provenance.py / test_linkage.py /
+test_linkage_integration.py / test_packaging.py。format baseline の 11 ファイルは
+mapping.py、talker.py、docs/phase2_madb_spec.md、tests の test_comicinfo.py、test_madb.py、
+test_madb_boundary.py、test_mapping.py、test_ndl.py、test_numbers.py、test_phase1_audit.py、test_talker.py。
+既存の改行混在、リスト整形、文書内 code fence 等の差であり、Release のための一括整形は行わない。
+既知の xfail は CIX writer の Volume=0 省略。source / test correctness の失敗はない。
+
+### 実 endpoint と Phase 1 regression
+
+| 実例 | 今回の結果 |
+|---|---|
+| M1032568 / R100000002-I033625982 | direct NDL URL と ISBN 一致、matched / exact、Series は NDL_ONLY |
+| M381096 / R100000002-I023440575 / C334830 | ISBN discovery で matched / strong、Series は MULTIPLE |
+
+C334830 の日本語表示名 `ご注文はうさぎですか?` と読み `ゴチュウモン ワ ウサギ デスカ` を両方保持した。
+**同一 Series resource の複数名称による MULTIPLE であり、意味的に複数の Series relation があるという断定ではない。**
+display name と reading の意味分類は Phase 2C 前に追加検討が必要で、今回 production code は追加しない。
+network suite の既存 limiter を維持し、実行後に JPBOOKS_RUN_NETWORK_TESTS を解除した。
+
+| NDL title | Series | 論理巻 | 再検証 |
+|---|---|---|---|
+| My Girl. vol.31 | My Girl | 31 | synthetic と実 NDL で成功 |
+| ご注文はうさぎですか? : アンソロジーコミック. volume 1 | ご注文はうさぎですか? : アンソロジーコミック | 1 | synthetic と実 NDL で成功 |
+| ご注文はうさぎですか? = Is the order a rabbit? 7 | ご注文はうさぎですか? | 7 | synthetic と実 NDL で成功 |
+| ブルーロック = BLUELOCK. 1 | ブルーロック | 1 | synthetic / audit で成功 |
+
+### 配布物と Release 手順
+
+- `dist/comictagger_jp_talker-0.2.1-py3-none-any.whl`
+- `dist/comictagger_jp_talker-0.2.1.tar.gz`
+- `dist/jpbooks_talker-plugin-0.2.1.zip`
+
+旧 dist / generated egg-info を workspace 内の検証済みパスだけで削除し、build 不在も確認した。
+wheel / sdist を各 1 件だけ自動検出し、既存 scripts/build_plugin.py で ZIP を作成した。
+linkage.py / provenance.py / mapping.py / MADB source を含む全 production source を照合済み。
+tests、research data、.git、__pycache__、.pyc は ZIP に含まれない。build artifacts と
+日本語 Release notes の一時ファイルは `.tools/` / dist の ignore 対象で、stage しない。
+
+検証後の最終更新は本検証記録だけで、production Python / tests の不変性を差分で確認した。
+この docs-only 更新のために pytest 全 suite は繰り返さず、git diff --check と最終 diff を再確認する。
+main CI success 後に既存形式の annotated tag を作り、Release workflow で plugin ZIP のみを公開する。
+公開後は curated notes とダウンロードした asset の内容・metadata を検証する。
+CI と local ZIP の hash 一致は要求しない。
+最終公開状況は [v0.2.1 Release](https://github.com/karigane-cha/comictagger-jp-talker/releases/tag/v0.2.1) と
+[GitHub Actions](https://github.com/karigane-cha/comictagger-jp-talker/actions) を参照する。
+以下の development 記録および Phase 2A / Phase 2B-1 の調査・実装履歴は保持する。
+
 ## 0.2.1 development / Phase 2B-2
 
 2026-09-27 (JST)。開始時の作業ツリーはクリーン、main / origin/main / v0.2.0 は

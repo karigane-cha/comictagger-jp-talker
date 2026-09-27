@@ -8,6 +8,8 @@ HTTPS の SRU 1.2 API と DC-NDL RDF v3（`recordSchema=dcndl_v3`）を使用し
 CBZ の読み書きと ComicInfo.xml 生成は ComicTagger の標準機構へ任せます。
 
 Phase 2B-1 では内部の [MADB read-only source](docs/phase2b1_madb_source.md) を追加しています。
+v0.2.1 の [Phase 2B-2](docs/phase2b2_linkage.md) は、NDL ↔ MADB の対応関係を
+direct NDL URL / ISBN evidence で判定し、provenance と Series comparison を保持する内部基盤です。
 通常の Talker 検索・設定・ComicInfo.xml 出力への接続と NDL/MADB merge は未実装です。
 
 ## 対応環境
@@ -488,12 +490,17 @@ CI ではこの環境変数を設定しません。詳細な確認元と制約�
 Phase 2B-1 で内部の **MADBSource** を実装済みです。NDL の `BookRecord` を再利用せず、
 MADB 専用の source-specific RDF models を使います。通信は明示的に `MADBSource` を使用した場合だけで、
 通常の NDL lookup は MADB endpoint へアクセスしません。利用者向けの MADB 設定はまだありません。
-0.2.1 development の Phase 2B-2 では、明示的に呼ぶ内部 API として NDL/MADB RecordMatch / linkage、
+v0.2.1 の Phase 2B-2 では、明示的に呼ぶ内部 API として NDL/MADB RecordMatch / linkage、
 Series comparison、provenance、conflict state を追加しました。資料の対応と値の一致・不一致を記録します。
 通常の Talker で MADB metadata を利用する機能、GenericMetadata mapping、自動 merge、
 不一致の解決・値の採用は未実装です。詳細は [Phase 2B-2 の実装記録](docs/phase2b2_linkage.md) を参照してください。
 MADB の Series / Imprint / Credits の上書き、MangaWork lookup、title fuzzy search、電子／紙判定も未実装です。
 詳しい境界は [MADB source の実装記録](docs/phase2b1_madb_source.md) を参照してください。
+次の Phase 2C では controlled Series supplement、provenance-aware merge policy、
+Imprint candidate evaluation、Credits comparison、利用者向け MADB integration policy を検討します。
+同一 MADB Series resource に表示名と読み等の複数名称がある場合も、v0.2.1 では安全側に倒して
+MULTIPLE として保持します。意味的に複数の Series relation があるという断定ではありません。
+display name と reading の意味分類は Phase 2C 前の検討事項で、今回の実装には含みません。
 その後 **openBD**、**Google Books API**、**Rakuten Books** を取得元に追加することを検討します。
 
 ## ライセンス

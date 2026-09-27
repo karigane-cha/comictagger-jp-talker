@@ -5,6 +5,8 @@ Phase 2B-1 は v0.2.0 に含まれる内部 foundation。package version は 0.2
 `__version__` で、setuptools の dynamic version と既存 plugin builder がこれを参照する。
 新しい production dependency、ユーザー設定は追加していない。
 この文書作成時点では Release 操作を対象外としていた。v0.2.0 の Release 検証は [検証記録](validation.md) を参照する。
+本書は Phase 2B-1 時点の履歴を保持する。v0.2.1 で追加した linkage layer と現在の統合境界は
+[Phase 2B-2 実装記録](phase2b2_linkage.md) を参照する。
 
 設計根拠は [Phase 2A 仕様書](phase2_madb_spec.md)、[実例台帳](research/madb/examples.md)、
 [実測記録](research/madb/evidence.json)、[query](research/madb/queries/)。
