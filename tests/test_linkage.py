@@ -343,7 +343,7 @@ def test_deduplicate_queries_and_candidates():
         (
             "作品名",
             ("作品名", RDFTerm("literal", "サクヒンメイ", language="ja-hrkt")),
-            FieldComparisonState.MULTIPLE,
+            FieldComparisonState.BOTH_AGREE,
         ),
         ("作品名", (" 作品名 ",), FieldComparisonState.BOTH_AGREE),
         ("作品名?", ("作品名",), FieldComparisonState.BOTH_CONFLICT),

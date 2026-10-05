@@ -1,5 +1,9 @@
 # Phase 2B-2: NDL / MADB linkage と Series comparison
 
+本書は v0.2.1 の歴史的実装記録を保持する。v0.3.0 では
+[Phase 2C-1](phase2c1_series_supplement.md) が display / reading の分類と MULTIPLE semantics を改善し、
+既定 OFF の Series 補完を追加した。以下の v0.2.1 時点の観測・未実装事項は書き換えない。
+
 v0.2.1 に含まれる内部 API。0.2.0 の正式 Release、Phase 2B-1 の source foundation、
 Phase 1 の Series 修正を基点とする。Release 前の検証は [検証記録](validation.md) を参照。
 目的は同一資料の対応関係と Series の一致・不一致を観測すること。

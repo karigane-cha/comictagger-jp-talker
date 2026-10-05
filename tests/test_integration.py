@@ -1,6 +1,7 @@
 """One live SRU request per test, only when explicitly enabled."""
 
 import os
+from unittest.mock import patch
 
 import pytest
 from comicapi.genericmetadata import GenericMetadata
@@ -16,7 +17,45 @@ from comictagger_jp_talker.mapping import (
 )
 from comictagger_jp_talker.models import SearchQuery
 from comictagger_jp_talker.sources.ndl import NDLSource
+from comictagger_jp_talker.sources.ndl_summary import DETAIL_ENDPOINT
 from comictagger_jp_talker.talker import JapaneseBooksTalker
+
+
+@pytest.mark.network
+@pytest.mark.skipif(os.getenv("JPBOOKS_RUN_NETWORK_TESTS") != "1", reason="opt-in reported-record check")
+def test_real_reported_record_summary_boundary(tmp_path):
+    identifier = "R100000002-I025375656"
+    talker = JapaneseBooksTalker("1.6.0b9", tmp_path)
+    try:
+        source = talker.source
+        real_get = source.session.get
+        summary_responses = []
+
+        def observe(url, **kwargs):
+            response = real_get(url, **kwargs)
+            if url == DETAIL_ENDPOINT:
+                summary_responses.append((response.status_code, response.headers.get("Retry-After")))
+            return response
+
+        with patch.object(source.session, "get", wraps=observe) as transport:
+            assert talker.fetch_series(identifier).id == identifier
+            assert all(call.args[0] != DETAIL_ENDPOINT for call in transport.call_args_list)
+            output = talker.fetch_comic_data(issue_id="", series_id=identifier, issue_number="")
+            assert output.issue_id == identifier and output.title and output.gtin
+            assert sum(call.args[0] == DETAIL_ENDPOINT for call in transport.call_args_list) <= 1
+        print(
+            "reported record:",
+            identifier,
+            "summary calls:",
+            sum(call.args[0] == DETAIL_ENDPOINT for call in transport.call_args_list),
+            "summary present:",
+            bool(output.description),
+            "summary HTTP status / Retry-After:",
+            summary_responses,
+        )
+    finally:
+        talker.source.session.close()
+        talker.source.cache.close()
 
 
 @pytest.mark.network

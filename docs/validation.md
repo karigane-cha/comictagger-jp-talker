@@ -1,5 +1,285 @@
 # 検証記録
 
+## v0.3.0 Release 前の再検証
+
+2026-10-05 (JST)。`feat/phase2c1-series-supplement` の未コミット Phase 2C-1 と release-blocker 修正を最終監査した。
+基点と origin/main は正式 v0.2.1 の commit `ec9ad62882df51f228299efe83868fa0e0c805f7`。
+canonical version は `comictagger_jp_talker/__init__.py` の 0.3.0、pyproject.toml の dynamic version を維持する。
+production logic と tests は変更せず、README と実装・検証文書だけを Release 状態へ整理した。
+
+監査で、ja / 根拠のあるタグなし文字列は display、ja-hrkt は reading、未対応 language / datatype は other と確認した。
+raw RDFTerm / language / datatype / Series URI / predicate path を保持し、同一 URI の同一 display だけを有効値として重複除去する。
+認識済み reading だけで MULTIPLE にせず、異なる URI と異なる display の曖昧性は維持する。
+setting は `jpbooks_madb_series_supplement`、label は Supplement missing Series from MADB (experimental)、既定 False。
+保存・復元、旧 config の key 欠損、CLI、非 boolean 拒否を既存 tests で再確認する。
+
+補完は利用者の opt-in、選択済み最終 fetch、欠損 NDL Series、exact / safe strong、一意かつ完全な display の場合だけ。
+変更は Series と最小限の provenance Notes だけで、NDL Series と他の GenericMetadata fields を維持する。
+optional な NDL summary と MADB supplement は fail-open、SRU 本体は必須で失敗時 fatal。
+候補の概要 network は 0、最終取得だけ必要時に最大 1。失敗の 7 日永続保存と自動 retry は行わない。
+bounded in-memory suppression は最大 128 ID、Retry-After を尊重する。NDL limiter は 1 request / 2 sec のまま。
+MADB は lightweight Book / Series retrieval、Agent / Holding は NOT REQUESTED、full API と共通 identity 判定を維持する。
+既存 fixture の cold cache は full 6 → lightweight 3、Agent 2 → 0、Holding 1 → 0、warm cache は 0。
+MADB limiter は 1 request / 3 sec のまま。並列要求と automatic retry は行わない。
+
+### 検証方法と実資料の制限
+
+NDL / MADB の実 endpoint で linkage と Series classification を確認し、M381096 / C334830 の BOTH_AGREE を検査する。
+報告書誌 R100000002-I025375656 は、2026-10-03 の実確認で fetch_series 概要 0、最終取得概要 1、HTTP 200。
+今回は deterministic な mock を中心に検査し、実 endpoint suite は最後に 1 回だけ実行した。
+NDL Series 欠損かつ安全な MADB display が一意という実資料の end-to-end 補完成功例は未確認。
+補完の成功経路は synthetic fixture / HTTP mock / built-plugin integration で検証する。
+
+### 今回のローカル検証と配布物
+
+| 検証 | 結果 |
+|---|---|
+| Ruff | **All checks passed** |
+| repository format | **10 files would be reformatted / 43 files already formatted**。既存 baseline を維持 |
+| changed Python format | **19 files already formatted** |
+| focused regression | NDL / summary policy / Talker / supplement / lightweight MADB / linkage、**418 passed**、6.62 秒 |
+| non-network suite | **1375 passed / 1 skipped / 13 deselected / 1 xfailed**、11.69 秒。失敗 0 |
+| packaging / isolated host | clean build 後の実 ZIP で **2 passed**、13.61 秒。上記 skip 対象も成功 |
+| git diff --check | **成功** |
+| clean build | **成功**。安全な root / 絶対パス確認後、旧 dist / build / generated egg-info だけを清掃し、隔離 build で sdist → wheel |
+| wheel / sdist | 各 1 件を自動検出。Name=comictagger-jp-talker、Version=0.3.0 |
+| plugin ZIP | 既存 scripts/build_plugin.py の actual CLI で生成、**62,136 bytes**、testzip()=None、METADATA 1 件、entry point 正常 |
+| source equality | wheel / sdist / ZIP の production Python **17 ファイル**が作業ツリーと byte 単位で完全一致 |
+| ZIP 内容 | 必要な Talker / summary / lightweight MADB / linkage / provenance / supplement / mapping modules を含む。tests / research / .git / __pycache__ / .pyc は含まない |
+| built ZIP 回帰 | beta.9 load、default OFF、候補 summary 0、final summary 429 fail-open、exact / strong 補完、Agent / Holding 0 が成功 |
+
+skip は clean build 前に旧 ZIP を削除したための配布物テスト。xfail は既知 CIX writer の Volume=0 省略。
+通常 suite の外部 HTTP は既存 fixture で禁止した。既知の sandbox 一時領域・配布物読み取り・依存取得の制約を避け、
+pytest / build / ZIP 検証は許可された実行環境を使用した。
+ZIP SHA-256: `1d05206983a500c219d35a2d1aed2311db771d24742301a55bfc32a51002fba5`。
+生成物は `dist/comictagger_jp_talker-0.3.0-py3-none-any.whl`、`dist/comictagger_jp_talker-0.3.0.tar.gz`、
+`dist/jpbooks_talker-plugin-0.3.0.zip`。Release asset は plugin ZIP のみで、wheel / sdist / PyPI の公開は行わない。
+
+候補 summary 要求数は search_for_series / fetch_series / fetch_issues_in_series /
+fetch_issues_by_series_issue_num_and_year が各 **0**、fetch_comic_data は必要時だけ **最大 1**。
+SRU abstract と summary cache があれば **0**。報告 ID の 429 sequence は **1 要求 / metadata 成功**、
+即時の次の fetch は追加要求 **0**。timeout / 503 / malformed response と SRU fatal の境界も成功した。
+MADB の one-candidate fixture は cold **3 要求**、Agent / Holding **0**、warm cache **0**。
+
+最終 network suite は non-network と packaging 成功後に **1 回だけ**実行し、
+**13 passed / 1377 deselected**、140.68 秒。失敗と再実行なし。JPBOOKS_RUN_NETWORK_TESTS は終了後に解除した。
+報告 ID R100000002-I025375656 は fetch_series 概要 **0**、final fetch 概要 **1**、
+DETAIL_ENDPOINT は **HTTP 200 / Retry-After なし**、Summary あり。実 429 を再現するための追加要求は行っていない。
+M381096 / C334830 は matched / strong、表示 `ご注文はうさぎですか?`（タグなし）と
+読み `ゴチュウモン ワ ウサギ デスカ`（ja-hrkt）を保持し、effective display 1 件、**BOTH_AGREE**。
+full MADB API の direct identity M1032568 は exact / NDL_ONLY を維持した。
+
+| Phase 1 回帰 | Series / 論理巻 | 結果 |
+|---|---|---|
+| My Girl. vol.31 | My Girl / 31 | synthetic + 実 NDL 成功 |
+| ご注文はうさぎですか? : アンソロジーコミック. volume 1 | ご注文はうさぎですか? : アンソロジーコミック / 1 | synthetic + 実 NDL 成功 |
+| ご注文はうさぎですか? = Is the order a rabbit? 7 | ご注文はうさぎですか? / 7 | synthetic + 実 NDL 成功 |
+| ブルーロック = BLUELOCK. 1 | ブルーロック / 1 | synthetic / audit 成功 |
+
+検証後の最終変更は文書だけとし、production / tests / fixtures **56 ファイル**の byte hash を保持する。
+文書の実測値追記では pytest 全実行を繰り返さず、hash の不変と git diff --check を確認する。
+ローカル測定後に README / production / tests は変更せず、Release commit の公開 ZIP は別途ダウンロードして検証する。
+正式公開状況は [v0.3.0 Release](https://github.com/karigane-cha/comictagger-jp-talker/releases/tag/v0.3.0) と
+[GitHub Actions](https://github.com/karigane-cha/comictagger-jp-talker/actions) を参照する。
+
+## 0.3.0 未公開 release-blocker 修正
+
+2026-10-02 開始、2026-10-03 (JST) 最終検証。実利用の `R100000002-I025375656` で fetch_series と
+fetch_comic_data がともに概要 JSON endpoint を呼び、HTTP 429 でメタデータ取得全体が失敗した。
+未公開 Phase 2C-1 の blocker として修正し、version は 0.3.0 を維持する。
+
+NDL の原因は get が概要を暗黙に取得し、概要の Network / Data error を必須 SRU と同じ fatal 経路へ渡したこと。
+429 応答はキャッシュされず、次の caller でも要求が発生した。MADB の別の原因は補完が full get を使い、
+Series のために creator / publisher Agent と provider Holding の詳細まで取得していたこと。
+
+修正前に外部通信なしの HTTP mock で 5 host paths の cold / cache を計測した。
+SRU abstract なし、同一 ID、概要 success cache なしでの DETAIL_ENDPOINT 要求数は次のとおり。
+
+| path | 修正前 | 修正後 |
+|---|---:|---:|
+| search_for_series | 0 | 0 |
+| fetch_series | 1 | 0 |
+| fetch_issues_in_series | 1 | 0 |
+| fetch_issues_by_series_issue_num_and_year | 1 | 0 |
+| fetch_comic_data | 1 | 1 |
+| fetch_series → fetch_comic_data、概要 200 | 1 | 1 |
+| fetch_series → fetch_comic_data、概要 429 | 2、両方 fatal | 1、NDL metadata 成功 |
+
+cold SRU は各単独 path で 1 要求、同一 query / record の SRU cache hit は 0。標準 sequence も SRU は合計 1。
+正常な概要 cache hit では各 fetch の DETAIL_ENDPOINT 要求は修正前・修正後とも 0。
+報告書誌 ID を使った mock でも fetch_series は概要 0、final fetch は 1、429 後の即時 final fetch は追加 0。
+基本 GenericMetadata の全 fields、書誌 ID、NDL 出典、Series / title / volume / ISBN / 日付等を維持する。
+429 の status / Retry-After / ID / endpoint は warning に残し、latest-error.txt を生成しない。
+503 / timeout / ConnectionError / generic requests error / invalid JSON / envelope / wrong ID / item も同じ境界を検証する。
+成功・正常な概要なしの 7 日キャッシュは維持し、失敗の永続保存と自動再試行は行わない。
+128 ID 上限のメモリ抑止、期限切れ、Retry-After 秒数 / HTTP-date、再生成時に失敗状態を持ち越さないことを確認する。
+SRU 429 / timeout / invalid XML は fatal、内部 AttributeError / TypeError / assertion は伝播する。
+
+MADB の relation を持つ既存 fixture で cold **6 → 3 要求**、Agent **2 → 0**、Holding **1 → 0**。
+新 API は MADBSource.get_for_series_linkage / link_ndl_record_for_series、bundle は retrieval_scope=`series_linkage`。
+必要な whole Book / Series の raw identity・名称・完全性を取得し、他の relation 詳細は NOT REQUESTED。
+full get / link_ndl_record、identity algorithm、default OFF、NDL Series 優先、分類と eligibility は維持する。
+NDL 2 秒 / MADB 3 秒の limiter は変更せず、並列要求と automatic retry は追加していない。
+実装の詳細は [Phase 2C-1 の performance boundary](phase2c1_series_supplement.md) を参照する。
+
+### 修正後の検証と配布物
+
+| 検証 | 結果 |
+|---|---|
+| 追加テスト | 新規 non-network **58 件**、報告書誌の live check **1 件**。旧候補経路の補完成功 4 ケースを削除し、候補の optional 通信禁止へ更新 |
+| focused regression | NDL / Summary / Talker / Series supplement / linkage / MADB、**418 passed**、6.83 秒 |
+| non-network suite | **1375 passed / 1 skipped / 13 deselected / 1 xfailed**、12.73 秒。失敗 0。skip は旧 ZIP 削除後、build 前の配布物テスト |
+| built ZIP packaging tests | build 後に **2 passed**、13.74 秒。上記 skip 対象も実 ZIP で成功 |
+| Ruff | **All checks passed** |
+| repository format | 開始 **10 mismatch / 41 formatted**、終了 **10 mismatch / 43 formatted**。既存 mismatch は変更していない |
+| changed Python format | **19 files already formatted** |
+| git diff --check | **成功** |
+| clean build | **成功**。安全な絶対パス確認後に旧 dist / build / generated egg-info を削除、通常の隔離 build で sdist → wheel |
+| wheel / sdist / ZIP | Name=comictagger-jp-talker、Version=0.3.0。wheel / sdist は各 1 件を自動検出し、既存 scripts/build_plugin.py の CLI を使用 |
+| ZIP validation | **62,147 bytes**、testzip()=None、entry point と必要 modules を確認、tests / research / .git / __pycache__ / .pyc なし |
+| source equality | wheel / sdist / ZIP 内の production Python **17 ファイル**が作業ツリーと byte 単位で一致。ZIP と wheel も同一 |
+| isolated host | beta.9 loader 後の ZIP を使用。load、default OFF、候補の summary 0、summary 429 fail-open、exact / strong 補完、Agent / Holding 0 を確認 |
+
+ZIP SHA-256: `b5026333837434eb99995b01e71dd746dae077418d83305b1f103d9e09bae79f`。
+配布物は dist 内の `comictagger_jp_talker-0.3.0-py3-none-any.whl`、
+`comictagger_jp_talker-0.3.0.tar.gz`、`jpbooks_talker-plugin-0.3.0.zip`。
+通常 suite は外部 HTTP 禁止。最初の sandbox 実行は pytest 一時領域へのアクセス拒否、build は隔離環境の依存取得で失敗し、
+権限を上げた実行で検証・build を完了した。旧 artifact の削除と生成 wheel の読み取りにも同じ sandbox 制約があった。
+既知 xfail は CIX writer の Volume=0 省略。無関係な format baseline と Phase 1 mapping は変更していない。
+
+default OFF、ON + NDL Series、exact / safe strong、ambiguous / unsafe / truncated / unavailable、
+display + reading / reading-only / multiple display / multiple Series URI の回帰は成功。
+My Girl. vol.31 → My Girl / 31、
+ご注文はうさぎですか? : アンソロジーコミック. volume 1 → 同作品名 / 1、
+ご注文はうさぎですか? = Is the order a rabbit? 7 → ご注文はうさぎですか? / 7、
+ブルーロック = BLUELOCK. 1 → ブルーロック / 1 は既存 synthetic / audit で個別に成功。
+
+最終 network suite は non-network / built ZIP 検証後、許可された通信環境で **1 回だけ**実行した。
+**13 passed / 1377 deselected**、89.74 秒。失敗と再実行なし。終了後に JPBOOKS_RUN_NETWORK_TESTS を解除した。
+報告書誌 `R100000002-I025375656` は fetch_series の DETAIL_ENDPOINT 要求 **0**、
+fetch_comic_data は **1**、概要 endpoint は **HTTP 200 / Retry-After なし**で Summary を取得した。
+429 は今回実 endpoint では観測せず、元の報告 ID と built ZIP の HTTP mock で fail-open と即時重複抑止を確認した。
+
+軽量 linkage の実 endpoint でも M381096 → C334830 は matched / strong、**BOTH_AGREE**。
+raw `ご注文はうさぎですか?`（タグなし）と `ゴチュウモン ワ ウサギ デスカ`（ja-hrkt）を保持し、
+effective display は前者 1 件。full API の M1032568 direct identity は exact / NDL_ONLY を維持する。
+Phase 1 の My Girl. vol.31、アンソロジーの volume 1、並列タイトルの 7 は実 NDL でも成功。
+ブルーロック = BLUELOCK. 1 は今回 synthetic / audit の検証で、追加の実通信は行っていない。
+
+最終境界: Version=0.3.0。NDL SRU は REQUIRED / fatal on failure、概要 JSON は OPTIONAL / fail-open。
+fetch_series summary network は NO、final selected fetch は AT MOST ONCE when needed。
+MADB Series supplement は OPT-IN / DEFAULT OFF、NDL Series overwrite は NO、
+MADB retrieval は LIGHTWEIGHT / NO AGENT / NO HOLDING。両 limiter は UNCHANGED、automatic retry は NO。
+Imprint mapping / Credits merge / Publisher merge / Date merge / general automatic metadata merge は NOT IMPLEMENTED。
+commit / merge / push / tag / Release / upload は NOT PERFORMED。変更は未コミット。
+
+## 0.3.0 development / Phase 2C-1 初回検証（blocker 修正前）
+
+2026-10-02 (JST)。開始時の main は clean。fetch / fast-forward pull 後も
+main / origin/main / v0.2.1 は `ec9ad62882df51f228299efe83868fa0e0c805f7` で、左右の差分は 0 / 0。
+`feat/phase2c1-series-supplement` を作成し、canonical version の
+`comictagger_jp_talker/__init__.py` だけで **0.2.1 → 0.3.0** に更新した。
+pyproject.toml の dynamic version、Phase 1 mapping、NDL source、MADB models / queries は変更していない。
+変更は未コミット。commit / push / tag / Release / upload は行っていない。
+
+分類と補完の規則は [Phase 2C-1 実装記録](phase2c1_series_supplement.md) を参照する。
+Phase 2A / Phase 2B-1 と research evidence は変更せず、Phase 2B-2 には後続実装への注記だけを追加した。
+
+### 最新のローカル結果
+
+Windows / CPython 3.12 / ComicTagger 1.6.0b9。PATH に python がないため
+`.venv/Scripts/python.exe` を使用。一時領域と pytest cache は今回専用の `.tools/pytest-2c1-*`。
+
+| 検証 | 結果 |
+|---|---|
+| 新規 unit / HTTP mock tests | `tests/test_series_supplement.py` の **92 件**。分類、raw / duplicate、設定と旧 config、全 fetch の通信抑止、eligibility、Notes、不変 fields、transport 障害、cache / close |
+| Ruff check | **All checks passed** |
+| repository-wide format check | 開始時 **11 files would be reformatted / 37 files already formatted**。最終 **10 files would be reformatted / 41 files already formatted**。既存 mismatch を全体成功と扱わない |
+| 変更 Python files の format check | 新規 2 件を含む **11 files already formatted** |
+| non-network pytest | **1322 passed / 12 deselected / 1 xfailed**、21.71 秒。skip / warning なし。外部 HTTP は既存 autouse fixture で禁止 |
+| opt-in network pytest | **12 passed / 1323 deselected**、105.35 秒。rate limiter を維持し、終了後に環境変数を解除 |
+| git diff --check | **成功** |
+| clean package build | **成功**。隔離環境で sdist → wheel、setuptools 84.0.0 |
+| artifact metadata | wheel / sdist / ZIP の Name=comictagger-jp-talker、Version=0.3.0 |
+| plugin ZIP validation | **60,622 bytes**、testzip() は None、METADATA 1 件、entry point を確認 |
+| current source equality | wheel / sdist / ZIP の **全 production Python 17 ファイル**が作業ツリーと byte 単位で一致 |
+| isolated host test | `tests/test_packaging.py::test_built_zip_in_isolated_host`、**1 passed**、9.70 秒。全 non-network suite でも再確認 |
+| built ZIP default OFF | beta.9 の実 loader 後に mock NDL lookup 成功、MADB POST を禁止、既存 Series / その他 output を維持 |
+| built ZIP opt-in | 実 ZIP の source / parser / linkage を mock HTTP で通し、exact / strong の両方で Series + Notes だけ変更。2 回目の fetch は cache hit |
+
+既存 format mismatch は mapping.py、docs/phase2_madb_spec.md、tests の test_comicinfo.py、test_madb.py、
+test_madb_boundary.py、test_mapping.py、test_ndl.py、test_numbers.py、test_phase1_audit.py、test_talker.py。
+今回変更した talker.py は format を確認し、混在していた改行を LF に統一した。無関係なファイルは整形しない。
+xfail は既知の CIX writer の Volume=0 省略。source / assertion の失敗はない。
+
+最初の network suite は sandbox の WinError 10013 で全件失敗した。通信許可後の上記実行は全件成功。
+旧 dist の削除と生成 wheel の読み取りにも sandbox のアクセス拒否があり、
+許可された環境で workspace 内の dist / build / generated egg-info だけを清掃し、build / ZIP / 照合を完了した。
+通常 NDL 本体エラーの扱いは従来どおりで、optional MADB failure を `latest-error.txt` に混入させない。
+
+### M381096 / C334830 の実 endpoint
+
+NDL `R100000002-I023440575` の Series は `ご注文はうさぎですか?`。
+ISBN discovery は matched / strong、conflict なし。
+
+| C334830 の raw schema:name | language tag | 分類 |
+|---|---|---|
+| `ご注文はうさぎですか?` | なし | display |
+| `ゴチュウモン ワ ウサギ デスカ` | `ja-hrkt` | reading |
+
+effective display は `ご注文はうさぎですか?` の **1 件**。
+v0.2.1 の reading-induced MULTIPLE から **BOTH_AGREE** に改善した。
+raw 値 / language / Series URI / predicate path は保持し、reading を display の候補数に含めない。
+M1032568 / R100000002-I033625982 は matched / exact、Series は NDL_ONLY のまま。
+実 endpoint data の変化は今回観測していない。新しい network request は追加せず、既存 suite に分類の検査を統合した。
+
+安全な NDL Series missing + MADB 一意 display の実補完成功例は確認できていない。
+現行 NDL parser は非空 title を必要とし、Phase 1 mapper はそのタイトルから Series を保持する。
+本体の規則を弱めず、実補完成功は synthetic / HTTP mock / built ZIP mock に留めた。
+
+### Phase 1 回帰と GenericMetadata の境界
+
+| title | Series / 論理巻 | 結果 |
+|---|---|---|
+| My Girl. vol.31 | My Girl / 31 | synthetic + 実 NDL 成功 |
+| ご注文はうさぎですか? : アンソロジーコミック. volume 1 | ご注文はうさぎですか? : アンソロジーコミック / 1 | synthetic + 実 NDL 成功 |
+| ご注文はうさぎですか? = Is the order a rabbit? 7 | ご注文はうさぎですか? / 7 | synthetic + 実 NDL 成功 |
+| ブルーロック = BLUELOCK. 1 | ブルーロック / 1 | synthetic / audit 成功 |
+
+OFF 時は固定 Phase 1 snapshot を全番号モードで確認。関連 search / fetch paths の MADBSource 生成は 0。
+ON でも非空 NDL Series なら MADBSource 生成は 0。実補完時の dataclass 全 field 比較では差分は series / notes だけ。
+title / issue / volume / counts / credits / publisher / imprint / date / gtin / Summary / tags / genres / language /
+web_links / format / identifier / data_origin / series_id / issue_id とその他 fields は不変。
+NDL / MADB source records、raw RDFTerm と statements は変更しない。
+timeout / network / HTTP 503 / 429 / protocol / schema を search / Book / Series の各段階で mock し、
+NDL metadata が正常に返り、warning が残り、補完 Notes と blocking error が生じないことを確認した。
+ambiguous / unsafe / truncated（exact を含む）/ unmatched / reading-only / multiple display / multiple URI も非採用。
+
+### 配布物
+
+- `dist/comictagger_jp_talker-0.3.0-py3-none-any.whl`
+- `dist/comictagger_jp_talker-0.3.0.tar.gz`
+- `dist/jpbooks_talker-plugin-0.3.0.zip`
+
+wheel / sdist は各 1 件を自動検出し、既存 scripts/build_plugin.py の actual CLI に wheel path を渡した。
+ZIP と wheel は byte 単位で同一。ZIP SHA-256 は
+`748ac5208dddb87d2f39fc9fa95129a7e0cb0da956ee986766c7bc5d8b5e633b`。
+talker.py、linkage.py、provenance.py、series_supplement.py、mapping.py、MADB source modules をすべて含む。
+tests / research datasets / .git / __pycache__ / .pyc は ZIP に含まれない。sdist は既存 MANIFEST policy に従う。
+build artifacts と一時検証 helper は ignore 対象で、commit / stage していない。
+配布物検証後の最終更新は本記録のみ。production / tests は変更せず、文書の spacing と diff を再確認する。
+
+### Integration boundary
+
+Normal source when supplement disabled: **NDL Search**。
+MADB Series supplement: **OPT-IN / DEFAULT OFF**。NDL Series overwrite: **NO**。
+NDL Series missing の補完: **YES, only under controlled eligibility**。
+Imprint mapping / Credits merge / Publisher merge / Date merge / MangaWork /
+General automatic metadata merge: **NOT IMPLEMENTED**。
+Phase 2C-2 以降の候補は Imprint candidate policy、Credits comparison / supplement、Publisher comparison、
+Date comparison、broader provenance-aware merge policy、user-facing diagnostics / source visibility、
+根拠が得られた場合だけの weak-linkage research。今回これらは実装していない。
+
 ## v0.2.1 Release 前の再検証
 
 2026-09-27 (JST)。`feat/phase2b2-linkage` の実装コミット

@@ -1,4 +1,4 @@
-"""Explicit-use, read-only MADB source. The Talker never instantiates this source."""
+"""Read-only MADB source, also used by the opt-in missing-Series supplement."""
 
 from __future__ import annotations
 
@@ -173,6 +173,18 @@ class MADBSource:
         )
 
     def get(self, book_id: str, *, refresh: bool = False) -> MADBRecordBundle:
+        """Full Book, Series, Agent and Holding evidence, preserving the public source API."""
+        return self._get_bundle(book_id, refresh=refresh, series_only=False)
+
+    def get_for_series_linkage(self, book_id: str, *, refresh: bool = False) -> MADBRecordBundle:
+        """Bounded whole Book/Series snapshots; Agent and Holding details are not requested.
+
+        Whole direct triples retain all identity contradictions and row-limit evidence.
+        Completeness refers only to the requested scope, not the full related graph.
+        """
+        return self._get_bundle(book_id, refresh=refresh, series_only=True)
+
+    def _get_bundle(self, book_id: str, *, refresh: bool, series_only: bool) -> MADBRecordBundle:
         uri = resource_uri(book_id, "book")
         book = self._resource(uri, "book", refresh=refresh)
         series, agents, holdings, warnings = [], [], [], []
@@ -211,18 +223,25 @@ class MADBSource:
                         warnings.append(f"{kind} {target_uri}: direct triple limit reached")
 
         related(book, SCHEMA_NS + "isPartOf", "series", series)
-        for record in (book, *series):
-            related(record, DCTERMS_NS + "creator", "agent", agents)
-            # P... literals remain raw; only genuine URI references are Agent lookups.
-            if any(t.kind == "uri" for t in record.publisher_references):
-                related(record, DCTERMS_NS + "publisher", "agent", agents)
-        related(book, SCHEMA_NS + "provider", "holding", holdings)
+        if not series_only:
+            for record in (book, *series):
+                related(record, DCTERMS_NS + "creator", "agent", agents)
+                # P... literals remain raw; only genuine URI references are Agent lookups.
+                if any(t.kind == "uri" for t in record.publisher_references):
+                    related(record, DCTERMS_NS + "publisher", "agent", agents)
+            related(book, SCHEMA_NS + "provider", "holding", holdings)
         # No Work lookup: current Phase 2A evidence has not established that capability.
         completeness = "partial" if warnings else "complete"
         if book.completeness == "truncated":
             completeness = "truncated"
         return MADBRecordBundle(
-            book, tuple(series), tuple(agents), tuple(holdings), tuple(dict.fromkeys(warnings)), completeness
+            book,
+            tuple(series),
+            tuple(agents),
+            tuple(holdings),
+            tuple(dict.fromkeys(warnings)),
+            completeness,
+            "series_linkage" if series_only else "full",
         )
 
     def check_status(self) -> None:

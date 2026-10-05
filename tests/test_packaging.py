@@ -44,6 +44,7 @@ assert ".zip" in plugin.obj.__init__.__code__.co_filename
 assert str(artifact) not in sys.path
 talkers, _ = get_talkers("1.6.0b9", cache, [plugin.obj])
 talker = talkers["jpbooks"]
+assert talker.madb_series_supplement is False
 response = requests.Response()
 response.status_code = 200
 root = ET.fromstring(fixture.read_bytes())
@@ -65,10 +66,14 @@ for item in root.iter("{http://ndl.go.jp/dcndl/terms/}Item"):
     ET.SubElement(item, "{http://purl.org/dc/terms/}format").text = "EPUB"
     ET.SubElement(item, "{http://purl.org/dc/terms/}issued").text = "2026-03-15"
 digital_response = ET.tostring(root)
+summary_calls = []
+summary_status = 200
 def get(session, url, **kwargs):
     if url.endswith("/api/bib/external/search"):
+        summary_calls.append(kwargs["params"]["f-token"])
         detail = requests.Response()
-        detail.status_code = 200
+        detail.status_code = summary_status
+        detail.headers["Retry-After"] = "120"
         detail._content = json.dumps({"hit": 1, "list": [{
             "id": "R100000002-Itest001", "items": [{"id": "returned-id", "meta": {
                 "k39022": [{"v": "紙"}], "t35200": [{"v": "Paper summary from JSON"}]
@@ -82,7 +87,28 @@ with patch.object(requests.Session, "get", get), patch.object(
     candidates = talker.search_for_series("488594287X")
     assert len(candidates) == 1
     assert not candidates[0].aliases
+    assert talker.fetch_series(candidates[0].id).id == candidates[0].id
+    assert talker.fetch_issues_in_series(candidates[0].id)
+    assert talker.fetch_issues_by_series_issue_num_and_year([candidates[0].id], "74", 2025)
+    assert not summary_calls
+    # Test optional 429 with a separate cold summary cache inside the built ZIP.
+    failure_talker = plugin.obj("1.6.0b9", cache / "summary-429")
+    summary_status = 429
+    assert failure_talker.fetch_series(candidates[0].id).id == candidates[0].id
+    assert not summary_calls
+    base = failure_talker.fetch_comic_data(series_id=candidates[0].id)
+    assert base.gtin == "9784885942877" and base.title and base.series
+    assert base.description is None
+    assert len(summary_calls) == 1
+    assert failure_talker.fetch_comic_data(series_id=candidates[0].id) == base
+    assert len(summary_calls) == 1
+    assert not (failure_talker.cache_folder / "jpbooks/latest-error.txt").exists()
+    failure_talker.source.session.close()
+    failure_talker.source.cache.close()
+    summary_calls.clear()
+    summary_status = 200
     md = talker.fetch_comic_data(series_id=candidates[0].id, issue_number="74")
+    assert len(summary_calls) == 1
     assert md.gtin == "9784885942877"
     assert any(c.person == "ねことうふ" and c.role == "Writer" for c in md.credits)
     assert any(c.person == "監修者" and c.role == "Other" for c in md.credits)
@@ -119,7 +145,89 @@ with patch.object(requests.Session, "get", get), patch.object(
         assert (cache / "jpbooks/latest-error.txt").is_file()
     else:
         raise AssertionError("Expected invalid ISBN error")
-print("ZIP: Japanese Books loaded and fetched with beta.9")
+# Exercise the actual ZIP's opt-in path after the host has restored sys.path.
+import contextlib
+import io
+from dataclasses import asdict
+from unittest.mock import Mock
+adapter_globals = talker.fetch_comic_data.__wrapped__.__globals__
+mapper = adapter_globals["to_metadata"]
+supplement = adapter_globals["supplement_series"]
+assert ".zip" in supplement.__code__.co_filename
+record_type = mapper.__globals__["BookRecord"]
+madb_type = supplement.__globals__["MADBSource"]
+assert ".zip" in madb_type.get_for_series_linkage.__code__.co_filename
+limiter = madb_type._request.__globals__["_LIMITER"]
+schema = "https://schema.org/"
+namespace = "https://mediaarts-db.artmuseums.go.jp/id/"
+ndl = record_type(
+    "R100000002-Itest001", "", "https://ndlsearch.ndl.go.jp/books/R100000002-Itest001",
+    isbns=["9784885942877"], volumes=["1"], publishers=["NDL publisher"],
+    responsibilities=["著者 [著]"], abstracts=["NDL summary"], issued=["2025-11-19"],
+    languages=["jpn"], subjects=["NDL subject"], series_titles=["NDL imprint"],
+)
+def term(value, kind="literal", language=None):
+    result = {"type": kind, "value": value}
+    if language:
+        result["xml:lang"] = language
+    return result
+def resource(identifier, kind, fields):
+    fields = [
+        ("http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+         term("https://mediaarts-db.artmuseums.go.jp/data/class#" + kind, "uri")),
+        (schema + "identifier", term(identifier)), *fields
+    ]
+    return {"head": {"vars": ["p", "o"]}, "results": {"bindings": [
+        {"p": term(p, "uri"), "o": o} for p, o in fields
+    ]}}
+for direct in (False, True):
+    talker.parse_settings({"jpbooks_madb_series_supplement": True})
+    calls = []
+    def post(session, url, **kwargs):
+        calls.append(kwargs["data"]["query"])
+        assert url == "https://mediaarts-db.artmuseums.go.jp/sparql"
+        query = kwargs["data"]["query"]
+        if "SELECT DISTINCT" in query:
+            payload = {"head": {"vars": ["book", "identifier", "isbn"]}, "results": {"bindings": [
+                {"book": term(namespace + "M1", "uri"), "isbn": term(ndl.isbns[0])}
+            ]}}
+        elif "/M1>" in query:
+            fields = [(schema + "isbn", term(ndl.isbns[0])),
+                      (schema + "isPartOf", term(namespace + "C1", "uri")),
+                      ("http://purl.org/dc/terms/creator", term(namespace + "C2", "uri")),
+                      ("http://purl.org/dc/terms/publisher", term(namespace + "C3", "uri")),
+                      (schema + "provider", term("https://mediaarts-db.artmuseums.go.jp/ref/S1", "uri"))]
+            if direct:
+                fields.append(("https://mediaarts-db.artmuseums.go.jp/data/property#dataUrl", term(ndl.url)))
+            payload = resource("M1", "MangaBook", fields)
+        else:
+            assert "/C1>" in query, "Agent/Holding must not be requested"
+            payload = resource("C1", "MangaBookSeries", [
+                (schema + "name", term("作品名", language="ja")),
+                (schema + "name", term("サクヒンメイ", language="ja-hrkt")),
+            ])
+        value = requests.Response()
+        value.status_code = 200
+        value.headers["Content-Type"] = "application/sparql-results+json"
+        value.raw = io.BytesIO(json.dumps(payload).encode())
+        return value
+    # New cache per confidence case so each exercises discovery + Book + Series.
+    talker.cache_folder = cache / ("exact" if direct else "strong")
+    with patch.object(requests.Session, "request", side_effect=AssertionError("Mock HTTP only")), \
+         patch.object(requests.Session, "post", post), \
+         patch.object(limiter, "ratelimit", lambda *a, **kw: contextlib.nullcontext()), \
+         patch.object(talker.source, "get", Mock(return_value=ndl)):
+        baseline = mapper(ndl)
+        output = talker.fetch_comic_data(issue_id=ndl.id)
+        assert output.series == "作品名"
+        assert {k for k, v in asdict(baseline).items() if asdict(output)[k] != v} == {"series", "notes"}
+        assert "MADB 照合: " + ("exact" if direct else "strong") in output.notes
+        assert len(calls) == 3
+        assert not any("/C2>" in q or "/C3>" in q or "/ref/S1>" in q for q in calls)
+        assert talker.fetch_comic_data(issue_id=ndl.id) == output
+        assert len(calls) == 3
+print("ZIP: beta.9 load, default OFF, summary-free candidates, summary 429 fail-open, "
+      "exact/strong lightweight supplement, Agent/Holding zero passed")
 """
     # Use a separate isolated process: the host restores module search paths and
     # can discover installed entry points, so a later import there could silently

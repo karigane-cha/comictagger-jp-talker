@@ -7,7 +7,10 @@ import json
 import logging
 import re
 import threading
+import time
 import xml.etree.ElementTree as ET
+from datetime import datetime, timezone
+from email.utils import parsedate_to_datetime
 from pathlib import Path
 from urllib.parse import urldefrag, urlsplit
 
@@ -20,12 +23,15 @@ from comictalker.vendor.pyrate_limiter import Limiter, RequestRate
 from comictagger_jp_talker import __version__
 from comictagger_jp_talker.isbn import isbn13, normalize_isbn
 from comictagger_jp_talker.models import BookRecord, ContentDates, SearchPage, SearchQuery
-from comictagger_jp_talker.sources.ndl_summary import DETAIL_ENDPOINT, parse_summary
+from comictagger_jp_talker.sources.ndl_summary import DETAIL_ENDPOINT, SummaryMode, parse_summary
 
 ENDPOINT = "https://ndlsearch.ndl.go.jp/api/sru"
 RECORD_SCHEMA = "dcndl_v3"
 SEARCH_CACHE = "jpbooks.ndl.search.dcndl_v3"
 RECORD_CACHE = "jpbooks.ndl.record.dcndl_v3"
+SUMMARY_CACHE = "jpbooks.ndl.summary.v1"
+MAX_SUMMARY_FAILURES = 128
+SUMMARY_FAILURE_COOLDOWN = 30  # Local duplicate suppression, not a promised safe retry interval.
 NS = {
     "sru": "http://www.loc.gov/zing/srw/",
     "diag": "http://www.loc.gov/zing/srw/diagnostic/",
@@ -312,6 +318,7 @@ class NDLSource:
     def __init__(self, cache_folder: Path, *, maximum_records: int = 20) -> None:
         self.maximum_records = maximum_records
         self._refresh_summaries: set[str] = set()
+        self._summary_failures: dict[str, float] = {}  # Bounded, in-memory only; no failure cache on disk.
         self.cache_folder = cache_folder / "jpbooks-ndl-v1"
         self.cache_folder.mkdir(parents=True, exist_ok=True)
         self.session = requests.Session()
@@ -351,37 +358,79 @@ class NDLSource:
         except requests.RequestException as exc:
             raise TalkerNetworkError("NDL Search", 0, f"Request error: {type(exc).__name__}") from exc
 
-    def _with_summary(self, record: BookRecord, on_rate_limit: RLCallBack | None) -> BookRecord:
-        if record.abstracts:
+    def _with_summary(
+        self, record: BookRecord, on_rate_limit: RLCallBack | None, mode: SummaryMode
+    ) -> BookRecord:
+        if mode == "none" or any(text.strip() for text in record.abstracts):
             return record
-        # Only enrich the selected record. Shared limiter and ComicCacher also
-        # cover this API, with the normal seven-day search-cache lifetime.
-        cache_source = "jpbooks.ndl.summary.v1"
         cached = (
             []
             if record.id in self._refresh_summaries
-            else self.cache.get_search_results(cache_source, record.id)
+            else self.cache.get_search_results(SUMMARY_CACHE, record.id)
         )
-        content = (
-            cached[0].data.data
-            if cached
-            else self._get(DETAIL_ENDPOINT, {"cs": "bib", "f-token": record.id}, on_rate_limit)
-        )
+        if not cached:
+            if mode == "cache" or self._summary_failures.get(record.id, 0) > time.monotonic():
+                return record
+            self._summary_failures.pop(record.id, None)
         try:
-            data = json.loads(content)
-        except (ValueError, UnicodeDecodeError) as exc:
-            raise TalkerDataError("NDL Search", 2, "Invalid JSON: 要約の応答を解析できません。") from exc
-        summary = parse_summary(data, record.id)
+            content = (
+                cached[0].data.data
+                if cached
+                else self._get(DETAIL_ENDPOINT, {"cs": "bib", "f-token": record.id}, on_rate_limit)
+            )
+            try:
+                data = json.loads(content)
+            except (ValueError, UnicodeDecodeError) as exc:
+                raise TalkerDataError("NDL Search", 2, "Invalid JSON: 要約の応答を解析できません。") from exc
+            summary = parse_summary(data, record.id)
+        except (TalkerNetworkError, TalkerDataError) as exc:
+            # Only optional acquisition/parser errors fail open. SRU and programming
+            # errors still escape, and failed responses never enter the success cache.
+            response = getattr(exc.__cause__, "response", None)
+            status = response.status_code if response is not None else None
+            retry_after = response.headers.get("Retry-After") if response is not None else None
+            if not cached:
+                self._suppress_summary(record.id, retry_after)
+            logger.warning(
+                "Optional NDL summary failed; retaining base metadata: id=%s endpoint=%s "
+                "status=%s Retry-After=%s error=%s",
+                record.id,
+                DETAIL_ENDPOINT,
+                status,
+                retry_after,
+                exc,
+            )
+            return record
         if not cached:
             # Cache valid 'no summary' responses too; never cache malformed data.
-            self.cache.add_search_results(cache_source, record.id, [CachedSeries(record.id, content)], True)
+            self.cache.add_search_results(SUMMARY_CACHE, record.id, [CachedSeries(record.id, content)], True)
         if summary:
             record.abstracts = summary.texts
             record.summary_provider = summary.provider
             record.summary_medium = summary.medium
             record.summary_item_id = summary.item_id
         self._refresh_summaries.discard(record.id)
+        self._summary_failures.pop(record.id, None)
         return record
+
+    def _suppress_summary(self, record_id: str, retry_after: str | None) -> None:
+        delay = SUMMARY_FAILURE_COOLDOWN
+        if retry_after:
+            try:
+                if retry_after.isascii() and retry_after.isdigit():
+                    seconds = float(int(retry_after))
+                else:
+                    date = parsedate_to_datetime(retry_after)
+                    seconds = (date - datetime.now(timezone.utc)).total_seconds()
+                delay = max(delay, seconds)
+            except (ValueError, TypeError, OverflowError):
+                pass  # Invalid external header; keep the local suppression period.
+        # Prune expired entries before enforcing the memory bound.
+        now = time.monotonic()
+        self._summary_failures = {key: until for key, until in self._summary_failures.items() if until > now}
+        if len(self._summary_failures) >= MAX_SUMMARY_FAILURES:
+            self._summary_failures.pop(next(iter(self._summary_failures)))
+        self._summary_failures[record_id] = now + delay
 
     def search(
         self, query: SearchQuery, *, refresh: bool = False, on_rate_limit: RLCallBack | None = None
@@ -412,7 +461,12 @@ class NDLSource:
                 self._refresh_summaries = {record.id for record in page.records}
             return page
 
-    def get(self, record_id: str, *, on_rate_limit: RLCallBack | None = None) -> BookRecord:
+    def get(
+        self, record_id: str, *, summary_mode: SummaryMode = "fetch", on_rate_limit: RLCallBack | None = None
+    ) -> BookRecord:
+        """Required SRU record plus explicit optional-summary policy; default preserves direct callers."""
+        if summary_mode not in ("none", "cache", "fetch"):
+            raise ValueError("Unknown NDL summary mode")
         if not re.fullmatch(r"[A-Za-z0-9_-]+", record_id):
             raise TalkerDataError("NDL Search", 2, "不正な NDL 書誌 ID です。")
         with _LOCK:
@@ -423,14 +477,14 @@ class NDLSource:
                 except (ET.ParseError, TalkerDataError):
                     logger.warning("Invalid cached NDL record; refreshing %s", record_id)
                 else:
-                    return self._with_summary(record, on_rate_limit)
+                    return self._with_summary(record, on_rate_limit, summary_mode)
             page = self.search(
                 SearchQuery(itemno=record_id, mediatype=""), refresh=True, on_rate_limit=on_rate_limit
             )
             matches = [record for record in page.records if record.id == record_id]
             if len(matches) != 1:
                 raise TalkerDataError("NDL Search", 3, "指定した NDL 書誌が見つかりません。")
-            return self._with_summary(matches[0], on_rate_limit)
+            return self._with_summary(matches[0], on_rate_limit, summary_mode)
 
     def check_status(self, *, on_rate_limit: RLCallBack | None = None) -> None:
         with _LOCK:

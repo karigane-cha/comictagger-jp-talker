@@ -19,6 +19,7 @@ from comictagger_jp_talker.isbn import isbn_from_gtin, normalize_isbn
 from comictagger_jp_talker.mapping import infer_volume, resolve_record_number, to_metadata, to_series
 from comictagger_jp_talker.mapping import issue_number as normalize_issue
 from comictagger_jp_talker.models import SearchPage, SearchQuery
+from comictagger_jp_talker.series_supplement import supplement_series
 from comictagger_jp_talker.sources.base import BookSource
 from comictagger_jp_talker.sources.ndl import ENDPOINT, NDLSource
 
@@ -49,6 +50,7 @@ class JapaneseBooksTalker(ComicTalker):
         self.volume_output = "issue"
         self.date_source = "auto"
         self.subject_tags = False
+        self.madb_series_supplement = False
         self._source: BookSource | None = None
 
     @property
@@ -109,6 +111,14 @@ class JapaneseBooksTalker(ComicTalker):
             display_name="Copy subjects to Tags (max 10)",
             help="件名のみ最大 10 件。分類や NDC は変換しません",
         )
+        parser.add_setting(
+            "--jpbooks-madb-series-supplement",
+            default=False,
+            action=argparse.BooleanOptionalAction,
+            display_name="Supplement missing Series from MADB (experimental)",
+            help="NDL の Series が空の場合だけ、安全に照合できた MADB の Series を補完します。"
+            "追加の MADB API 通信が発生します。既定 OFF",
+        )
 
     @staticmethod
     def _validate_settings(settings: dict[str, Any]) -> None:
@@ -136,6 +146,8 @@ class JapaneseBooksTalker(ComicTalker):
             raise ValueError("候補数は 1〜100 にしてください。")
         if not isinstance(settings.get("jpbooks_subject_tags", False), bool):
             raise ValueError("件名を Tags に出力する設定は boolean にしてください。")
+        if not isinstance(settings.get("jpbooks_madb_series_supplement", False), bool):
+            raise ValueError("MADB の Series 補完設定は boolean にしてください。")
 
     def parse_settings(self, settings: dict[str, Any]) -> dict[str, Any]:
         self._validate_settings(settings)
@@ -147,6 +159,7 @@ class JapaneseBooksTalker(ComicTalker):
         self.volume_output = settings.get("jpbooks_volume_output", "issue")
         self.date_source = settings.get("jpbooks_date_source", "auto")
         self.subject_tags = settings.get("jpbooks_subject_tags", False)
+        self.madb_series_supplement = settings.get("jpbooks_madb_series_supplement", False)
         self._source = None
         return settings
 
@@ -258,21 +271,22 @@ class JapaneseBooksTalker(ComicTalker):
     @copyable_errors
     def fetch_series(self, series_id: str, *, on_rate_limit: RLCallBack | None = None) -> ComicSeries:
         return to_series(
-            self.source.get(series_id, on_rate_limit=on_rate_limit), date_source=self.date_source
+            self.source.get(series_id, summary_mode="cache", on_rate_limit=on_rate_limit),
+            date_source=self.date_source,
         )
 
     @copyable_errors
     def fetch_issues_in_series(
         self, series_id: str, *, on_rate_limit: RLCallBack | None = None
     ) -> list[GenericMetadata]:
-        return [
-            to_metadata(
-                self.source.get(series_id, on_rate_limit=on_rate_limit),
-                subject_tags=self.subject_tags,
-                volume_output=self.volume_output,
-                date_source=self.date_source,
-            )
-        ]
+        record = self.source.get(series_id, summary_mode="cache", on_rate_limit=on_rate_limit)
+        metadata = to_metadata(
+            record,
+            subject_tags=self.subject_tags,
+            volume_output=self.volume_output,
+            date_source=self.date_source,
+        )
+        return [metadata]
 
     @copyable_errors
     def fetch_comic_data(
@@ -286,7 +300,7 @@ class JapaneseBooksTalker(ComicTalker):
         selected = issue_id or series_id
         if not selected:
             raise TalkerDataError(self.name, 3, "標準候補選択で NDL 書誌を選んでください。")
-        record = self.source.get(selected, on_rate_limit=on_rate_limit)
+        record = self.source.get(selected, summary_mode="fetch", on_rate_limit=on_rate_limit)
         resolved = resolve_record_number(record)
         if issue_number:
             if resolved.conflict:
@@ -295,13 +309,14 @@ class JapaneseBooksTalker(ComicTalker):
                 )
             if resolved.value and normalize_issue(resolved.value) != normalize_issue(issue_number):
                 raise TalkerDataError(self.name, 3, "選択した書誌の巻番号が要求と一致しません。")
-        return to_metadata(
+        metadata = to_metadata(
             record,
             existing_issue=issue_number,
             subject_tags=self.subject_tags,
             volume_output=self.volume_output,
             date_source=self.date_source,
         )
+        return supplement_series(metadata, record, self.cache_folder, enabled=self.madb_series_supplement)
 
     @copyable_errors
     def fetch_issues_by_series_issue_num_and_year(
@@ -314,7 +329,7 @@ class JapaneseBooksTalker(ComicTalker):
     ) -> list[GenericMetadata]:
         result = []
         for series_id in dict.fromkeys(series_id_list):
-            record = self.source.get(series_id, on_rate_limit=on_rate_limit)
+            record = self.source.get(series_id, summary_mode="cache", on_rate_limit=on_rate_limit)
             resolved = resolve_record_number(record)
             if resolved.conflict:
                 continue

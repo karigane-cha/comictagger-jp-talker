@@ -144,6 +144,8 @@ class MADBRecordBundle:
     holdings: tuple[MADBHoldingRecord, ...] = ()
     warnings: tuple[str, ...] = ()
     completeness: Completeness = "complete"
+    retrieval_scope: Literal["full", "series_linkage"] = "full"
+    # In series_linkage scope, empty agents/holdings mean NOT REQUESTED, not absent.
 
 
 @dataclass(frozen=True)

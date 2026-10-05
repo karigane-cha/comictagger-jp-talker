@@ -1,4 +1,4 @@
-"""Explicit NDL/MADB identity linkage, independent of the normal Talker path."""
+"""NDL/MADB identity linkage, reused by the opt-in missing-Series supplement."""
 
 from __future__ import annotations
 
@@ -260,12 +260,23 @@ def compare_candidates(
 
 
 def link_ndl_record(record: BookRecord, madb_source: MADBSource, *, refresh: bool = False) -> LinkageResult:
-    """Explicit ISBN discovery, then pure comparison. Never called by the Talker.
+    """Explicit ISBN discovery, then pure comparison using the existing source.
 
     All distinct valid ISBNs are queried using the existing source's 10/13 query.
     Any discovery/Book failure makes the overall result unavailable, retaining
     completed evidence but withholding automatic Series comparison.
     """
+    return _link_ndl_record(record, madb_source, madb_source.get, refresh=refresh)
+
+
+def link_ndl_record_for_series(
+    record: BookRecord, madb_source: MADBSource, *, refresh: bool = False
+) -> LinkageResult:
+    """Use the same discovery/identity rules with Book/Series-only acquisition."""
+    return _link_ndl_record(record, madb_source, madb_source.get_for_series_linkage, refresh=refresh)
+
+
+def _link_ndl_record(record: BookRecord, madb_source: MADBSource, acquire, *, refresh: bool) -> LinkageResult:
     isbns = sorted({value for raw in record.isbns if (value := isbn13(raw))})
     discovered: dict[str, CandidateSummary] = {}
     bundles = []
@@ -279,7 +290,7 @@ def link_ndl_record(record: BookRecord, madb_source: MADBSource, *, refresh: boo
             for candidate in page.records:
                 discovered[candidate.id] = CandidateSummary(candidate.id, candidate.uri)
         for candidate in sorted(discovered.values(), key=lambda item: item.id):
-            bundle = madb_source.get(candidate.id, refresh=refresh)
+            bundle = acquire(candidate.id, refresh=refresh)
             if bundle.book.id != candidate.id or bundle.book.uri != candidate.uri:
                 raise MADBError("schema", "Retrieved Book differs from discovered candidate")
             bundles.append(bundle)

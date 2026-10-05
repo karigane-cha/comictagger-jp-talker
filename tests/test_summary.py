@@ -6,7 +6,7 @@ from unittest.mock import Mock
 
 import pytest
 import requests
-from comictalker.comictalker import TalkerDataError, TalkerNetworkError
+from comictalker.comictalker import TalkerDataError
 
 from comictagger_jp_talker.mapping import to_metadata
 from comictagger_jp_talker.models import SearchQuery
@@ -147,22 +147,21 @@ def test_empty_summary_cached(source, no_abstract):
 
 
 @pytest.mark.parametrize("payload", [b"not JSON", b"\xff", b"{}"])
-def test_invalid_json_not_cached(source, no_abstract, payload):
+def test_invalid_json_not_cached(source, no_abstract, payload, caplog):
     source.session.get.return_value._content = no_abstract
     source.search(SearchQuery(isbn="488594287X"))
     source.session.get.return_value._content = payload
-    with pytest.raises(TalkerDataError):
-        source.get(ID)
+    assert source.get(ID).abstracts == []
+    assert "Optional NDL summary failed" in caplog.text
     assert not source.cache.get_search_results("jpbooks.ndl.summary.v1", ID)
 
 
-def test_summary_timeout_is_reported(source, no_abstract):
+def test_summary_timeout_retains_base_record(source, no_abstract, caplog):
     source.session.get.return_value._content = no_abstract
     source.search(SearchQuery(isbn="488594287X"))
     source.session.get.side_effect = requests.Timeout()
-    with pytest.raises(TalkerNetworkError) as error:
-        source.get(ID)
-    assert error.value.sub_code == 4
+    assert source.get(ID).abstracts == []
+    assert "Optional NDL summary failed" in caplog.text
 
 
 def test_summary_uses_shared_rate_limiter(source, no_abstract, details, monkeypatch):

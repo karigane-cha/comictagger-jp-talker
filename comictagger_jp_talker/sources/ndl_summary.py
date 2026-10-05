@@ -8,10 +8,12 @@ exact selected ID, inspect only its items, and never search arbitrary nested tex
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Literal
 
 from comictalker.comictalker import TalkerDataError
 
 DETAIL_ENDPOINT = "https://ndlsearch.ndl.go.jp/api/bib/external/search"
+SummaryMode = Literal["none", "cache", "fetch"]
 
 
 @dataclass(frozen=True)

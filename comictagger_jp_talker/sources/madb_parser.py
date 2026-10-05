@@ -187,7 +187,9 @@ def parse_resource(content: bytes, uri: str, kind: ResourceKind, limit: int, *, 
         raise MADBError("not_found", "MADB resource not found")
     if any(row["p"].kind != "uri" for row in rows):
         raise MADBError("schema", "RDF predicate must be a URI")
-    statements = tuple(dict.fromkeys(MADBStatement(uri, row["p"].value, row["o"]) for row in rows))
+    raw_statements = tuple(MADBStatement(uri, row["p"].value, row["o"]) for row in rows)
+    # Series classification retains even repeated raw name statements as evidence.
+    statements = raw_statements if kind == "series" else tuple(dict.fromkeys(raw_statements))
     truncated = len(rows) == limit
     types = terms(statements, RDF_NS + "type")
     expected = (

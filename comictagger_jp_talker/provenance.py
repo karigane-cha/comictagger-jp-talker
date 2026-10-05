@@ -9,7 +9,7 @@ from comictagger_jp_talker.mapping import ResolvedNumber, infer_volume, resolve_
 from comictagger_jp_talker.models import BookRecord
 from comictagger_jp_talker.sources.madb_models import MADBRecordBundle, RDFTerm
 from comictagger_jp_talker.sources.madb_parser import terms
-from comictagger_jp_talker.sources.madb_queries import SCHEMA_NS
+from comictagger_jp_talker.sources.madb_queries import RDF_NS, SCHEMA_NS, XSD_NS
 
 
 class EvidenceSource(str, Enum):
@@ -41,6 +41,43 @@ class FieldComparisonState(str, Enum):
 
 
 @dataclass(frozen=True)
+class SeriesNameClassification:
+    series_uri: str
+    display_names: tuple[FieldEvidence, ...]
+    readings: tuple[FieldEvidence, ...]
+    other_names: tuple[FieldEvidence, ...]
+
+    @property
+    def effective_display_values(self) -> tuple[str, ...]:
+        # Deduplicate within this resource only; evidence remains untouched.
+        return tuple(
+            dict.fromkeys(e.value.strip() for e in self.display_names if e.value and e.value.strip())
+        )
+
+
+def classify_series_names(series_uri: str, names: tuple[FieldEvidence, ...]) -> SeriesNameClassification:
+    """Use explicit RDF language metadata, never script or title heuristics.
+
+    Phase 2A C334830 and current fixtures establish untagged string displays.
+    Unknown languages/datatypes remain unresolved, even beside a known display.
+    """
+    display, readings, other = [], [], []
+    for evidence in names:
+        term = evidence.raw_value
+        if not isinstance(term, RDFTerm) or term.kind != "literal":
+            other.append(evidence)
+            continue
+        language = term.language.casefold() if term.language else None
+        if language in ("ja", "ja-hrkt") and term.datatype in (None, RDF_NS + "langString"):
+            (readings if language == "ja-hrkt" else display).append(evidence)
+        elif language is None and term.datatype in (None, XSD_NS + "string"):
+            display.append(evidence)
+        else:
+            other.append(evidence)
+    return SeriesNameClassification(series_uri, tuple(display), tuple(readings), tuple(other))
+
+
+@dataclass(frozen=True)
 class SeriesComparison:
     state: FieldComparisonState
     ndl: FieldEvidence
@@ -50,13 +87,14 @@ class SeriesComparison:
     relations: tuple[FieldEvidence, ...]
     ndl_number: ResolvedNumber
     warnings: tuple[str, ...] = ()
+    name_classifications: tuple[SeriesNameClassification, ...] = ()
 
 
 def compare_series(record: BookRecord, bundle: MADBRecordBundle) -> SeriesComparison:
     """Observe an already-linked pair. This pure function does not establish identity.
 
-    All language variants remain candidates, including readings: there is no
-    language preference policy yet. Missing/unresolved resources are not absence.
+    Raw names remain evidence. Only supported displays are comparison values;
+    recognized readings do not introduce ambiguity. Unresolved names block selection.
     """
     inferred, _ = infer_volume(record.title)
     ndl = FieldEvidence(
@@ -100,7 +138,12 @@ def compare_series(record: BookRecord, bundle: MADBRecordBundle) -> SeriesCompar
         for term in series.titles
     )
     ndl_key = inferred.strip() or None
-    madb_keys = tuple(dict.fromkeys(e.value.strip() for e in evidence if e.value and e.value.strip()))
+    classifications = tuple(
+        classify_series_names(series.uri, tuple(e for e in evidence if e.related_uri == series.uri))
+        for series in related
+    )
+    madb_keys = tuple(value for c in classifications for value in c.effective_display_values)
+    unresolved_names = any(e.value and e.value.strip() for c in classifications for e in c.other_names)
     warnings = list(bundle.warnings)
     incomplete = (
         book.completeness != "complete"
@@ -112,9 +155,9 @@ def compare_series(record: BookRecord, bundle: MADBRecordBundle) -> SeriesCompar
     if incomplete:
         state = FieldComparisonState.UNAVAILABLE
         warnings.append("Series evidence is incomplete; missing values are not established absence")
-    elif len(expected) > 1 or len(madb_keys) > 1:
+    elif len(expected) > 1 or len(madb_keys) > 1 or unresolved_names:
         state = FieldComparisonState.MULTIPLE
-        warnings.append("Multiple Series relations or distinct names; no name/language is selected")
+        warnings.append("Multiple Series relations, distinct displays, or unsupported name classification")
     elif ndl_key and madb_keys:
         state = (
             FieldComparisonState.BOTH_AGREE if madb_keys == (ndl_key,) else FieldComparisonState.BOTH_CONFLICT
@@ -134,4 +177,5 @@ def compare_series(record: BookRecord, bundle: MADBRecordBundle) -> SeriesCompar
         relations,
         resolve_record_number(record),
         tuple(dict.fromkeys(warnings)),
+        classifications,
     )

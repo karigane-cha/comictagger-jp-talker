@@ -2,7 +2,7 @@
 
 日本で出版された漫画・書籍の書誌メタデータを取得する独立 Talker プラグインです。
 表示名は **Japanese Books**、Talker ID は **jpbooks**。
-通常のメタデータ取得元は **国立国会図書館サーチ（NDL Search）だけ**です。
+通常のメタデータ取得元は **国立国会図書館サーチ（NDL Search）**です。
 HTTPS の SRU 1.2 API と DC-NDL RDF v3（`recordSchema=dcndl_v3`）を使用し、API キー・secret は不要です。
 要約の補完には、NDL の公式仕様書に記載された書誌詳細 JSON API も使用します。
 CBZ の読み書きと ComicInfo.xml 生成は ComicTagger の標準機構へ任せます。
@@ -10,7 +10,34 @@ CBZ の読み書きと ComicInfo.xml 生成は ComicTagger の標準機構へ任
 Phase 2B-1 では内部の [MADB read-only source](docs/phase2b1_madb_source.md) を追加しています。
 v0.2.1 の [Phase 2B-2](docs/phase2b2_linkage.md) は、NDL ↔ MADB の対応関係を
 direct NDL URL / ISBN evidence で判定し、provenance と Series comparison を保持する内部基盤です。
-通常の Talker 検索・設定・ComicInfo.xml 出力への接続と NDL/MADB merge は未実装です。
+**v0.3.0 / Phase 2C-1** では、実験的な MADB Series 補完を追加しました。
+**OPT-IN / DEFAULT OFF** で、設定を有効にした場合だけ NDL の欠損 Series を補完できます。
+NDL の Series を上書きせず、他の metadata fields は MADB から変更しません。
+詳細は [Phase 2C-1 の実装記録](docs/phase2c1_series_supplement.md) を参照してください。
+
+### 実験的な MADB Series 補完
+
+Preferences の Japanese Books 設定にある **Supplement missing Series from MADB (experimental)**
+を明示的に有効化すると、選択した書誌の fetch 時に限り MADB endpoint への追加通信が発生し得ます。
+設定 key は `jpbooks_madb_series_supplement`、既定値は `false` です。旧設定に key がなくても OFF。
+補完は最終取得の `fetch_comic_data()` だけで行います。候補検索・候補一覧・`fetch_series()` は MADB を呼びません。
+Book と Series の軽量取得を使い、Agent と Holding の詳細は取得しません。
+NDL mapping 後の Series が既にある場合は、ON でも MADB 通信と補完を行いません。
+
+欠損 Series は、既存 linkage が exact / safe strong、検索が非 truncated、
+Series resource と対応する表示名がそれぞれ一意の場合だけ補完します。
+`ja-hrkt` の読みは表示候補から除外します。ambiguous / unsafe / unmatched、
+複数 Series URI / 複数表示名 / 未対応の名称では補完しません。
+MADB unavailable は warning を残し、通常の NDL metadata をそのまま返します。
+成功時の変更は Series と最小限の出典 Notes だけです。NDL の ID と data_origin も維持します。
+既存 mapper は巻次を分離できない非空タイトルも Series とするため、通常の多くの書誌では補完は起動しません。
+
+補完値は国立美術館国立アートリサーチセンター「メディア芸術データベース」の公開データに由来します。
+[公式 dataset 案内](https://github.com/mediaarts-db/dataset)、
+[MADB 利用規約](https://mediaarts-db.artmuseums.go.jp/user_terms)、
+[MADB Lab 利用規約](https://mediag.bunka.go.jp/madb_lab/user_terms/) と、
+[Phase 2A の出典・加工表示](docs/phase2_madb_spec.md) を参照してください。
+コードの MIT License と外部メタデータの利用条件は別です。
 
 ## 対応環境
 
@@ -217,8 +244,11 @@ Phase 1 は mediatype を使います。
 接続 timeout は 5 秒、読み取り timeout は 30 秒。エラー時の自動連続再試行はしません。
 検索結果（0 件を含む）は既存 `ComicCacher` の 7 日、書誌は 1 年の有効期間を利用します。
 キャッシュは ComicTagger の cache フォルダー内 `jpbooks-ndl-v1` に保存します。
-要約補完は選択した書誌に SRU の要約がない場合だけ行い、未取得なら追加で 1 回通信します。
+要約補完は最終取得の `fetch_comic_data()` で、SRU の要約がない場合だけ最大 1 回通信します。
+`fetch_series()` と候補一覧は要約キャッシュだけを参照し、要約 API へ新しく通信しません。
+要約 API の 429・5xx・timeout・不正応答は警告を残し、NDL の基本メタデータを返します。
 要約あり・なしの正常な詳細応答を 7 日間キャッシュし、追加 API にも同じ limiter を適用します。
+失敗応答は永続キャッシュへ保存せず、同一 source 内の即時重複要求だけをメモリ上で抑止します。
 Refresh を使った検索では、選択した書誌の要約も再取得します。
 複数の ComicTagger プロセス間ではアクセス頻度は共有されません。
 
@@ -408,7 +438,7 @@ Cover Artist は CoverArtist、Translator は Translator 要素に書き込ま�
 この CIX reader は Translator を credits に読み戻さず、CoverArtist は Cover として読み戻します。
 プラグイン独自のタグ writer や role は追加しません。
 
-現時点では、シリーズ名は **利用可能な既存 series → `infer_volume(record.title)` で得た作品名**の順です。
+NDL mapping のシリーズ名は **利用可能な既存 series → `infer_volume(record.title)` で得た作品名**の順です。
 巻次を分離できないタイトルは、そのまま作品名として使用します。
 beta.9 は既存 series を fetch 時に渡さないので、その優先処理は `to_metadata(..., existing_series=...)` で利用可能です。
 `dcndl:seriesTitle` は出版シリーズ・レーベル・雑誌名等を含み、漫画作品名とは限りません。
@@ -487,20 +517,14 @@ CI ではこの環境変数を設定しません。詳細な確認元と制約�
 - CR のみでは GTIN・Translator を専用要素へ保存できません。CIX をご利用ください。
 - NDL 書誌の分類から漫画ジャンルを自動推定せず、Kavita での表示結果は手動確認が必要です。
 
-Phase 2B-1 で内部の **MADBSource** を実装済みです。NDL の `BookRecord` を再利用せず、
-MADB 専用の source-specific RDF models を使います。通信は明示的に `MADBSource` を使用した場合だけで、
-通常の NDL lookup は MADB endpoint へアクセスしません。利用者向けの MADB 設定はまだありません。
-v0.2.1 の Phase 2B-2 では、明示的に呼ぶ内部 API として NDL/MADB RecordMatch / linkage、
-Series comparison、provenance、conflict state を追加しました。資料の対応と値の一致・不一致を記録します。
-通常の Talker で MADB metadata を利用する機能、GenericMetadata mapping、自動 merge、
-不一致の解決・値の採用は未実装です。詳細は [Phase 2B-2 の実装記録](docs/phase2b2_linkage.md) を参照してください。
-MADB の Series / Imprint / Credits の上書き、MangaWork lookup、title fuzzy search、電子／紙判定も未実装です。
-詳しい境界は [MADB source の実装記録](docs/phase2b1_madb_source.md) を参照してください。
-次の Phase 2C では controlled Series supplement、provenance-aware merge policy、
-Imprint candidate evaluation、Credits comparison、利用者向け MADB integration policy を検討します。
-同一 MADB Series resource に表示名と読み等の複数名称がある場合も、v0.2.1 では安全側に倒して
-MULTIPLE として保持します。意味的に複数の Series relation があるという断定ではありません。
-display name と reading の意味分類は Phase 2C 前の検討事項で、今回の実装には含みません。
+Phase 2B-1 の **MADBSource**、v0.2.1 の RecordMatch / linkage / provenance を再利用します。
+v0.3.0 / Phase 2C-1 の Series comparison は表示名と読みを分類し、
+同一 Series URI の表示名 1 件と認識済みの読みだけなら MULTIPLE としません。
+別 Series URI、異なる表示値、未対応の名称による ambiguity は保持します。
+実験的な Series 補完以外の MADB metadata mapping、自動 merge、不一致解決は未実装です。
+Imprint / Credits / Publisher / Date の補完、MangaWork lookup、title fuzzy search、電子／紙判定も未実装です。
+Phase 2C-2 以降の候補は Imprint candidate policy、Credits comparison / supplement、Publisher / Date comparison、
+broader provenance-aware merge、利用者向け diagnostics / source visibility、根拠がある場合の weak linkage 調査です。
 その後 **openBD**、**Google Books API**、**Rakuten Books** を取得元に追加することを検討します。
 
 ## ライセンス
