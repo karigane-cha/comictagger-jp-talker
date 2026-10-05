@@ -2,7 +2,7 @@
 
 日本で出版された漫画・書籍の書誌メタデータを取得する独立 Talker プラグインです。
 表示名は **Japanese Books**、Talker ID は **jpbooks**。
-通常のメタデータ取得元は **国立国会図書館サーチ（NDL Search）**です。
+通常のメタデータ取得元は **国立国会図書館サーチ（NDL Search）** です。
 HTTPS の SRU 1.2 API と DC-NDL RDF v3（`recordSchema=dcndl_v3`）を使用し、API キー・secret は不要です。
 要約の補完には、NDL の公式仕様書に記載された書誌詳細 JSON API も使用します。
 CBZ の読み書きと ComicInfo.xml 生成は ComicTagger の標準機構へ任せます。
