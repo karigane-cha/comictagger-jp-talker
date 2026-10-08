@@ -1,0 +1,29 @@
+# Automatically normalize detected text files to LF in Git
+* text=auto
+
+# Python source and scripts
+*.py     text eol=lf
+*.sh     text eol=lf
+*.ps1    text eol=lf
+
+# Documentation and configuration
+*.md     text eol=lf
+*.toml   text eol=lf
+*.yml    text eol=lf
+*.yaml   text eol=lf
+*.txt    text eol=lf
+
+# Structured research data and test fixtures
+*.json   text eol=lf
+*.xml    text eol=lf
+*.rq     text eol=lf
+
+# Repository-specific text files
+.gitignore     text eol=lf
+.gitattributes text eol=lf
+MANIFEST.in    text eol=lf
+LICENSE        text eol=lf
+
+# Windows batch scripts, if introduced in the future
+*.bat    text eol=crlf
+*.cmd    text eol=crlf
