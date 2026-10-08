@@ -547,21 +547,24 @@ class RDFTerm:
     datatype: str | None
     language: str | None
 
+
 @dataclass(frozen=True)
 class MADBStatement:
     subject: str
     predicate: str
     object: RDFTerm
 
+
 @dataclass(frozen=True)
 class MADBCredit:
-    statement: RDFTerm             # raw責任表示、読みも識別
-    predicate: str                 # creator / contributor / originalWorkCreator
+    statement: RDFTerm  # raw 責任表示、読みも識別
+    predicate: str  # creator / contributor / originalWorkCreator
     name_candidate: str | None
     role_raw: str | None
-    agent_uri: str | None          # personとは限らない。照合できた場合のみ
-    agent_kind: str | None         # 個人/団体等のraw。未確認ならNone
+    agent_uri: str | None  # person とは限らない。照合できた場合のみ
+    agent_kind: str | None  # 個人 / 団体等の raw。未確認なら None
     association: Literal["explicit", "name_match", "unresolved"]
+
 
 @dataclass
 class MADBBookRecord:
@@ -580,35 +583,37 @@ class MADBBookRecord:
     publishers: tuple[RDFTerm, ...]
     publisher_references: tuple[RDFTerm, ...]  # P... literalも保持
     labels: tuple[RDFTerm, ...]
-    series_statements: tuple[RDFTerm, ...]    # ma:seriesName
-    series_uris: tuple[str, ...]             # 通常0..1。異常な複数を失わない
+    series_statements: tuple[RDFTerm, ...]  # ma:seriesName
+    series_uris: tuple[str, ...]  # 通常0..1。異常な複数を失わない
     credits: tuple[MADBCredit, ...]
-    creator_references: tuple[RDFTerm, ...]   # literalと順序対応させない
+    creator_references: tuple[RDFTerm, ...]  # literal と順序対応させない
     languages: tuple[RDFTerm, ...]
-    genres: tuple[RDFTerm, ...]              # materialではない
+    genres: tuple[RDFTerm, ...]  # material ではない
     extent: tuple[MADBStatement, ...]
     external_identifiers: tuple[ExternalIdentifier, ...]
-    statements: tuple[MADBStatement, ...]    # 未知predicateも保存
+    statements: tuple[MADBStatement, ...]  # 未知 predicate も保存
     fetched_at: str
-    dataset_version: str | None              # endpointでは通常None
+    dataset_version: str | None  # endpoint では通常 None
     completeness: Literal["complete", "truncated", "partial"]
+
 
 @dataclass(frozen=True)
 class ExternalIdentifier:
-    scheme: str                             # ndl_search_bib / jpno / holding_id等
+    scheme: str  # ndl_search_bib / jpno / holding_id 等
     raw: RDFTerm
     normalized: str | None
-    subject_uri: str                         # Bookか所蔵かAgentか
+    subject_uri: str  # Book か所蔵か Agent か
     predicate: str
     provider: str | None
+
 
 @dataclass
 class MADBRecordBundle:
     book: MADBBookRecord
-    series: tuple[MADBSeriesRecord, ...]     # title/brand/version/date/raw statements
+    series: tuple[MADBSeriesRecord, ...]  # title/brand/version/date/raw statements
     agents: tuple[MADBAgentRecord, ...]
     holdings: tuple[MADBHoldingRecord, ...]
-    works: tuple[MADBWorkRecord, ...]        # 現段階は空。具体parser実装は保留
+    works: tuple[MADBWorkRecord, ...]  # 現段階は空。具体 parser 実装は保留
     work_status: Literal["not_queried", "unavailable", "present", "error"]
     warnings: tuple[str, ...]
 ```
@@ -648,8 +653,8 @@ class RecordMatch:
 | — | JPNO、Agent 典拠、P 番号の NDL Bib ID への読み替え | unsafe |
 
 Phase 2B 最初は ISBN exact 検索と raw ISBN 比較を実装する。
-ISBN がない 11.38%は無理にタイトル linkage へ流さず未照合とする。
-直接 NDL URL があれば ISBN に先行する検証材料とするが、所蔵 ID の coverage/対応確認を終えるまで
+ISBN がない 11.38% は無理にタイトル linkage へ流さず未照合とする。
+直接 NDL URL があれば ISBN に先行する検証材料とするが、所蔵 ID の coverage / 対応確認を終えるまで
 全資料に対する自動 ID-linkage を前提にしない。
 
 ISBN で得た候補は全件返し、上限到達時は truncated を示す。同じ ISBN を持つ異なる Book URI を潰さない。
@@ -666,10 +671,11 @@ class FieldEvidence:
     predicate_or_path: str
     raw_terms: tuple[RDFTerm, ...]
     value: object
-    transform: str | None          # isbn10_to13_v1 / role_prefix_v1等
-    scope: str                    # book / series / holding / paper / digital
+    transform: str | None  # isbn10_to13_v1 / role_prefix_v1 等
+    scope: str  # book / series / holding / paper / digital
     retrieved_at: str
     source_version: str | None
+
 
 @dataclass(frozen=True)
 class FieldComparison:
@@ -677,6 +683,7 @@ class FieldComparison:
     ndl: tuple[FieldEvidence, ...]
     madb: tuple[FieldEvidence, ...]
     reasons: tuple[str, ...]
+
 
 @dataclass(frozen=True)
 class ResolvedField:
@@ -751,21 +758,21 @@ POST も SELECT 専用。SERVICE/UPDATE 等をユーザー入力で任意実行�
 
 ```text
 comictagger_jp_talker/
-  models.py                 # 現在のNDL互換BookRecordを維持
-  isbn.py                   # 共用可能なISBN正規化
-  mapping.py                # 既存NDL→GenericMetadata
+  models.py                 # 現在の NDL 互換 BookRecord を維持
+  isbn.py                   # 共用可能な ISBN 正規化
+  mapping.py                # 既存 NDL→GenericMetadata
   sources/
-    base.py                 # 現契約を確認し、異種recordを無理に返さない
+    base.py                 # 現契約を確認し、異種 record を無理に返さない
     ndl.py                  # 既存
     ndl_summary.py          # 既存
     madb.py                 # 将来: read-only transport / search / get
     madb_models.py          # 将来: RDFTerm, Book, Series, Agent, Holding
     madb_queries.py         # 将来: bounded SELECT templates
-  madb_mapping.py           # 将来: MADB-only GenericMetadata候補
+  madb_mapping.py           # 将来: MADB-only GenericMetadata 候補
   linkage.py                # 将来: 同一資料判定
-  provenance.py             # 将来: sourceとraw/変換の保持
-  comparison.py             # 将来: 4状態のfield比較
-  merge.py                  # 最終段階のみ: 明示policyによるcontrolled merge
+  provenance.py             # 将来: source と raw/ 変換の保持
+  comparison.py             # 将来: 4 状態の field 比較
+  merge.py                  # 最終段階のみ: 明示 policy による controlled merge
 ```
 
 既存 Source 契約が BookRecord 前提なら初期 MADB adapter は別契約にする。
@@ -794,7 +801,7 @@ Work を別フェーズへ延期する明示的なスコープ変更が必要。
 |---|---|
 | 現行 endpoint が利用可能 | 調査時 GET/POST 成功。長期間の安定性/SLA は未確認 |
 | ISBN で Book 取得 | 達成。13/10 と datatype を確認 |
-| Series relation 取得 | 達成。ただし全 Book の約 80.8%に限定 |
+| Series relation 取得 | 達成。ただし全 Book の約 80.8% に限定 |
 | Work relation 取得 | **未達**。query は 0 件、配布にもなし |
 | ISBN format/datatype 把握 | 達成。欠損・複数・不正・set を含む |
 | Volume 形式把握 | 達成。整数以外も確認 |
@@ -831,7 +838,7 @@ ZIP、PDF、raw HTTP、temporary tooling は gitignore 済み `.research/madb/` 
 PDF 抽出用 pypdf は同ディレクトリ内だけに置き、production dependency には追加していない。
 
 ```powershell
-# 通常のpythonがPATHにある環境。今回の環境では .\.venv\Scripts\python.exe を使用。
+# 通常の python が PATH にある環境。今回の環境では .\.venv\Scripts\python.exe を使用。
 python scripts/research_madb.py isbn_exact --query docs/research/madb/queries/isbn_exact.rq
 python scripts/research_madb.py resource_get --query docs/research/madb/queries/resource_get.rq
 python scripts/research_madb.py series --query docs/research/madb/queries/series.rq
@@ -864,5 +871,5 @@ package version は変更しない。ZIP build、tag、release、merge は実施
 - `git diff --exit-code -- comictagger_jp_talker pyproject.toml .github tests`: 成功、差分なし。
 
 調査対象の各項目は本書で確認結果・欠損・未確認を区別して扱った。
-DoD のうち**Work の実データ取得成功は満たせない**。電子版実例の確定も未達。
+DoD のうち **Work の実データ取得成功は満たせない**。電子版実例の確定も未達。
 この事実を未解決事項として残すことが、Phase 2A で無根拠な実装を避けるための設計境界となる。
