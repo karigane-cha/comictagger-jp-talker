@@ -151,14 +151,15 @@ def test_search_priority_helper(talker, record):
     assert talker.source.search.call_args.args[0].isbn == "9784885942877"
     talker.source.search.reset_mock()
     talker.source.search.side_effect = [
-        SearchPage([], 0), SearchPage([], 0), SearchPage([], 0), SearchPage([record], 1)
+        SearchPage([], 0),
+        SearchPage([], 0),
+        SearchPage([], 0),
+        SearchPage([record], 1),
     ]
     md.gtin = None
     talker.search_metadata(md)
     queries = [c.args[0] for c in talker.source.search.call_args_list]
-    assert [(q.issue, q.creator) for q in queries] == [
-        ("74", "作者"), ("74", ""), ("", "作者"), ("", "")
-    ]
+    assert [(q.issue, q.creator) for q in queries] == [("74", "作者"), ("74", ""), ("", "作者"), ("", "")]
 
 
 def test_literal_and_validation(talker):

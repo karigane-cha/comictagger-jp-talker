@@ -288,8 +288,21 @@ def test_output_modes(record, output, expected, raw):
 @pytest.mark.parametrize(
     "raw",
     [
-        "上", "下", "上巻", "下巻", "前編", "後編", "外伝", "別巻", "番外編",
-        "特別編", "完", "1/2", "1-2", "1.5", "12.5",
+        "上",
+        "下",
+        "上巻",
+        "下巻",
+        "前編",
+        "後編",
+        "外伝",
+        "別巻",
+        "番外編",
+        "特別編",
+        "完",
+        "1/2",
+        "1-2",
+        "1.5",
+        "12.5",
     ],
 )
 @pytest.mark.parametrize("output", ["volume", "issue", "both"])

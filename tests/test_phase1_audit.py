@@ -60,8 +60,27 @@ def test_edition_candidates_remain_distinct(record, editions):
 @pytest.mark.parametrize(
     "raw",
     [
-        "0", "第0巻", "０", "第０巻", "上", "下", "上巻", "下巻", "前編", "後編", "12.5", "1-2", "1/2",
-        "別巻", "外伝", "番外編", "特別編", "完", "公式ファンブック", "短編集", "総集編",
+        "0",
+        "第0巻",
+        "０",
+        "第０巻",
+        "上",
+        "下",
+        "上巻",
+        "下巻",
+        "前編",
+        "後編",
+        "12.5",
+        "1-2",
+        "1/2",
+        "別巻",
+        "外伝",
+        "番外編",
+        "特別編",
+        "完",
+        "公式ファンブック",
+        "短編集",
+        "総集編",
     ],
 )
 def test_noninteger_and_zero_volume_only_never_invents_a_number(record, raw):
@@ -178,8 +197,14 @@ def test_paper_and_digital_candidates_show_distinguishing_fields(record):
     for item in (paper, digital):
         details = to_series(item).description
         for label in (
-            "Series:", "Author:", "ISBN:", "Publisher:",
-            "Bibliographic date:", "Edition:", "Material:", "Provider:",
+            "Series:",
+            "Author:",
+            "ISBN:",
+            "Publisher:",
+            "Bibliographic date:",
+            "Edition:",
+            "Material:",
+            "Provider:",
         ):
             assert label in details
         assert item.editions[0] in details and item.isbns[0] in details

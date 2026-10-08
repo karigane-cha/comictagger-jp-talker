@@ -486,9 +486,8 @@ def to_metadata(
         month=month,
         day=day,
         language=language_code(record.languages),
-        description="\n\n".join(
-            v for raw in _usable_abstracts(record) if (v := _XML_UNSAFE.sub("", raw))
-        ) or None,
+        description="\n\n".join(v for raw in _usable_abstracts(record) if (v := _XML_UNSAFE.sub("", raw)))
+        or None,
         web_links=[parse_url(record.url)] if record.url else [],
         credits=map_credits(record),
         tags=set([v for v in record.subjects if v.strip()][:10]) if subject_tags else set(),
