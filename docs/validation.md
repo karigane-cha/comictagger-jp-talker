@@ -808,3 +808,102 @@ CR の GTIN/Translator 非対応は CIX で対応する。本体の変更や独�
 調査用 checkout・Python／依存環境・一時キャッシュは `.research`, `.tools`, `.venv` に分離して
 `.gitignore` 対象とし、配布 wheel には含めない。
 0.1.0 初回検証時点では GitHub Actions の設定ファイルを追加済みだったが、リモート CI 自体は未実行だった。
+
+## Phase 2C-2B: Imprint 候補評価 API の検証
+
+検証期間: **2026-10-08～2026-10-09 (JST)**。パッケージは **v0.3.0** のまま。評価仕様は `phase2c2b-v1`。
+詳細は [実装仕様書](phase2c2b_imprint_candidates.md)、実装は
+[imprint_candidates.py](../comictagger_jp_talker/imprint_candidates.py)。
+Phase 2A～2C-2A の過去の観測値・判断は維持した。
+
+### 実装範囲と確認結果
+
+取得済み MADBRecordBundle から schema:brand の抽出・言語と構造の分類・Book / Series / NDL の比較・採用可否を返す。
+入力は変更せず、raw RDFTerm と subject / predicate / object、各出現位置、取得状態、全意味確認証拠を保持する。
+ELIGIBLE / HOLD / REJECT に加え、既存値・安全な候補欠損を SKIP として区別する。
+ELIGIBLE の場合だけ単一の Book 候補を返し、他は selected_candidate=None とする。
+
+意味確認は、明示的な trusted / VERIFIED、独立性、既知の origin group、同巻・同 ISBN・出版主体・版・媒体・時期の適用確認が必要。
+URL、Book / Series 一致、NDL の系列表記だけで意味を確定しない。
+M1032569 は、保存済み集英社の確認注記に基づくテスト用の明示的な信頼・適用契約を与えた場合だけ ELIGIBLE。
+証拠なしの M1032569 / M1032568 は、実測の MATCHED / EXACT でも HOLD。
+M197767 の版表示重複、M353277 / M1080059 の不一致、階層・数値・雑誌・別表記混在を採用しない。
+Series-only、未知 term、不完全取得、identity conflict、XML 不正文字、異なる対象の意味確認も採用しない。
+
+### 実測・synthetic の区別
+
+保存済み Phase 2C-2A evidence から **39 Book / 27 Series** を必要な predicate に縮約し、
+tests/fixtures/madb/imprint_measured.json に収録した。
+元ファイルの SHA-256、raw binding、取得日時、request_id、出典・加工表示を検証した。
+11 NDL 書誌の選択フィールドと、M1032568 / M1032569 の実測 discovery を再利用した。
+他資料の discovery / linkage 完了条件、すべての authority trust / scope envelope、
+未観測の RDF 型・言語・datatype・取得失敗・Unicode 境界は synthetic と明記した。
+正例の成功は公式サイトを自動取得・検証する実運用機能の成功ではない。
+
+### 実行環境と結果
+
+Windows、CPython 3.12.14、ComicTagger 1.6.0b9、pytest 9.1.1、Ruff 0.16.8。
+通常の python が PATH にないため、既存 .venv/Scripts/python.exe を使用した。
+
+| 検証 | 最終結果 |
+|---|---|
+| Imprint 専用単体テスト | **235 passed**（0.71 秒）。新規の test_imprint_candidates.py |
+| 全回帰テスト | **1,612 passed / 13 skipped / 1 xfailed**（25.57 秒） |
+| 既存基準との差分 | 1,376 passed に対し、Imprint 235 件 + sdist 検証 1 件を追加 |
+| Ruff check | All checks passed |
+| Ruff format --check | **59 files already formatted** |
+| sdist → wheel ビルド | 成功。既存依存環境を利用する --no-isolation |
+| build_plugin.py | 成功。jpbooks_talker-plugin-0.3.0.zip を生成 |
+| packaging | **3 件通過**。entry point、beta.9 ZIP loader、sdist 内容の検証 |
+| wheel / ZIP の収録内容 | imprint_candidates.py が作業ソースと byte 単位で一致。ComicTagger 本体・docs・tests を wheel / ZIP に同梱しない |
+| sdist の再現性 | 評価モジュール、専用テスト、縮約 fixture、検証元 evidence が作業ファイルと一致 |
+| 既存動作の保持 | 通常 NDL 検索・取得、ISBN、照合、Series 補完、既定 OFF、通信抑止、fail-open、Notes、ComicInfo.xml、標準 GUI / ZIP 統合試験を既存 suite で確認 |
+| pure function の境界 | 新規評価の network / file I/O 禁止、GenericMetadata・Book / Series / bundle 不変、繰り返し・順序不変を確認 |
+| 改行を考慮した Git 差分確認 | git -c core.whitespace=cr-at-eol diff --check が成功 |
+| 実 API テスト | 新規アクセスなし。既存 opt-in テストは有効化していない |
+
+再現コマンド:
+
+```powershell
+.venv/Scripts/python.exe -m pytest tests/test_imprint_candidates.py -v -p no:cacheprovider --basetemp .research/phase2c2b-unit-release
+.venv/Scripts/python.exe -m pytest -q -p no:cacheprovider --basetemp .research/phase2c2b-regression-release
+.venv/Scripts/python.exe -m ruff check .
+.venv/Scripts/python.exe -m ruff format --check .
+.venv/Scripts/python.exe -m build --no-isolation
+.venv/Scripts/python.exe -X utf8 scripts/build_plugin.py dist/comictagger_jp_talker-0.3.0-py3-none-any.whl
+.venv/Scripts/python.exe -m pytest tests/test_packaging.py -v -p no:cacheprovider --basetemp .research/phase2c2b-packaging-final
+git -c core.whitespace=cr-at-eol diff --check
+```
+
+### 初回の失敗と修正
+
+- 初回単体テストの 1 件は、壊した Book URI から検証済み authority を作ろうとする synthetic fixture の不整合だった。
+  正常な authority と壊れた snapshot を別に用意して、不一致の拒否を検証するよう修正した。
+- 初回の全体 format check は既存 10 ファイルの整形不一致だった。機械的な改行・行配置・コード例の空白を修正した。
+  9 Python ファイルの HEAD との AST 同一性、Phase 2A 仕様書の本文の非空白文字列・Python コード例の AST 同一性を確認した。
+  mapping.py の規則、既存テストの意味、過去の観測値は変更していない。
+- sandbox 内のビルド・配布物確認では、既存配布物の置換や生成済み wheel / sdist の読み込みに Windows のアクセス拒否が発生した。
+  承認された環境でビルド・読み取り検証・全回帰テストを再実行し、成功した。
+- CRLF が Git の既定差分検査で行末空白と見なされたため、検証コマンドだけ cr-at-eol を明示した。
+  リポジトリの Git 設定は変更していない。既知の xfail、既存の skip、失敗したテストは無効化していない。
+
+### 変更と互換性
+
+追加: imprint_candidates.py、test_imprint_candidates.py、imprint_measured.json、phase2c2b_imprint_candidates.md。
+validation.md に本記録を追記し、test_packaging.py に ZIP import 確認と sdist 検証を追加した。
+MANIFEST.in は fixture の検証元 evidence を sdist に収録するための 1 行だけ変更した。
+既存の整形対象は mapping.py、test_comicinfo.py、test_madb.py、test_madb_boundary.py、test_mapping.py、
+test_ndl.py、test_numbers.py、test_phase1_audit.py、test_talker.py と phase2_madb_spec.md。
+開始時に存在した未コミットの Phase 2C-2A の 4 成果物は保持した。
+
+通常の Talker 経路、GenericMetadata.imprint、その他の出力、設定、バージョン、identity algorithm、Series 補完を変更していない。
+commit / merge / push / tag / GitHub Release は実行していない。
+実際の Imprint 書き込み、公式情報の自動取得、補完設定、ComicInfo.xml への新値保存・再読込、
+実際の Imprint 補完を伴う built-plugin integration は未実施で、Phase 2C-2C の範囲とする。
+
+### 移行判断
+
+**CONDITIONAL GO**。候補評価 API の条件付き採用と安全な保留・拒否の検証は完了した。
+本番の補完には、信頼済み意味確認の供給・独立性・更新と失効、対象版・媒体・時期・構造の確認を確立する必要がある。
+LinkageResult は raw bundle を返さないため、同一 snapshot と AcquisitionContext を Series / Imprint に共有する内部契約が必要。
+次フェーズでは OFF 互換性、同時 ON、cache / refresh、要求数、fail-open、CR / CIX 往復、ZIP の実補完を追加検証する。

@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 import subprocess
 import sys
+import tarfile
 from importlib.metadata import entry_points
 from pathlib import Path
 
@@ -18,6 +19,24 @@ def test_installed_entry_point(tmp_path):
     assert plugin.load().name == "Japanese Books"
     talkers, _ = get_talkers("1.6.0b9", tmp_path)
     assert talkers["jpbooks"].name == "Japanese Books"
+
+
+def test_sdist_contains_imprint_fixture_and_its_source():
+    root = Path(__file__).resolve().parents[1]
+    artifact = root / "dist" / f"comictagger_jp_talker-{__version__}.tar.gz"
+    if not artifact.is_file():
+        pytest.skip("Build the source distribution first")
+    prefix = f"comictagger_jp_talker-{__version__}/"
+    with tarfile.open(artifact) as archive:
+        for path in (
+            "comictagger_jp_talker/imprint_candidates.py",
+            "tests/test_imprint_candidates.py",
+            "tests/fixtures/madb/imprint_measured.json",
+            "docs/research/madb/imprint_evidence.json",
+        ):
+            member = archive.extractfile(prefix + path)
+            assert member is not None
+            assert member.read() == (root / path).read_bytes()
 
 
 def test_built_zip_in_isolated_host(tmp_path):
@@ -238,6 +257,12 @@ from unittest.mock import patch
 import requests
 sys.path.insert(0, sys.argv[1])
 with patch.object(requests.Session, "request", side_effect=AssertionError("No import-time network")):
+    from comictagger_jp_talker.imprint_candidates import (
+        AcquisitionContext, classify_imprint_terms, compare_imprint_candidates,
+        evaluate_imprint_eligibility, extract_imprint_evidence,
+    )
+    assert ".zip" in evaluate_imprint_eligibility.__code__.co_filename
+    assert AcquisitionContext().discovery.value == "not_requested"
     from comictagger_jp_talker.linkage import LinkageResult, LinkageStatus, RecordMatch, compare_candidates
     from comictagger_jp_talker.provenance import FieldEvidence, SeriesComparison
     from comictagger_jp_talker.models import BookRecord
