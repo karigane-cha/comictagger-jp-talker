@@ -27,3 +27,6 @@ LICENSE        text eol=lf
 # Windows batch scripts, if introduced in the future
 *.bat    text eol=crlf
 *.cmd    text eol=crlf
+
+# Preserve byte-exact research evidence referenced by SHA-256
+docs/research/madb/imprint_evidence.json -text -eol
