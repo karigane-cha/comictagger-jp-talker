@@ -267,7 +267,13 @@ def main():
                 }
             )
             for start in range(0, len(related), 8):
-                capture(data, source, related[start : start + 8], "series")
+                capture(
+                    data,
+                    source,
+                    related[start : start + 8],
+                    "series",
+                    retry_network=args.retry_network_once,
+                )
     if args.ndl:
         collect_ndl(data)
     print(
