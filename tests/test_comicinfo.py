@@ -87,9 +87,7 @@ def test_cbz_comicinfo_roundtrip(tmp_path, record, tag, output, subtitle):
 @pytest.mark.parametrize(
     "edition,material", [("Special", "Book"), ("新装版", "図書 http://ndl.go.jp/ndltype/Book")]
 )
-def test_opaque_volume_and_ndl_format_sources_do_not_write_cix_tags(
-    tmp_path, record, raw, edition, material
-):
+def test_opaque_volume_and_ndl_format_sources_do_not_write_cix_tags(tmp_path, record, raw, edition, material):
     record = replace(record, title="作品名", volumes=[raw], editions=[edition], material_types=[material])
     path = tmp_path / "safe.cbz"
     cover = io.BytesIO()
