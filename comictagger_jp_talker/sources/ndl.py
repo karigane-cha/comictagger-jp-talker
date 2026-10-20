@@ -26,6 +26,8 @@ from comictagger_jp_talker.models import BookRecord, ContentDates, SearchPage, S
 from comictagger_jp_talker.sources.ndl_summary import DETAIL_ENDPOINT, SummaryMode, parse_summary
 
 ENDPOINT = "https://ndlsearch.ndl.go.jp/api/sru"
+SRU_TIMEOUT = (5, 60)
+SUMMARY_TIMEOUT = (5, 15)
 RECORD_SCHEMA = "dcndl_v3"
 SEARCH_CACHE = "jpbooks.ndl.search.dcndl_v3"
 RECORD_CACHE = "jpbooks.ndl.record.dcndl_v3"
@@ -336,14 +338,48 @@ class NDLSource:
             "startRecord": 1,
             "query": query,
         }
-        return self._get(ENDPOINT, params, on_rate_limit)
+        return self._get(ENDPOINT, params, on_rate_limit, api="SRU", timeout=SRU_TIMEOUT)
 
-    def _get(self, endpoint: str, params: dict, on_rate_limit: RLCallBack | None) -> bytes:
+    def _get(
+        self,
+        endpoint: str,
+        params: dict,
+        on_rate_limit: RLCallBack | None,
+        *,
+        api: str,
+        timeout: tuple[int, int],
+    ) -> bytes:
         try:
             with _LIMITER.ratelimit("ndlsearch", delay=True, on_rate_limit=on_rate_limit):
-                response = self.session.get(endpoint, params=params, timeout=(5, 30))
-            response.raise_for_status()
-            return response.content  # XML bytes determine encoding; never requests' guessed .text.
+                # Exclude limiter/lock waits; Session.get includes receiving the body.
+                started = time.monotonic()
+                response = None
+                try:
+                    response = self.session.get(endpoint, params=params, timeout=timeout)
+                    response.raise_for_status()
+                    content = response.content  # XML bytes determine encoding, not guessed .text.
+                except requests.RequestException as exc:
+                    failed_response = exc.response if exc.response is not None else response
+                    # Public error reporting / optional-summary warnings own higher-level logs.
+                    # Keep timing diagnostics at DEBUG to avoid duplicate warning/error reports.
+                    logger.debug(
+                        "NDL %s request failed: status=%s error=%s elapsed=%.2fs timeout=(%s,%s)",
+                        api,
+                        failed_response.status_code if failed_response is not None else None,
+                        type(exc).__name__,
+                        time.monotonic() - started,
+                        *timeout,
+                    )
+                    raise
+                elapsed = time.monotonic() - started
+            logger.debug(
+                "NDL %s request completed: status=%s elapsed=%.2fs timeout=(%s,%s)",
+                api,
+                response.status_code,
+                elapsed,
+                *timeout,
+            )
+            return content
         except requests.Timeout as exc:
             raise TalkerNetworkError("NDL Search", 4) from exc
         except requests.ConnectionError as exc:
@@ -376,7 +412,13 @@ class NDLSource:
             content = (
                 cached[0].data.data
                 if cached
-                else self._get(DETAIL_ENDPOINT, {"cs": "bib", "f-token": record.id}, on_rate_limit)
+                else self._get(
+                    DETAIL_ENDPOINT,
+                    {"cs": "bib", "f-token": record.id},
+                    on_rate_limit,
+                    api="Summary",
+                    timeout=SUMMARY_TIMEOUT,
+                )
             )
             try:
                 data = json.loads(content)
