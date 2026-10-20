@@ -1,16 +1,19 @@
 import copy
 import json
+import logging
 import xml.etree.ElementTree as ET
-from dataclasses import replace
+from dataclasses import asdict, replace
+from types import SimpleNamespace
 from unittest.mock import Mock
 
 import pytest
 import requests
-from comictalker.comictalker import TalkerDataError
+from comictalker.comictalker import RLCallBack, TalkerDataError
 
 from comictagger_jp_talker.mapping import to_metadata
 from comictagger_jp_talker.models import SearchQuery
-from comictagger_jp_talker.sources.ndl import NS, NDLSource, parse_sru
+from comictagger_jp_talker.sources import ndl
+from comictagger_jp_talker.sources.ndl import NS, SUMMARY_CACHE, SUMMARY_TIMEOUT, NDLSource, parse_sru
 from comictagger_jp_talker.sources.ndl_summary import DETAIL_ENDPOINT, parse_summary
 
 ID = "R100000002-Itest001"
@@ -107,7 +110,9 @@ def test_selected_fetch_enriches_and_caches(source, details, no_abstract, tmp_pa
     record = source.get(ID)
     args, kwargs = source.session.get.call_args
     assert args == (DETAIL_ENDPOINT,)
-    assert kwargs == {"params": {"cs": "bib", "f-token": ID}, "timeout": (5, 30)}
+    assert kwargs == {"params": {"cs": "bib", "f-token": ID}, "timeout": SUMMARY_TIMEOUT}
+    assert SUMMARY_TIMEOUT == (5, 15)
+    assert [call.kwargs["timeout"] for call in source.session.get.call_args_list] == [(5, 60), (5, 15)]
     md = to_metadata(record)
     assert md.description == "紙版の要約・𠮷野"
     assert "架空の提供元 / 紙 / returned-item" in md.notes
@@ -156,12 +161,69 @@ def test_invalid_json_not_cached(source, no_abstract, payload, caplog):
     assert not source.cache.get_search_results("jpbooks.ndl.summary.v1", ID)
 
 
-def test_summary_timeout_retains_base_record(source, no_abstract, caplog):
+@pytest.mark.parametrize("error", [requests.Timeout(), requests.ReadTimeout(), requests.ConnectTimeout()])
+def test_summary_timeout_retains_base_record(source, no_abstract, monkeypatch, caplog, error):
     source.session.get.return_value._content = no_abstract
     source.search(SearchQuery(isbn="488594287X"))
-    source.session.get.side_effect = requests.Timeout()
+    original = source.get(ID, summary_mode="none")
+    now = [100.0]
+    monkeypatch.setattr(ndl, "time", SimpleNamespace(monotonic=lambda: now[0]))
+
+    def timeout(*args, **kwargs):
+        now[0] += 15.02
+        raise error
+
+    source.session.get.side_effect = timeout
+    with caplog.at_level(logging.DEBUG, logger=ndl.__name__):
+        assert asdict(source.get(ID)) == asdict(original)
+        assert asdict(source.get(ID)) == asdict(original)  # Suppressed, with no automatic retry.
+    assert asdict(source.get(ID, summary_mode="none")) == asdict(original)
+    assert source.session.get.call_count == 2  # Initial SRU and one failed Summary request.
+    assert source.session.get.call_args.kwargs["timeout"] == (5, 15)
+    assert not source.cache.get_search_results(SUMMARY_CACHE, ID)
+    assert source._summary_failures[ID] == now[0] + ndl.SUMMARY_FAILURE_COOLDOWN
+    assert caplog.messages[0] == (
+        f"NDL Summary request failed: status=None error={type(error).__name__} elapsed=15.02s timeout=(5,15)"
+    )
+    assert len(caplog.records) == 2
+    assert caplog.records[0].levelno == logging.DEBUG
+    assert caplog.records[1].levelno == logging.WARNING
+    assert "Optional NDL summary failed" in caplog.messages[1]
+
+
+def test_summary_success_timing(source, no_abstract, details, monkeypatch, caplog):
+    source.session.get.return_value._content = no_abstract
+    source.get(ID, summary_mode="none")
+    source.session.get.return_value._content = json.dumps(details).encode()
+    now = [100.0]
+    monkeypatch.setattr(ndl, "time", SimpleNamespace(monotonic=lambda: now[0]))
+
+    def get(*args, **kwargs):
+        now[0] += 1.25
+        return source.session.get.return_value
+
+    source.session.get.side_effect = get
+    with caplog.at_level(logging.DEBUG, logger=ndl.__name__):
+        assert source.get(ID).abstracts == ["紙版の要約・𠮷野"]
+        assert source.get(ID).abstracts == ["紙版の要約・𠮷野"]
+    assert caplog.messages == ["NDL Summary request completed: status=200 elapsed=1.25s timeout=(5,15)"]
+    assert source.session.get.call_count == 2
+
+
+def test_failed_summary_refresh_preserves_success_cache(source, no_abstract, details):
+    query = SearchQuery(isbn="488594287X")
+    source.session.get.return_value._content = no_abstract
+    source.search(query)
+    content = json.dumps(details).encode()
+    source.session.get.return_value._content = content
+    assert source.get(ID).abstracts == ["紙版の要約・𠮷野"]
+    source.session.get.return_value._content = no_abstract
+    source.search(query, refresh=True)
+    source.session.get.side_effect = requests.ReadTimeout()
     assert source.get(ID).abstracts == []
-    assert "Optional NDL summary failed" in caplog.text
+    assert source.get(ID).abstracts == []
+    assert source.cache.get_search_results(SUMMARY_CACHE, ID)[0].data.data == content
+    assert source.session.get.call_count == 4
 
 
 def test_summary_uses_shared_rate_limiter(source, no_abstract, details, monkeypatch):
@@ -174,8 +236,10 @@ def test_summary_uses_shared_rate_limiter(source, no_abstract, details, monkeypa
     source.session.get.return_value._content = json.dumps(details).encode()
     limiter = Mock(return_value=contextlib.nullcontext())
     monkeypatch.setattr(ndl._LIMITER, "ratelimit", limiter)
-    source.get(ID)
-    assert limiter.call_count == 1
+    callback = RLCallBack(lambda a, b: None, 1)
+    source.get(ID, on_rate_limit=callback)
+    limiter.assert_called_once_with("ndlsearch", delay=True, on_rate_limit=callback)
+    assert source.session.get.call_args.kwargs["timeout"] == (5, 15)
 
 
 def test_record_abstract_and_notes_are_separate(xml_bytes):

@@ -3,10 +3,13 @@ from pathlib import Path
 from unittest.mock import Mock
 
 import pytest
+import requests
+from comicapi.genericmetadata import GenericMetadata
 from comictalker.comictalker import TalkerDataError, TalkerNetworkError
 
 from comictagger_jp_talker.errors import report_error
 from comictagger_jp_talker.models import SearchPage
+from comictagger_jp_talker.sources import ndl
 
 
 def test_error_log_and_hint(talker, caplog):
@@ -50,3 +53,24 @@ def test_zero_results_do_not_create_error_log(talker):
     talker._source.search.return_value = SearchPage([], 0)
     assert talker.search_for_series("9784088528113") == []
     assert not (talker.cache_folder / "jpbooks/latest-error.txt").exists()
+
+
+@pytest.mark.parametrize("operation", ["search_for_series", "search_metadata", "fetch_comic_data"])
+def test_sru_timeout_preserves_public_error_report(talker, caplog, operation):
+    error = requests.ReadTimeout("read timeout=60")
+    talker.source.session.get.side_effect = error
+    argument = {
+        "search_for_series": "パタリロ！ 13",
+        "search_metadata": GenericMetadata(series="パタリロ！", issue="13"),
+        "fetch_comic_data": "selected-id",
+    }[operation]
+    with caplog.at_level(logging.DEBUG, logger=ndl.__name__), pytest.raises(TalkerNetworkError) as caught:
+        getattr(talker, operation)(argument)
+    assert caught.value.sub_code == 4
+    assert caught.value.__cause__ is error
+    assert talker.source.session.get.call_count == 1
+    assert talker.source.session.get.call_args.kwargs["timeout"] == (5, 60)
+    assert "Ctrl+C" in str(caught.value)
+    report = (talker.cache_folder / "jpbooks/latest-error.txt").read_text(encoding="utf-8")
+    assert operation in report and "ReadTimeout" in report and "read timeout=60" in report
+    assert sum(record.levelno >= logging.WARNING for record in caplog.records) == 1

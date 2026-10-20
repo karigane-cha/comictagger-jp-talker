@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import contextlib
+import logging
 from dataclasses import replace
+from types import SimpleNamespace
 from unittest.mock import Mock
 
 import pytest
@@ -9,8 +11,11 @@ import requests
 from comictalker.comictalker import RLCallBack, TalkerDataError, TalkerNetworkError
 
 from comictagger_jp_talker.models import SearchQuery
+from comictagger_jp_talker.sources import ndl
 from comictagger_jp_talker.sources.ndl import (
     ENDPOINT,
+    RECORD_CACHE,
+    SRU_TIMEOUT,
     NDLSource,
     build_cql,
     cql_quote,
@@ -200,7 +205,7 @@ def test_http_and_cache(source, tmp_path):
     page = source.search(SearchQuery(isbn="488594287X", mediatype=""))
     args, kwargs = source.session.get.call_args
     assert args == (ENDPOINT,)
-    assert kwargs["timeout"] == (5, 30)
+    assert kwargs["timeout"] == SRU_TIMEOUT == (5, 60)
     assert kwargs["params"]["recordSchema"] == "dcndl_v3"
     assert kwargs["params"]["recordPacking"] == "xml"
     assert kwargs["params"]["version"] == "1.2"
@@ -230,23 +235,131 @@ def test_empty_cached(source):
     "error,code,label",
     [
         (requests.Timeout(), 4, "timed out"),
+        (requests.ReadTimeout(), 4, "timed out"),
+        (requests.ConnectTimeout(), 4, "timed out"),
         (requests.ConnectionError(), 1, "Connection error"),
         (requests.RequestException(), 0, "Request error"),
     ],
 )
-def test_network_errors(source, error, code, label):
+def test_network_errors(source, monkeypatch, error, code, label):
+    cache_write = Mock(wraps=source.cache.add_search_results)
+    monkeypatch.setattr(source.cache, "add_search_results", cache_write)
     source.session.get.side_effect = error
     with pytest.raises(TalkerNetworkError, match=label) as caught:
         source.search(SearchQuery(title="漫画"))
     assert caught.value.sub_code == code
+    assert caught.value.__cause__ is error
+    assert source.session.get.call_count == 1
+    cache_write.assert_not_called()
 
 
 @pytest.mark.parametrize("status,subcode", [(500, 0), (429, 3), (403, 0)])
-def test_http_error(source, status, subcode):
+def test_http_error(source, monkeypatch, caplog, status, subcode):
+    clock = Mock(side_effect=[100.0, 102.43])
+    monkeypatch.setattr(ndl, "time", SimpleNamespace(monotonic=clock))
+    cache_write = Mock(wraps=source.cache.add_search_results)
+    monkeypatch.setattr(source.cache, "add_search_results", cache_write)
     source.session.get.return_value.status_code = status
-    with pytest.raises(TalkerNetworkError, match=f"HTTP error: {status}") as caught:
+    with (
+        caplog.at_level(logging.DEBUG, logger=ndl.__name__),
+        pytest.raises(TalkerNetworkError, match=f"HTTP error: {status}") as caught,
+    ):
         source.search(SearchQuery(title="漫画"))
     assert caught.value.sub_code == subcode
+    assert isinstance(caught.value.__cause__, requests.HTTPError)
+    assert source.session.get.call_count == 1
+    cache_write.assert_not_called()
+    assert (
+        f"NDL SRU request failed: status={status} error=HTTPError elapsed=2.43s timeout=(5,60)"
+        in caplog.messages
+    )
+
+
+def test_check_status_uses_sru_timeout_without_search_cache(source):
+    source.search(SearchQuery(isbn="488594287X", mediatype=""))
+    source.check_status()
+    source.check_status()
+    assert source.session.get.call_count == 3
+    assert all(call.args == (ENDPOINT,) for call in source.session.get.call_args_list)
+    assert all(call.kwargs["timeout"] == (5, 60) for call in source.session.get.call_args_list)
+
+
+def test_request_timing_excludes_limiter_waits(source, monkeypatch, caplog):
+    now = [100.0]
+    clock = Mock(side_effect=lambda: now[0])
+    monkeypatch.setattr(ndl, "time", SimpleNamespace(monotonic=clock))
+
+    @contextlib.contextmanager
+    def limiter(*args, **kwargs):
+        now[0] += 20
+        yield
+        now[0] += 10
+
+    def get(*args, **kwargs):
+        now[0] += 2.43
+        return source.session.get.return_value
+
+    monkeypatch.setattr(ndl._LIMITER, "ratelimit", limiter)
+    source.session.get.side_effect = get
+    query = SearchQuery(title="private-query")
+    with caplog.at_level(logging.DEBUG, logger=ndl.__name__):
+        source.search(query)
+        source.search(query)  # Cache hits produce neither HTTP requests nor timing logs.
+    messages = [r for r in caplog.records if r.name == ndl.__name__]
+    assert len(messages) == 1
+    assert messages[0].levelno == logging.DEBUG
+    assert messages[0].getMessage() == ("NDL SRU request completed: status=200 elapsed=2.43s timeout=(5,60)")
+    assert "private-query" not in caplog.text
+    assert clock.call_count == 2
+    assert source.session.get.call_count == 1
+
+
+@pytest.mark.parametrize(
+    "error,subcode,status",
+    [
+        (requests.ReadTimeout("private-error"), 4, None),
+        (requests.ConnectTimeout("private-error"), 4, None),
+        (requests.ConnectionError("private-error"), 1, None),
+        (requests.RequestException("private-error"), 0, None),
+        (requests.HTTPError("private-error"), 0, None),
+        (requests.HTTPError("private-error", response=requests.Response()), 0, 500),
+        (requests.HTTPError("private-error", response=requests.Response()), 3, 429),
+    ],
+)
+def test_failed_request_diagnostics_preserve_exception(source, monkeypatch, caplog, error, subcode, status):
+    if error.response is not None:
+        error.response.status_code = status
+    clock = Mock(side_effect=[100.0, 160.04])
+    monkeypatch.setattr(ndl, "time", SimpleNamespace(monotonic=clock))
+    source.session.get.side_effect = error
+    with caplog.at_level(logging.DEBUG, logger=ndl.__name__), pytest.raises(TalkerNetworkError) as caught:
+        source.search(SearchQuery(title="private-query"))
+    assert caught.value.sub_code == subcode
+    assert caught.value.__cause__ is error
+    assert clock.call_count == 2
+    assert source.session.get.call_count == 1  # No automatic retry, including on 429.
+    assert caplog.messages == [
+        f"NDL SRU request failed: status={status} error={type(error).__name__} elapsed=60.04s timeout=(5,60)"
+    ]
+    assert "private-query" not in caplog.text and "private-error" not in caplog.text
+
+
+@pytest.mark.parametrize("failure", ["timeout", "http"])
+def test_failed_refresh_keeps_successful_search_and_record_cache(source, failure):
+    query = SearchQuery(title="漫画")
+    original = source.search(query)
+    original_record = source.get(original.records[0].id, summary_mode="none")
+    cached_xml = source.cache.get_series_info(original_record.id, RECORD_CACHE).data.data
+    if failure == "timeout":
+        source.session.get.side_effect = requests.ReadTimeout()
+    else:
+        source.session.get.return_value.status_code = 500
+    with pytest.raises(TalkerNetworkError):
+        source.search(query, refresh=True)
+    assert source.search(query) == original
+    assert source.get(original_record.id, summary_mode="none") == original_record
+    assert source.cache.get_series_info(original_record.id, RECORD_CACHE).data.data == cached_xml
+    assert source.session.get.call_count == 2
 
 
 def test_rate_limit_callback_passed(source, monkeypatch):
