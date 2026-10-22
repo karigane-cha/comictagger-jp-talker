@@ -14,7 +14,7 @@ jobs:
 
     strategy:
       matrix:
-        python-version: ['3.10', '3.12']
+        python-version: ['3.10', '3.12', '3.14']
 
     steps:
       - uses: actions/checkout@v7
@@ -22,8 +22,36 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python-version }}
+          check-latest: true
 
-      - run: python -m pip install -e '.[dev]'
+      - name: Verify Python 3.14 security baseline
+        if: matrix.python-version == '3.14'
+        shell: pwsh
+        run: |
+          $verify = @'
+          import sys
+          print(sys.version)
+          if (sys.version_info[:2] != (3, 14)
+                  or sys.version_info < (3, 14, 9)
+                  or sys.version_info.releaselevel != "final"):
+              raise SystemExit("A stable Python 3.14.9 or later 3.14 release is required")
+          '@
+          python -c $verify
+          if ($LASTEXITCODE -ne 0) {
+            throw "Python 3.14 security baseline verification failed"
+          }
+
+      - name: Bootstrap secure pip
+        shell: pwsh
+        run: ./.github/scripts/bootstrap-pip.ps1
+
+      - run: python -m pip install -e '.[dev]' 'certifi>=2026.10.19'
+
+      - name: Verify Python packaging security
+        run: python .github/scripts/verify-python-security.py --require-certifi
+
+      - name: Check installed dependencies
+        run: python -m pip check
 
       - run: python -m ruff check .
 
@@ -43,6 +71,10 @@ jobs:
         with:
           python-version: '3.12'
 
+      - name: Bootstrap secure pip
+        shell: pwsh
+        run: ./.github/scripts/bootstrap-pip.ps1
+
       - name: Install build dependencies and package metadata
         shell: pwsh
         run: |
@@ -50,10 +82,18 @@ jobs:
           if ($LASTEXITCODE -ne 0) {
             throw "Failed to install build dependencies"
           }
+          # Check tools before the intentionally dependency-free metadata install.
+          python -m pip check
+          if ($LASTEXITCODE -ne 0) {
+            throw "Build dependency validation failed"
+          }
           python -m pip install --no-deps -e .
           if ($LASTEXITCODE -ne 0) {
             throw "Failed to install package metadata"
           }
+
+      - name: Verify Python packaging security
+        run: python .github/scripts/verify-python-security.py
 
       - name: Get package version
         id: version
