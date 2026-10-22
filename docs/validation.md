@@ -907,3 +907,160 @@ commit / merge / push / tag / GitHub Release は実行していない。
 本番の補完には、信頼済み意味確認の供給・独立性・更新と失効、対象版・媒体・時期・構造の確認を確立する必要がある。
 LinkageResult は raw bundle を返さないため、同一 snapshot と AcquisitionContext を Series / Imprint に共有する内部契約が必要。
 次フェーズでは OFF 互換性、同時 ON、cache / refresh、要求数、fail-open、CR / CIX 往復、ZIP の実補完を追加検証する。
+
+## CI / Release の証明書対策と Python 3.14 系への対応（2026-10-23）
+
+### 背景と変更範囲
+
+[Python Packaging の公式勧告](https://discuss.python.org/t/information-for-python-users-regarding-emudhra-emsign-ca-certificate-security-incident/109576)
+に基づき、eMudhra / emSign の証明書問題に対して CI / Release のパッケージ取得を保護し、
+Python 3.14 系の互換性を継続的に検証する構成とした。
+安全性を確認していない pip による依存取得を避け、Python のパッチ選択とパッケージ管理の
+セキュリティ下限をそれぞれ検証する。
+
+実装と検証記録の対象は次の 5 ファイル。
+
+- `.github/workflows/test.yml`: Python 3.10 / 3.12 / 3.14 のテスト、最新安定パッチの選択、
+  Python 3.14 の下限検証、test / build の pip 更新と依存関係検証。
+- `.github/workflows/release.yml`: 依存導入前の pip 更新と導入後のセキュリティ検証。
+- `.github/scripts/bootstrap-pip.ps1`: 共通の pip 更新処理と実際の Python バージョンの出力。
+- `.github/scripts/verify-python-security.py`: pip、同梱 certifi、必要な環境の独立した certifi の検証。
+- `docs/validation.md`: 仕様・検証結果・残存する制約の記録。
+
+### Python バージョンの選択とセキュリティ下限
+
+CI テスト マトリックスは `['3.10', '3.12', '3.14']`。
+`actions/setup-python@v7` と `check-latest: true` を使用し、各系列について
+Actions の配布一覧で利用可能な最新安定パッチを選択する。
+`allow-prereleases` は既定の false を維持する。
+キャッシュ内の古いパッチを優先しない選択方法は
+[setup-python の公式仕様](https://github.com/actions/setup-python/blob/v7/docs/advanced-usage.md#check-latest-version)
+に基づく。将来の 3.14 パッチも Actions で利用可能になればワークフローの変更なしで選択できるが、
+Python 本体の公開直後から Actions で取得できることを保証する設定ではない。
+
+`matrix.python-version == '3.14'` のステップだけで、実際の `sys.version_info` が
+3.14 系、3.14.9 以上、かつ `releaselevel == "final"` であることを検証する。
+3.14.9 未満、プレリリース、別系列は拒否する。
+実バージョンをログに出力し、違反時は `SystemExit` と PowerShell の終了コード検査で停止する。
+`assert` を使わないため、Python の最適化設定によって検証が無効にならない。
+この 3.14 専用条件を Python 3.10 / 3.12 に適用しない。build / Release は Python 3.12 を維持する。
+
+[Python 3.14.9 の公式案内](https://www.python.org/downloads/release/python-3149/)
+に同梱 pip 26.2.2 / certifi 2026.10.19 による eMudhra 対策が記載されているため、
+3.14 系の最低セキュリティ バージョンを 3.14.9 とした。
+ローカルで互換性を検証した具体的なバージョンは Python 3.12.14 と Python 3.14.9。
+
+### pip / certifi のセキュリティ対策
+
+pip >=26.2.2、certifi >=2026.10.19 を必須とする。
+公式勧告にある uv >=0.13.4、sigstore >=4.5.1 については、CI で使用していないため導入していない。
+古い pip は独立した certifi を更新しても自身の同梱 CA を使い続けるため、両者を区別して検証する。
+
+全ジョブで checkout → setup-python → ハッシュ付き pip wheel の再導入 → pip / 同梱 CA の検証
+→ 各ジョブの依存導入、の順序とする。3.14 の test ジョブでは setup-python の直後に Python の下限も検証する。
+[PyPI の pip 26.2.2](https://pypi.org/project/pip/26.2.2/) と公式案内で
+wheel URL、SHA-256、Python >=3.10 の要件を照合した。
+公式 wheel は `pip-26.2.2-py3-none-any.whl`、SHA-256 は
+`fd7f4dfa8190e014013b9f08f3e973f4e4c26ffd179a204895533a7254813a70`。
+完全な URL とハッシュは共通スクリプトに一元化している。
+
+`--no-deps --no-cache-dir --force-reinstall` を指定し、同一バージョンも再導入する。
+`--disable-pip-version-check` で古い pip の追加の更新確認通信を止め、
+TLS 検証を無効化せずに取得した wheel のハッシュ照合を必須とする。
+[setup-python v7 の実装](https://github.com/actions/setup-python/blob/v7/src/find-python.ts)
+では `pip-version` が既存 pip による通常の更新を呼び出すため、安全な更新の起点には使用しない。
+
+バージョン比較は pip 同梱の `packaging.version.Version` を使い、追加依存を導入しない。
+pip と同梱 certifi を検証し、test / Release では独立した `certifi>=2026.10.19` も
+明示的に導入して実バージョンを検証する。依存導入後には `pip check` を実行する。
+最低版未満、最低版の rc / dev 版、必要なパッケージの欠落、更新・検証コマンドの非ゼロ終了は
+ジョブを失敗させる。
+
+build では `build` 導入直後に `pip check` を実行し、続いて `--no-deps -e .` で
+バージョン取得用のメタデータを導入する。メタデータ導入後の全体 `pip check` は、
+意図的に省いた本体依存を不足と判定するため実行せず、pip / 同梱 CA を再検証する。
+GUI / 開発用依存や独立した certifi は追加しない。
+ローカルで確認した build 1.6.1 は、隔離ビルドの依存取得にも外側の更新済み pip を使用する。
+
+### CI / Release の既存動作と互換性
+
+`requires-python = ">=3.10"`、Ruff の `target-version = "py310"`、公開バージョン `0.3.0` を維持。
+NDL / MADB の取得・検索、Imprint の判定、メタデータのマッピング、GUI を含む本番コード、
+既存テスト、`pyproject.toml`、`.gitignore`、`scripts/build_plugin.py` は変更していない。
+既存の未コミット変更も保持した。CI 専用スクリプトは `.github/scripts/` に配置している。
+
+Ruff、`pytest -m "not network"`、`QT_QPA_PLATFORM=offscreen`、`PYTHONUTF8=1`、
+テスト失敗時のジョブ停止、既存の除外条件を維持する。
+build / Release の wheel / sdist / ComicTagger プラグイン ZIP の生成、
+成果物の名前と内部構造、アップロード処理、GitHub Actions の権限・認証も保持する。
+Release の `vX.Y.Z` タグ検証、パッケージ バージョンとの照合、安全な生成物削除、
+ZIP の隔離ホスト テスト、構造・メタデータ検証、同名資産の重複アップロード防止を維持する。
+YAML の構造比較で、build のバージョン取得以降と Release のタグ照合以降のステップが
+変更前と一致することを確認した。
+
+`gh release create --verify-tag` は
+[タグの存在確認](https://cli.github.com/manual/gh_release_create) であり、暗号学的な署名検証ではない。
+現行ワークフローには署名済みタグの暗号学的な検証処理はなく、この対策でも追加していない。
+
+### ローカル検証結果
+
+以下は最終検証の実測結果。Python 3.14.9 はローカルの検証環境のバージョンを示す。
+
+| 検証 | 結果 |
+|---|---|
+| Python 3.12.14 / `.venv` | **2,616 passed / 13 deselected / 1 xfailed**、65.70 秒 |
+| Python 3.14.9 / `.tools/venv-py314` | **2,616 passed / 13 deselected / 1 xfailed**、65.43 秒 |
+| Ruff | 両環境の `ruff check .`、CI 専用スクリプトの明示検査とも成功 |
+| 依存整合性 | uv 0.13.4 の `pip check` が両環境で成功、40 / 38 パッケージ。両環境の certifi は 2026.10.19 |
+| Actions / YAML | actionlint 1.7.12、PyYAML の構文・順序・マトリックス・権限・既存処理比較が成功 |
+| PowerShell 構文 | GitHub 式を仮の値に置換して全 run ブロックと更新スクリプトの構文解析に成功 |
+| Python 下限 | 3.14.8 / 3.14.9 / 3.14.10 / 3.14.11 / rc / alpha / 別系列の 8 ケースが成功。最適化付きコンパイルでも確認 |
+| 実環境の下限検証 | ワークフローから抽出した PowerShell ステップを Python 3.14.9 で実行して成功 |
+| pip / certifi | 一時環境で公式 wheel の取得・再導入、同梱 / 独立 certifi の検査、`pip check` が成功 |
+| pip / certifi の条件検証 | 版境界・欠落など 18 ケースが成功 |
+| PowerShell の失敗停止 | 更新処理の正常 / 異常終了 4 ケースが成功 |
+| Python 3.10 の構文互換性 | CI 専用 Python スクリプトを `ast.parse(feature_version=(3, 10))` で確認 |
+| 配布物 | 安全な pip の一時環境で wheel / sdist の隔離ビルド、既存スクリプトによる ZIP 生成が成功 |
+| packaging テスト | 新規生成物で **3 passed**、14.83 秒。sdist 内容と ZIP の本体一致、隔離ホストでの読み込みを確認 |
+| Release 用 ZIP 検証 | ワークフロー内の Python 検証コードを抽出し、新規 ZIP に対して成功 |
+| Git / 改行 | `git diff --check` 成功。実装・記録の変更ファイルは UTF-8（BOM なし）/ LF |
+
+回帰テストは以下の条件で実行した。`network` マーカーは有効化せず、警告の出力もなかった。
+
+```powershell
+$env:QT_QPA_PLATFORM = 'offscreen'
+$env:PYTHONUTF8 = '1'
+.venv/Scripts/python.exe -m ruff check .
+.venv/Scripts/python.exe -m pytest -m 'not network' -p no:cacheprovider
+.tools/venv-py314/Scripts/python.exe -m ruff check .
+.tools/venv-py314/Scripts/python.exe -m pytest -m 'not network' -p no:cacheprovider
+.tools/actionlint-1.7.12/actionlint.exe .github/workflows/test.yml .github/workflows/release.yml
+```
+
+既知の Windows のアクセス制約については許可された環境を使用し、pytest のキャッシュを無効化した。
+所有権・ACL・既存キャッシュ、`.venv` / `.tools/venv-py314` の依存は変更していない。
+検証用コード、ビルド ログ、最終成果物は Git 対象外の `.research/ci-security-py314-20261023/`、
+pip の更新・ビルド用一時環境は `.research/ci-security-20261022/bootstrap-env/` にある。
+最終成果物は `source/dist/` に出力し、リポジトリ直下の既存 `dist/` は変更していない。
+
+### 未検証事項と今後の確認
+
+GitHub Actions 実環境での実行、Python 3.10 のローカル・CI 実行、
+ホストされた Windows での最新パッチ取得・依存解決・資産アップロード・Release 登録は未検証。
+[公式 versions-manifest](https://github.com/actions/python-versions/blob/main/versions-manifest.json)
+で 3.14.9 の Windows x64 配布を確認したことは、実ジョブの成功を意味しない。
+将来の Python 3.14 パッチとの互換性は未保証であり、選択された版ごとに CI で確認する。
+
+この対策は CI / Release の Python パッケージ取得が対象で、OS の証明書ストア、
+既存の全仮想環境、配布済み ComicTagger ホスト、利用者環境の更新は対象外。
+依存全体のハッシュ固定や署名検証の新設も行っていない。
+pip の wheel を更新する際は、公式 URL・SHA-256・最低バージョン・同梱 certifi の検証条件を
+まとめて見直す必要がある。
+
+PR 前には CI 関連の変更と既存の機能開発差分を区別し、新規スクリプトの追加漏れを確認する。
+通常の CI で test の 3 系列と Python 3.12 の build、実際の Python / pip / certifi のログ、
+生成 ZIP を確認してからマージする。Release 前にはタグとバージョン、同名資産の保持、
+隔離ホスト テストを確認する。
+将来 Release を Python 3.14 系へ移す場合は、ビルド依存・wheel / sdist・ZIP メタデータ、
+ComicTagger 1.6.0b9 の隔離ホスト テスト、公開経路を改めて検証する。
+commit / push / tag / GitHub Release の作成・更新 / Actions の手動実行は行っていない。
