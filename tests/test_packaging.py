@@ -29,7 +29,14 @@ def test_sdist_contains_imprint_fixture_and_its_source():
         pytest.skip("Build the source distribution first")
     prefix = f"comictagger_jp_talker-{__version__}/"
     with tarfile.open(artifact) as archive:
+        production = tuple((root / "comictagger_jp_talker").rglob("*.py"))
+        assert {prefix + p.relative_to(root).as_posix() for p in production} == {
+            n
+            for n in archive.getnames()
+            if n.startswith(prefix + "comictagger_jp_talker/") and n.endswith(".py")
+        }
         for path in (
+            *(p.relative_to(root).as_posix() for p in production),
             "comictagger_jp_talker/imprint_candidates.py",
             "comictagger_jp_talker/acquisition.py",
             "comictagger_jp_talker/sources/madb_acquisition.py",
@@ -45,12 +52,55 @@ def test_sdist_contains_imprint_fixture_and_its_source():
             "tests/test_metadata_supplement.py",
             "tests/fixtures/metadata_supplement_baseline.json",
             "tests/test_imprint_candidates.py",
+            "tests/test_imprint_report.py",
             "tests/fixtures/madb/imprint_measured.json",
             "docs/research/madb/imprint_evidence.json",
         ):
             member = archive.extractfile(prefix + path)
             assert member is not None
             assert member.read() == (root / path).read_bytes()
+
+
+def test_built_wheel_report_api_and_entry_points(tmp_path):
+    root = Path(__file__).resolve().parents[1]
+    artifact = root / "dist" / f"comictagger_jp_talker-{__version__}-py3-none-any.whl"
+    if not artifact.is_file():
+        pytest.skip("Build the wheel first")
+    with zipfile.ZipFile(artifact) as archive:
+        paths = tuple((root / "comictagger_jp_talker").rglob("*.py"))
+        assert {p.relative_to(root).as_posix() for p in paths} == {
+            n for n in archive.namelist() if n.startswith("comictagger_jp_talker/") and n.endswith(".py")
+        }
+        for path in paths:
+            assert archive.read(path.relative_to(root).as_posix()) == path.read_bytes()
+        entries = archive.read(next(n for n in archive.namelist() if n.endswith("/entry_points.txt")))
+        assert entries.decode().strip() == (
+            "[comictagger.talker]\njpbooks = comictagger_jp_talker.talker:JapaneseBooksTalker"
+        )
+    code = """
+import sys
+from unittest.mock import patch
+import requests
+sys.path.insert(0, sys.argv[1])
+with patch.object(requests.Session, "__init__", side_effect=AssertionError("No session")):
+    from comictagger_jp_talker.imprint_report import describe_imprint_evidence, report_to_json_data
+    from comictagger_jp_talker.linkage import acquire_linked_record_evidence
+    from comictagger_jp_talker.models import BookRecord
+    assert ".whl" in describe_imprint_evidence.__code__.co_filename
+    evidence = acquire_linked_record_evidence(BookRecord("test", "Title"), object())
+    data = report_to_json_data(describe_imprint_evidence(evidence))
+    assert data["schema_version"] == "imprint-report-v1"
+    assert data["apply_allowed"] is data["writes_performed"] is False
+"""
+    result = subprocess.run(
+        [sys.executable, "-X", "utf8", "-I", "-c", code, str(artifact)],
+        cwd=tmp_path,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        timeout=30,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
 
 
 def test_built_zip_in_isolated_host(tmp_path):
@@ -317,6 +367,12 @@ with patch.object(requests.Session, "request", side_effect=AssertionError("No im
     assert ".zip" in acquire_linked_record_evidence.__code__.co_filename
     no_isbn = acquire_linked_record_evidence(BookRecord("test", "Title"), object())
     assert no_isbn.bundles == () and no_isbn.acquisition_context.discovery.state.value == "not_requested"
+    from comictagger_jp_talker.imprint_report import describe_imprint_evidence, report_to_json_data
+    assert ".zip" in describe_imprint_evidence.__code__.co_filename
+    report = report_to_json_data(describe_imprint_evidence(no_isbn))
+    assert report["schema_version"] == "imprint-report-v1"
+    assert report["authority_state"] == report["archive_state"] == "not_supplied"
+    assert report["writes_performed"] is report["apply_allowed"] is False
 print("ZIP: optional linkage API imported and evaluated without network")
 import contextlib
 import io

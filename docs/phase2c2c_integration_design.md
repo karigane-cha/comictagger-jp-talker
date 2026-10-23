@@ -1062,3 +1062,30 @@ authority はプレビュー時の成功を再利用せず、確認時・保存�
 並行して host raw 観測 / transaction の feasibility と D の実供給を別々に検証する。
 双方の受入・レビュー前に F / G を開始しない。
 工程 A～C の GO と E0 の実測を維持し、**Imprint 自動補完全体は NO-GO**。
+
+## 18. 工程 R1 の確定契約（Phase 2C-2C-4R1）
+
+2026-10-23。§17 までの設計・記録を保持し、純粋な診断 report のみを実装した。
+詳細は [R1 の契約](phase2c2c_imprint_report.md)、検証結果は [validation.md](validation.md) を参照。
+
+- `imprint_report.describe_imprint_evidence(LinkedRecordEvidence)` は frozen な
+  `ImprintDiagnosticReport` を返す。`report_to_json_data(report)` は新しい JSON 互換 dict を返す。
+- schema は `imprint-report-v1`、package は `0.3.0`。identity `phase2b2-v1` と
+  evaluator `phase2c2b-v1` は変更しない。JSON の型・フィールドは明示し、暗黙の schema 変更を拒否する。
+- acquisition 台帳、全 discovery page、失敗・未取得・除外を含む全 Book、全 trace / issues と
+  linkage 全体を保持する。Book の対応は台帳の位置で示し、同じ ID を集約しない。
+- included_in_linkage=True の bundle に既存の抽出・分類・比較・評価を適用する。
+  NDL は取得時 snapshot の独立コピー。除外 bundle は分類まで、bundle 不在は評価なし。
+  identity を再計算せず、局所的な一件だけの MATCHED を作らない。
+- raw term・出典・qualifier・statement / label indices・比較 key・blockers を保持する。
+  authority は空 tuple、保存先は未供給。HOLD / REJECT / SKIP を変更しない。
+- operation=READ_ONLY、authority_state / archive_state=not_supplied、target_known /
+  existing_value_assessed / apply_allowed / writes_performed=false を固定する。
+  `existing_imprint=None` は archive 欠損の観測ではない。
+- 取得時刻・cache・応答 hash の不明値は null のまま。bundle の同時点性は unknown。
+  API は通信・filesystem・metadata 更新・clock 読取・出力を行わない。
+
+R1 の専用試験は 208 件。R2 の通信・コマンド・renderer、R3 の実用性確認は実装していない。
+通常 Talker / metadata_supplement / Series 補完への接続、新設定、entry point は追加しない。
+R2 は明示通信許可・既存取得制限・close・安全な表示・通常経路非接続を条件に進める。
+工程 D と host 保存契約の未解決事項は維持し、**Imprint 自動補完全体は NO-GO**。

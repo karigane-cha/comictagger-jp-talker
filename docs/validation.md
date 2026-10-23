@@ -1732,3 +1732,120 @@ PR 前には CI 関連の変更と既存の機能開発差分を区別し、新�
 将来 Release を Python 3.14 系へ移す場合は、ビルド依存・wheel / sdist・ZIP メタデータ、
 ComicTagger 1.6.0b9 の隔離ホスト テスト、公開経路を改めて検証する。
 commit / push / tag / GitHub Release の作成・更新 / Actions の手動実行は行っていない。
+
+## Phase 2C-2C-4R1：純粋 Imprint 診断 report（2026-10-23）
+
+開始状態は `feat/madb-imprint-integration` / `2a12b22360dc1c129abbd8b6d678f6df725074cb`、
+clean、package `0.3.0`。指定された基点と一致し、既存 6 コミットを変更していない。
+`commit.gpgsign=true` / `gpg.format=ssh` を確認した。
+環境は Python `3.12.14`、ComicTagger `1.6.0b9`、comicinfoxml `0.5.1`。
+
+### 実装範囲と純粋性
+
+`imprint_report.py` に frozen な report と純粋な構築・JSON 変換 API を追加した。
+確定契約は [R1 文書](phase2c2c_imprint_report.md)、統合設計の追記は §18。
+schema は `imprint-report-v1`。既存の取得・identity・意味判定規則と通常 Talker / Series 出力は維持する。
+全 Book 台帳・discovery page・traces・issues、raw provenance、分類・比較・意味評価を保持する。
+除外 bundle を再照合せず、失敗・未取得を空 bundle に変換しない。
+
+authority は未供給、保存先・既存値は未評価、operation=READ_ONLY、
+apply_allowed / writes_performed=false。HOLD / REJECT / SKIP をそのまま残す。
+report に mutable な BookRecord を保持せず、snapshot の独立コピーだけを evaluator に渡す。
+
+専用試験では import 後に source / session 生成、HTTP、cache、SQLite、Path / open、clock helper、
+logger、GenericMetadata 生成・更新、ComicArchive 生成・保存を禁止して API を実行した。
+同一入力の結果一致、入力・元 BookRecord・metadata・CBZ・既存エラー履歴の不変、stdout / stderr 無出力を確認。
+JSON 変換後の dict を変更しても report は変わらない。
+通常試験は既存 autouse fixture で外部 HTTP を禁止し、通信試験の opt-in は有効にしていない。
+
+### 検証結果
+
+| 対象 | 結果 |
+|---|---|
+| R1 専用試験 | **208 passed**、8.57 秒 |
+| 指定の関連 9 ファイル、権限付き再実行 | **1,519 passed**、56.00 秒。skip / xfail / fail なし |
+| 全体 suite、権限付き実行 | **2,825 passed / 13 skipped / 1 xfailed**、69.59 秒。fail なし |
+| Ruff check | **All checks passed** |
+| Ruff format check | **76 files already formatted** |
+| sdist / wheel | 最新 source から `build --no-isolation` で生成成功。wheel は sdist から生成 |
+| plugin ZIP | 既存 `scripts/build_plugin.py` に wheel を渡して生成 |
+| 配布物の source 比較 | sdist / wheel / ZIP それぞれ全 **24 production Python ファイル**の集合・bytes が一致 |
+| wheel import | 隔離プロセスで wheel 内の report API を import・実行。session 生成なし |
+| ComicTagger loader | 実 ZIP を beta9 loader で読込。path cleanup 後の従来 fetch / Series 補完・共有 core が成功 |
+| 設定・entry point | 既存 Talker のみ。新規 console entry point・Imprint 設定・自動書込なし |
+| 差分・文字形式 | `git diff --check`、明示ステージ後の cached diff check。変更テキストは UTF-8 / BOM なし / LF |
+
+13 skipped は NDL 関連 9、linkage 2、MADB 2 の既存 opt-in 通信試験。
+1 xfailed は既知の CIX writer の整数 Volume 0 省略。配布物依存試験の skip はない。
+既報の 2,614 passed / 15 skipped / 1 xfailed に対し、新規 R1 の 208 件、
+新規 wheel 試験 1 件、配布物が存在して実行された既存 2 件が passed に加わった。
+
+専用 208 件には既存 linkage 24 ケース × 2 scope × trace 有無、実測 RDF 39 件、
+単一・複数 brand、Book / Series 一致・競合、Series-only、reading / IRI / bnode / datatype、
+publisher / edition 同名、階層・結合・雑誌名・XML 不正値、authority 未供給を含む。
+実測 RDF に付けた取得 context は synthetic と明示し、本番 authority を供給・検証したとは扱わない。
+正常 0 件・有効 ISBN なし・partial 0 件・truncated・Book / Series failure・relation budget・
+Agent / Holding 未要求・trace 不在・cache 原時刻不明を元台帳と照合した。
+500 候補、同一 ID の重複項目、1,000 件以上の event を省略せず保持する。
+JSON の全文 roundtrip と独立した dataclass 展開の一致、制御文字・Unicode・空白・時刻 offset の保持、
+未対応型・NaN / Infinity・schema / 保存状態の契約違反拒否を確認した。
+
+### 失敗の原因と対応
+
+最初の専用試験は 94 failed / 111 passed。
+共通の test helper が既存 `source_for()` の full 用 `get` だけを設定し、
+軽量取得の `get_for_series_linkage` に synthetic bundle を返していなかったことが原因。
+helper の対応を修正すると 204 passed / 1 failed となった。
+残った大量候補試験は既存 fixture parser の 300 行 cap を超えていたため、
+取得済み parsed snapshot を直接組み立てる synthetic 試験へ変更した。production cap は変更していない。
+その後の追加試験では 207 passed / 1 failed。異なる ISBN を UNMATCHED と期待していたが、
+既存 linkage は ISBN conflict を UNSAFE とする。URL / ISBN 証拠がない UNMATCHED 入力へ訂正し、
+208 passed を確認した。identity や evaluator をテストに合わせて緩和していない。
+
+最初の sandbox 内 build は既存 sdist を置換する `os.remove(result_path)` で
+`PermissionError: [WinError 5]`。同じ build を許可された権限で再実行して成功した。
+ZIP 生成も wheel を開く段階の PermissionError を確認し、権限付きで成功した。
+関連試験の最初の実行は **2 failed / 1,517 passed**、53.78 秒。
+失敗は sdist の `tarfile.open` と wheel の `zipfile.ZipFile` の読み取り権限で、内容検証前の例外。
+この実測 stack を確認したうえで同じ関連試験を権限付きで再実行し、1,519 passed となった。
+全体 suite はこの権限制約を踏まえて権限付きで実行し、上記のとおり成功した。
+以前の PermissionError と同じものだと仮定して失敗を除外した結果ではない。
+
+### 再現手順と配布境界
+
+```powershell
+.venv/Scripts/python.exe -X utf8 -m pytest -q -ra --tb=short -p no:cacheprovider --basetemp .research/r1-final tests/test_imprint_report.py
+.venv/Scripts/python.exe -m ruff check .
+.venv/Scripts/python.exe -m ruff format --check .
+.venv/Scripts/python.exe -m build --no-isolation
+.venv/Scripts/python.exe scripts/build_plugin.py dist/comictagger_jp_talker-0.3.0-py3-none-any.whl
+.venv/Scripts/python.exe -X utf8 -m pytest -q -ra --tb=short -p no:cacheprovider --basetemp .research/r1-related-authorized tests/test_imprint_report.py tests/test_imprint_candidates.py tests/test_linkage_evidence.py tests/test_madb_acquisition.py tests/test_metadata_supplement.py tests/test_series_supplement.py tests/test_imprint_delivery_contract.py tests/test_imprint_host_boundary.py tests/test_packaging.py
+.venv/Scripts/python.exe -X utf8 -m pytest -q -ra --tb=short -p no:cacheprovider --basetemp .research/r1-full
+git diff --check
+git diff --cached --check
+```
+
+配布物は `dist/comictagger_jp_talker-0.3.0.tar.gz`、
+`dist/comictagger_jp_talker-0.3.0-py3-none-any.whl`、`dist/jpbooks_talker-plugin-0.3.0.zip`。
+保存先の権限制約があるため build / ZIP / 配布物を含む pytest は許可された権限で実行した。
+文書確定後にも build / ZIP と packaging 4 件を再実行する。
+loader 試験は従来の default OFF、EXACT / STRONG、cold 3 要求 / warm 追加 0、
+Agent / Holding 詳細要求 0、出力変更が Series / Notes のみであることを維持する。
+Windows 配布 exe の画面操作、未実装の診断コマンドの起動・実用性を確認したものではない。
+
+raw evidence の SHA-256 は変更なし:
+`780581e27e6041950e12dd93df6e90513d3b8023e7fa4efece411f5a58a43d12`。
+`.gitattributes`、既存 production module、package version は変更していない。
+
+### 判断と残る事項
+
+**R1 は GO**。取得済み evidence の純粋な診断、全候補・失敗・raw・unknown の保持、
+未供給 authority / 保存先未評価 / 保存不可、既存回帰と配布互換性を確認した。
+R1 の重大な未解決問題はない。report の JSON は意図的に snapshot を複数箇所に含み、
+R2 の renderer は表示の escape と出力失敗を扱う必要がある。
+R2 は明示通信許可、既存制限、確実な close、中断・失敗、通常経路非接続を条件に開始できる。
+R2 / R3 は未実装、authority の真正性・対象・期限・失効と host 保存契約は未解決。
+**Imprint 自動補完全体は引き続き NO-GO**。
+
+R1 の 6 ファイルのみを明示的にステージし、SSH 署名付きの独立したローカル commit として記録する。
+既存履歴の rebase / amend / squash、push / merge / tag / GitHub Release は行わない。
