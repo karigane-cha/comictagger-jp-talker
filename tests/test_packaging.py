@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import os
 import subprocess
 import sys
@@ -53,6 +54,8 @@ def test_sdist_contains_imprint_fixture_and_its_source():
             "tests/fixtures/metadata_supplement_baseline.json",
             "tests/test_imprint_candidates.py",
             "tests/test_imprint_report.py",
+            "tests/test_imprint_diagnostics.py",
+            "docs/phase2c2c_imprint_diagnostics.md",
             "tests/fixtures/madb/imprint_measured.json",
             "docs/research/madb/imprint_evidence.json",
         ):
@@ -101,6 +104,150 @@ with patch.object(requests.Session, "__init__", side_effect=AssertionError("No s
         timeout=30,
     )
     assert result.returncode == 0, result.stdout + result.stderr
+
+
+@pytest.mark.parametrize(
+    "mode", ["help", "version", "text", "json", "json_ascii", "text_ascii", "broken_pipe", "interrupt"]
+)
+def test_built_wheel_diagnostics_module_in_isolated_process(tmp_path, mode):
+    root = Path(__file__).resolve().parents[1]
+    artifact = root / "dist" / f"comictagger_jp_talker-{__version__}-py3-none-any.whl"
+    if not artifact.is_file():
+        pytest.skip("Build the wheel first")
+    code = r"""
+import contextlib
+import io
+import json
+import logging
+import os
+import runpy
+import sys
+from pathlib import Path
+from unittest.mock import patch
+import requests
+artifact, fixture_root, cache, mode = sys.argv[1:]
+sys.path.insert(0, artifact)
+import comictagger_jp_talker
+assert ".whl" in comictagger_jp_talker.__file__
+from comictagger_jp_talker.sources import ndl, madb
+assert ".whl" in ndl.NDLSource.get.__code__.co_filename
+assert ".whl" in madb.MADBSource.get_for_series_linkage.__code__.co_filename
+# The module's default cache remains outside host history, inside this test's sandbox.
+os.environ["LOCALAPPDATA"] = cache
+os.environ["XDG_CACHE_HOME"] = cache
+fixture_root = Path(fixture_root)
+ndl_body = (fixture_root / "ndl.xml").read_bytes().replace(b"4-88594-287-X", b"9784592880714")
+calls = {"ndl": 0, "madb": 0, "close": 0}
+def get(session, url, **kwargs):
+    assert url == ndl.ENDPOINT and kwargs["timeout"] == (5, 60)
+    calls["ndl"] += 1
+    response = requests.Response()
+    response.status_code = 200
+    response._content = ndl_body
+    return response
+def post(session, url, **kwargs):
+    assert url == madb.ENDPOINT and kwargs["timeout"] == (5, 30)
+    calls["madb"] += 1
+    if mode == "interrupt":
+        raise KeyboardInterrupt()
+    q = kwargs["data"]["query"]
+    if q.startswith("PREFIX"):
+        name = "single"
+    elif "/M1>" in q:
+        name = "book"
+    else:
+        assert "/C1>" in q, "Agent/Holding details must not be fetched"
+        name = "series"
+    body = (fixture_root / "madb" / (name + ".json")).read_bytes()
+    data = json.loads(body)
+    # Inject adversarial external raw Unicode into an actual source/parser path.
+    if name == "book":
+        data["results"]["bindings"].append({
+            "p": {"type": "uri", "value": "https://schema.org/brand"},
+            "o": {"type": "literal", "value": " 日本語𠮷📚\r\n\t\u001b[31m\u202e　 "},
+        })
+    response = requests.Response()
+    response.status_code = 200
+    response.headers["Content-Type"] = "application/sparql-results+json"
+    response.raw = io.BytesIO(json.dumps(data).encode())
+    logging.getLogger("comictagger_jp_talker.sources.madb").critical("must not reach stdout")
+    return response
+original_close = requests.Session.close
+def close(session):
+    calls["close"] += 1
+    original_close(session)
+logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
+if mode in ("json_ascii", "text_ascii"):
+    sys.stdout.reconfigure(encoding="ascii", errors="strict")
+if mode == "broken_pipe":
+    reader, writer = os.pipe()
+    os.close(reader)
+    # A buffered broken stream exercises both main's flush and final shutdown.
+    sys.stdout = io.TextIOWrapper(os.fdopen(writer, "wb"), encoding="utf-8")
+sys.argv = ["comictagger_jp_talker.imprint_diagnostics"]
+if mode in ("help", "version"):
+    sys.argv += ["--" + mode]
+else:
+    sys.argv += ["--ndl-id", "R100000002-Itest001", "--allow-network", "--format",
+                 "text" if mode.startswith("text") else "json"]
+with patch.object(requests.Session, "request", side_effect=AssertionError("No real HTTP")), \
+     patch.object(requests.Session, "get", get), \
+     patch.object(requests.Session, "post", post), \
+     patch.object(requests.Session, "close", close), \
+     patch.object(ndl._LIMITER, "ratelimit", lambda *a, **kw: contextlib.nullcontext()), \
+     patch.object(madb._LIMITER, "ratelimit", lambda *a, **kw: contextlib.nullcontext()):
+    try:
+        runpy.run_module("comictagger_jp_talker.imprint_diagnostics", run_name="__main__")
+    except SystemExit as exc:
+        expected = 4 if mode in ("text_ascii", "broken_pipe") else 130 if mode == "interrupt" else 0
+        assert exc.code == expected, exc.code
+        if mode in ("help", "version"):
+            assert calls == {"ndl": 0, "madb": 0, "close": 0}
+        else:
+            assert calls == {"ndl": 1, "madb": 1 if mode == "interrupt" else 3, "close": 2}, calls
+        raise
+"""
+    target = tmp_path / "stdout.txt"
+    with target.open("wb") as stdout:
+        result = subprocess.run(
+            [
+                sys.executable,
+                "-X",
+                "utf8",
+                "-I",
+                "-c",
+                code,
+                str(artifact),
+                str(root / "tests/fixtures"),
+                str(tmp_path / "cache"),
+                mode,
+            ],
+            cwd=tmp_path,
+            stdout=stdout,
+            stderr=subprocess.PIPE,
+            timeout=30,
+        )
+    expected_code = 4 if mode in ("text_ascii", "broken_pipe") else 130 if mode == "interrupt" else 0
+    assert result.returncode == expected_code, result.stderr.decode("utf-8")
+    output = target.read_text(encoding="utf-8")
+    if mode.startswith("json"):
+        data = json.loads(output)
+        assert data["schema_version"] == "imprint-report-v1"
+        assert data["apply_allowed"] is data["writes_performed"] is False
+        terms = data["books"][0]["evaluation"]["comparison"]["classification"]["terms"]
+        assert any(
+            t["candidate"]["evidence"]["raw_value"]["value"] == " 日本語𠮷📚\r\n\t\u001b[31m\u202e　 "
+            for t in terms
+        )
+        assert not result.stderr
+    elif mode == "text":
+        assert "日本語𠮷📚" in output and "Existing Imprint: not assessed" in output
+        assert "\x1b" not in output and "\u202e" not in output and not result.stderr
+    elif mode in ("help", "version"):
+        assert "--allow-network" in output if mode == "help" else output.strip() == "0.3.0"
+        assert not result.stderr
+    else:
+        assert result.stderr and "Imprint diagnostics error" in result.stderr.decode("utf-8")
 
 
 def test_built_zip_in_isolated_host(tmp_path):

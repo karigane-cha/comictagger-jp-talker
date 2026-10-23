@@ -1089,3 +1089,39 @@ R1 の専用試験は 208 件。R2 の通信・コマンド・renderer、R3 の�
 通常 Talker / metadata_supplement / Series 補完への接続、新設定、entry point は追加しない。
 R2 は明示通信許可・既存取得制限・close・安全な表示・通常経路非接続を条件に進める。
 工程 D と host 保存契約の未解決事項は維持し、**Imprint 自動補完全体は NO-GO**。
+
+## 19. 工程 R2 の確定契約（Phase 2C-2C-4R2）
+
+2026-10-23。§18 の R1 契約を維持し、独立した
+`python -m comictagger_jp_talker.imprint_diagnostics` を追加した。
+詳細は [R2 の契約と実行方法](phase2c2c_imprint_diagnostics.md)、結果は [validation.md](validation.md) を参照。
+
+- NDL ID 一件と `--allow-network` を必須とする。既定出力は text、`--format json` で JSON。
+  入力検証・許可確認より前に source / session / cache を生成しない。help / version も取得しない。
+- NDL の既存 ID 文法を使用し、`get(..., summary_mode="none")` の ID 一致を確認する。
+  NDL 失敗時に MADB は開始しない。任意 URL / endpoint / archive / 複数 ID は受け付けない。
+- MADB は `refresh=False, scope="series_linkage"` で共有 core を一回呼ぶ。
+  Book / Series の直接 triple、query、limiter、timeout、cap、cache namespace / key を維持する。
+  Agent / Holding 詳細、full scope、自動 retry は追加しない。
+- `--refresh` は省略した。NDL get の record cache bypass 契約がないため、MADB だけの refresh を
+  全取得の再実行と表現しない。将来追加する場合は両 source の契約を別途確定する。
+- source を閉じてから R1 report API を呼び、JSON は R1 の厳密な変換だけをデータ源とする。
+  evaluator、identity、schema、BookEvaluationState、全台帳と各時刻の意味は変更しない。
+- text は概要と全 report 詳細。全候補・失敗・除外・理由・trace を表示し、表示上の切詰めはしない。
+  raw は JSON string literal による可逆 escape とし、制御文字・不可視文字を端末で実行させない。
+  JSON は `ensure_ascii=True / allow_nan=False`、全 serialization 後に stdout へ一つだけ出力する。
+- 標準 logging は独立 CLI の処理中だけ抑止し、設定を復元する。エラーは安全に quote して stderr へ出す。
+  終了コードは 0=診断完了、2=入力・許可不足、3=外部取得・必要範囲の不完全性、
+  4=内部・serialization・出力・close 失敗、130=Ctrl+C。
+- HOLD / REJECT / identity conflict は取得処理の失敗にしない。有効 ISBN なしは意図された
+  非実行として 0 とし、MADB の評価材料がないことを明示する。不完全な evidence があれば report と 3 を返す。
+- NDL session / cache は別々に close し、MADB は自身の context exit で close する。
+  cleanup 失敗でも残りを閉じ、元の取得失敗を保持する。constructor 内部の部分初期化の回収保証は既存の制限。
+- 診断専用 cache root を使用する。許可後の source cache 読書きは許容し、metadata / Notes /
+  Imprint / archive / ComicInfo.xml / NDL エラー履歴は変更しない。
+
+通常 Talker / metadata_supplement / GUI preview への接続、新設定、console_scripts は追加しない。
+package version は `0.3.0`。module / wheel 起動と ZIP / beta9 loader の検証を受入対象とし、
+exe 内の起動機構や R3 の配布受入完了を主張しない。
+R3 は配布方式、実環境での可読性・日本語・終了コード・beta9 共存の受入を別途行う。
+本番 authority と host 保存契約は未実装であり、**Imprint 自動補完全体は NO-GO**。

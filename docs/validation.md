@@ -1849,3 +1849,143 @@ R2 / R3 は未実装、authority の真正性・対象・期限・失効と host
 
 R1 の 6 ファイルのみを明示的にステージし、SSH 署名付きの独立したローカル commit として記録する。
 既存履歴の rebase / amend / squash、push / merge / tag / GitHub Release は行わない。
+
+## Phase 2C-2C-4R2：明示実行の読み取り専用 Imprint 診断 CLI（2026-10-23）
+
+### 開始状態と範囲
+
+ブランチは `feat/madb-imprint-integration`、開始 HEAD は
+`20d7cad92ff0abbdb3ceb63a054e7b0c5eb603aa`。作業ツリーは clean で、依頼された R1 完了状態と一致した。
+Windows の既存 `.venv`、Python **3.12.14**、package version **0.3.0** を使用した。
+Git の `commit.gpgsign=true` / `gpg.format=ssh` を維持する。
+
+新規 production module は `imprint_diagnostics.py` のみ。
+`tests/test_imprint_diagnostics.py` と新規契約文書を追加し、packaging 試験を拡張した。
+統合設計には §18 を維持して §19 を追記した。R1 / E0 / E1 の試験、既存 production module、
+identity / evaluator、通常 Talker、metadata_supplement、Series policy、package version は変更しない。
+
+### 確定した動作
+
+- `--ndl-id` 一件と `--allow-network` が必須。`--format` の既定は text、JSON も選択可能。
+  help / version、無許可・不正入力で source / session / cache / HTTP の生成・操作は 0。
+- NDL は既存 `get(..., summary_mode="none")` と ID 一致確認。NDL 失敗時に MADB は開始しない。
+  MADB は `refresh=False / series_linkage` の既存共有 core を一回呼ぶ。
+- source を close してから R1 API を一回呼ぶ。schema は `imprint-report-v1`、
+  authority / archive は未供給、保存先未評価、apply_allowed / writes_performed は false。
+- text は概要と全 field / trace / candidate を省略せず表示。制御・不可視文字を可逆 escape する。
+  JSON は R1 変換だけを使用し、`ensure_ascii=True / allow_nan=False`、stdout に一つの document。
+- 標準 logging は処理中だけ抑止し、終了時に復元。stderr のエラー文字列も安全に quote する。
+  取得失敗と close 失敗を同時に保持し、全 cleanup を試みる。source 下位 resource の二重 close はしない。
+- 終了コードは 0 / 2 / 3 / 4 / 130。HOLD / REJECT / identity conflict は取得失敗にしない。
+  no_valid_isbn は意図された非実行として 0、評価材料なしを明示する。不完全 report は出力したうえで 3。
+- NDL get の全 refresh 契約がないため `--refresh` は省略した。source constructor 内部の部分初期化、
+  失敗した close の解放保証、全 report のメモリ使用、単一スレッドの logging 抑止を既知の制限として記録した。
+
+### 検証結果
+
+| 対象 | 結果 |
+|---|---|
+| R2 専用試験 | **191 passed**。下記 focused / 関連 / 全体で実行 |
+| R1 再検証 | 既存 **208 passed**。変更・削除なし |
+| 最終 focused（R2 + R1） | **399 passed**、22.49 秒 |
+| 関連 10 ファイル | **1,718 passed**、75.97 秒。skip / xfail / failed なし |
+| Python 3.12 全体 suite | **3,024 passed / 13 skipped / 1 xfailed**、82.70 秒。failed 0 |
+| Packaging | **12 passed**。既存 4 件と新規 wheel CLI 8 ケース。関連 / 全体にも含む |
+| Ruff check | **All checks passed** |
+| Ruff format check | **79 files already formatted** |
+| sdist → wheel → ZIP | 既存 build と build_plugin.py で成功。version は 0.3.0 |
+| 全 production Python | **25 ファイル**。source / sdist / wheel / ZIP の集合・bytes が一致 |
+| wheel module | 隔離 subprocess で help / version / text / JSON が成功。実 wheel の module を起動 |
+| 文字コード・出力障害 | UTF-8 ファイル出力、ASCII JSON roundtrip、text の UnicodeEncodeError=4、broken pipe=4 |
+| 中断 | 取得・report・renderer・cleanup の KeyboardInterrupt=130。wheel subprocess の中断も 130 |
+| beta9 loader | 最新 ZIP を読み込み、path cleanup 後の通常 NDL / Series 動作を確認 |
+| 既存保存境界 | E0 592 件、E1 6 件を維持。GenericMetadata 全 field / Notes / description / Imprint / CBZ bytes / NDL 履歴の不変を確認 |
+| テキスト形式 | 変更対象は UTF-8 / BOM なし / LF。git diff check を実施 |
+
+全体の 13 skipped は既存の opt-in 実通信試験（NDL 9、linkage 2、MADB 2）。
+1 xfailed は既知の CIX writer による整数 Volume 0 の省略。
+配布物未生成による skip はなく、実通信試験は有効化していない。
+開始時の 2,825 passed に新規専用 191 件と wheel CLI 8 ケースを加えた 3,024 passed である。
+
+### HTTP mock の実測と安全性
+
+| 条件 | NDL SRU | MADB HTTP |
+|---|---:|---:|
+| ISBN 1 / Book 1 / Series 1、cold | 1 | 3 |
+| 同条件、warm | 0 | 0 |
+| Series relation なし、cold | 1 | 2 |
+| ISBN 2 / Book 2 / Series 2、cold | 1 | 6 |
+| relation 13 件、budget 12 | 1 | 14（discovery + Book + Series 12） |
+| 有効 ISBN なし | 1 | 0 |
+
+すべて固定 fixture / synthetic 応答で実 source / parser / cache を通した試験。
+全書誌の要求数を保証する表ではない。NDL summary 追加要求 **0**、Agent / Holding 詳細要求 **0**。
+典型例では core と CLI からの R1 report API 呼出が各一回で、report 生成中の追加取得はない。
+HTTP timeout / 429 / 503 / 接続失敗、NDL 0 件 / ID 不一致 / SRU protocol / XML、
+MADB discovery / Book / Series failure、row / byte cap、relation budget、trace 不在も検証した。
+
+24 種の既存 linkage scenario を trace 有無で通し、除外・未取得・失敗・重複台帳、
+複数 ISBN / Book、identity conflict を R1 JSON と比較した。
+HOLD / REJECT / SKIP の意味を終了コードへ混入しない。
+500 raw 候補と 1,001 event を含む重複台帳も text / JSON の両方で省略せず出力した。
+日本語・非 BMP・XML 特殊文字・CR / LF / TAB・ESC / ANSI・C0 / C1 / DEL・双方向制御・
+ゼロ幅文字・結合文字・外周空白について、terminal-safe 表示と raw の JSON 復元を検証した。
+
+実 source の session / cache close を計数した。
+NDL session が失敗しても cache を閉じ、MADB は自身の close で session / cache を閉じる。
+取得失敗 + 複数 close 失敗、context exit の例外、nested KeyboardInterrupt を保持する。
+JSON serialization 前の未知型拒否、短い stdout write、BrokenPipe、flush、encoding の失敗を非ゼロにする。
+stdout を事前に捕捉した logging handler も JSON を汚染せず、logging 設定は復元される。
+
+### 途中の失敗と対応
+
+最初の focused は **16 failed / 374 passed**。
+新規 HTTP fixture の ISBN 置換が `488594287X` を探していたが、既存 XML の原値は
+`4-88594-287-X` だった。NDL と MADB fixture の ISBN が一致せず、parser が
+`Unexpected ISBN exact-search binding` を正しく拒否した。
+新規 fixture の置換を訂正し、複数 ISBN fixture の応答も実 query の ISBN に一致させた。
+production の ID / ISBN 検証を緩和せず、既存 fixture は変更していない。
+修正後 390 passed、異常終了試験の追加後に 397 passed、最終 399 passed となった。
+
+最初の sandbox 内 build は既存 sdist の `os.remove(result_path)` で
+`PermissionError: [WinError 5]`。同じ build を権限付きで再実行して成功した。
+ZIP 生成も最新 wheel の open で PermissionError を確認し、権限付きで成功した。
+配布物の読取を含む packaging / 関連 / 全体試験はこの実測制約に基づき権限付きで実行した。
+試験失敗の再分類・除外ではない。
+
+開始 HEAD の SSH 検証は sandbox 内では allowedSigners の読取で Permission denied。
+権限付きで同じ `git verify-commit HEAD` を実行し、既存署名設定で正常検証できた。
+署名なし commit への切替は行わない。
+
+### 再現コマンドと最終成果物
+
+```powershell
+.venv/Scripts/python.exe -X utf8 -m pytest -q -ra --tb=short -p no:cacheprovider --basetemp .research/r2-focused-contract tests/test_imprint_diagnostics.py tests/test_imprint_report.py
+.venv/Scripts/python.exe -m ruff check .
+.venv/Scripts/python.exe -m ruff format --check .
+.venv/Scripts/python.exe -X utf8 -m build --no-isolation
+.venv/Scripts/python.exe scripts/build_plugin.py dist/comictagger_jp_talker-0.3.0-py3-none-any.whl
+.venv/Scripts/python.exe -X utf8 -m pytest -q -ra --tb=short -p no:cacheprovider --basetemp .research/r2-related tests/test_imprint_diagnostics.py tests/test_imprint_report.py tests/test_imprint_candidates.py tests/test_linkage_evidence.py tests/test_madb_acquisition.py tests/test_metadata_supplement.py tests/test_series_supplement.py tests/test_imprint_delivery_contract.py tests/test_imprint_host_boundary.py tests/test_packaging.py
+.venv/Scripts/python.exe -X utf8 -m pytest -q -ra --tb=short -p no:cacheprovider --basetemp .research/r2-full
+```
+
+配布物は `dist/comictagger_jp_talker-0.3.0.tar.gz`、
+`dist/comictagger_jp_talker-0.3.0-py3-none-any.whl`、`dist/jpbooks_talker-plugin-0.3.0.zip`。
+文書確定後にも build / ZIP を更新し、packaging と文書表記を再確認する。
+既存 Talker の entry point / 設定、Series default OFF、ON の cold 3 / warm 追加 0 を維持した。
+exe 内の診断起動を実装・確認した結果ではない。
+
+raw evidence の SHA-256 は変更なし:
+`780581e27e6041950e12dd93df6e90513d3b8023e7fa4efece411f5a58a43d12`。
+`.gitattributes` と raw evidence を維持し、R2 の 6 ファイルだけを明示的にステージして
+独立した SSH 署名付きローカル commit に記録する。
+push / merge / tag / GitHub Release / Actions 手動実行は行わない。
+
+### 判断
+
+**R2 は GO**。明示許可の単一書誌診断、既存取得制限、R1 の意味・schema 保持、
+安全な text / JSON、異常終了、通常経路非接続と配布互換性の必須検証に未解決の失敗はない。
+constructor 内部の部分初期化など、既存 source の制限は R2 文書に明記した。
+R3 は配布方式の合意、実環境での表示・文字コード・終了コード・beta9 共存の受入を条件に開始できる。
+実通信の実用性、exe 利用者向け提供、一般配布は R2 の結果だけで完了扱いしない。
+本番 authority と host 保存契約は未実装。**Imprint 自動補完全体は NO-GO を維持する。**
