@@ -1331,6 +1331,126 @@ parser が既に除去した重複等の制限は工程 B のままである。
 これらの調査・実装、Imprint 設定・評価の本番接続・書き込みには進んでいない。
 commit / push / merge / tag / GitHub Release は実行していない。
 
+## Phase 2C-2C-3E0：ComicTagger の Imprint 保存境界（2026-10-20）
+
+### 対象と変更範囲
+
+導入済み Windows 11、Python `3.12.14`、ComicTagger `1.6.0b9`、
+comicinfoxml `0.5.1` を調査した。既存 `.venv` を使い、依存の更新・追加はしていない。
+開始ブランチは `main`、HEAD は `cbce602f07a3559b8299a8e55c2dfc9d13d29022`。
+工程 A～C 等の既存差分（変更済み 9、未追跡 11 ファイル）を保持した。
+
+今回の成果物は次の 4 ファイルのみ。
+
+- `tests/test_imprint_host_boundary.py`: 実 host 保存 API に対する synthetic CBZ 試験。
+- `docs/phase2c2c_host_imprint_boundary.md`: 取得・merge・保存・reader の調査、反例、代替方式と受入判断。
+- `docs/phase2c2c_integration_design.md`: §15 までを維持し、§16 を追記。
+- 本記録: 従来の validation を保持して追記。
+
+開始時に `.research/phase2c2c3e0-start/` に既存 production / tests / fixtures の SHA-256、
+両文書のコピーを保存した。比較により、既存 code / tests / fixtures の bytes が変わらず、
+両文書の旧内容が新内容の完全な prefix として残ることを確認した。
+package version `0.3.0`、`.gitattributes`、既存 raw evidence を維持する。
+production への Imprint 設定・評価接続・書き込み、authority provider は追加していない。
+
+### 実測の主要結果
+
+1. `fetch_comic_data()` へ archive metadata / raw XML / host 設定は渡らない。
+   `search_metadata()` は beta9 の callback ではない。候補の詳細表示から最終 fetch が呼ばれる場合もある。
+2. 既定の OVERLAY は非空の取得 Imprint で既存値を上書きする。
+   ADD_MISSING はメモリ内の空白文字列を保護するが、reader で None になった空白値は保護できない。
+3. `prepare_metadata()` は import transform → clear → merge → auto_imprint の順。
+   現行 CBLTransformer は Imprint を直接変更しない。fix_publisher は既存値にも作用する。
+4. GUI の None はフォームに代入されないため、clear 後に旧フォーム値が保存時に復活する実測例がある。
+   CLI / 自動 worker の clear は消去となった。この経路差を保護機能とは扱わない。
+5. CR / CIX は同じ `ComicInfo.xml` を使用し、両方向の reader 呼出しが可能。
+   通常の日本語・英数字・内部空白・XML 特殊文字・非 BMP は往復した。
+   外周空白は xlate で失い、空白だけなら None。CR / CRLF は XML parser が LF にする。
+6. XML 不正値の書き込みも True となり得る。両 reader はタグなしとして扱い、
+   `read_selected_tags()` の error も None のため、成功戻り値・例外監視だけでは保護できない。
+
+実 XML 全文、parser text、CR / CIX reader 値、入力 / merge / 保存値は、
+各試験の `tmp_path/observation.json` と CBZ に記録する。今回の主な保存先は
+`.research/phase2c2c3e0-host/` と `.research/phase2c2c3e0-full/`。
+調査値はすべて synthetic。既存の MADB 実測 fixture や意味確認済み authority と混同しない。
+
+### 試験範囲と結果
+
+新規 592 件の内訳は、既定値 1、raw 往復 30、不正 XML 10、archive の値マトリクス 384、
+overlay 対照 96、設定相互作用 32、auto_imprint 分岐 8、共有 XML 4、実 CLI 14、
+実 GUI 1（内部で 14 シナリオ）、実自動 worker 12。
+既存値 8 種類 × 取得値 6 種類 × merge 2 × clear 2 × writer 2 を全組合せにした。
+auto_imprint は publisher の変換・維持・消去を生じる代表例と設定の直積で分岐を覆う。
+raw 入力を正規化して assertion を通していない。
+
+CLI は `CLI.save()` から実保存、自動 worker は `identify_and_tag_single_archive()` →
+実 `identify_comic()` / prepare / writer を通す。取得結果と画像照合だけを Mock に置換する。
+GUI は実 TaggerWindow を offscreen で生成し、load / apply / form / write / reread を同期実行する。
+検索のクリック・非同期スレッド・曖昧候補ダイアログ・配布 exe 全体の操作を実証したとはしない。
+自動開始ダイアログの設定伝搬等は報告書の手動試験に残した。
+通常テストの外部 HTTP 禁止を維持し、network opt-in は有効化していない。
+
+| 検証 | 結果 |
+|---|---|
+| 最終の新規保存境界試験 | **592 passed**、16.79 秒 |
+| 既存 ComicInfo / Talker / 工程 C の関連試験 | **206 passed / 1 xfailed**、7.30 秒 |
+| 全回帰 | **1 failed / 2,609 passed / 13 skipped / 1 xfailed**、53.95 秒 |
+| 権限のある環境で packaging 再実行 | **3 passed**、14.31 秒 |
+| Ruff 指摘対応後の該当試験 | **4 passed / 588 deselected**、0.52 秒 |
+| Ruff check | **All checks passed** |
+| Ruff format check | **70 files already formatted** |
+| 差分検査 | `git diff --check`、新規ファイルの差分検査、UTF-8 / BOM なし / LF を確認 |
+
+全回帰の失敗は既知の `dist/comictagger_jp_talker-0.3.0.tar.gz` に対する
+`tarfile.open()` 内の `PermissionError`。内容検証に到達する前の読み取り拒否であり、
+許可された環境で既存 packaging 試験を再実行して 3 件成功した。
+**全体 suite が一度で成功したとは記録しない。**
+13 skipped は既存の実通信 opt-in、1 xfailed は既知の CIX writer の整数 Volume 0 の制約。
+production を変更していないため今回は再 build せず、工程 C の配布物を検証した。
+既存 sdist の選択ファイル照合、ZIP の全 production Python の byte 照合、
+beta9 loader の既存統合試験は成功。E0 の新規文書・試験が配布物へ収録済みという意味ではない。
+
+初回の新規試験は **30 failed / 549 passed**、16.31 秒。
+ADD_MISSING の旧 None + 新 `""` が `""`、旧 `""` + 新 None が None となる実装を、
+欠損表現まで同じと仮定していた期待値が原因だった。raw 入力を変えず、表現差を明示して修正した。
+単独の GUI 試験の初回は plugin registry 初期化不足の `KeyError: cr` で **1 failed**。
+host と同じ `load_archive_plugins()` / `load_tag_plugins()` を setup に追加し、
+再実行は **1 passed / 579 deselected**、1.23 秒。その後上記の全 592 件で確認した。
+Ruff の初回は B905 が 1 件。固定長の zip に `strict=True` を明記し、対象 4 件と Ruff を再確認した。
+これらは新規調査テストの修正であり、既存機能や安全性判定の緩和ではない。
+
+再現コマンド（packaging 再実行のみ許可された環境）:
+
+```powershell
+.venv/Scripts/python.exe -X utf8 -m pytest -q -ra -p no:cacheprovider --basetemp .research/phase2c2c3e0-host tests/test_imprint_host_boundary.py
+.venv/Scripts/python.exe -X utf8 -m pytest -q -ra -p no:cacheprovider --basetemp .research/phase2c2c3e0-related tests/test_comicinfo.py tests/test_talker.py tests/test_metadata_supplement.py
+.venv/Scripts/python.exe -X utf8 -m pytest -q -ra -p no:cacheprovider --basetemp .research/phase2c2c3e0-full
+.venv/Scripts/python.exe -X utf8 -m pytest -q -ra -p no:cacheprovider --basetemp .research/phase2c2c3e0-packaging tests/test_packaging.py
+.venv/Scripts/python.exe -X utf8 -m pytest -q -ra -p no:cacheprovider --basetemp .research/phase2c2c3e0-final-focus tests/test_imprint_host_boundary.py -k share_one_xml
+.venv/Scripts/python.exe -m ruff check .
+.venv/Scripts/python.exe -m ruff format --check .
+git diff --check
+git status --short
+```
+
+raw evidence の SHA-256 は次の値を維持した。
+`780581e27e6041950e12dd93df6e90513d3b8023e7fa4efece411f5a58a43d12`
+
+### 判定と未解決事項
+
+E0 の調査・実証は **GO**、通常文字列の指定版での保存・再読込は **GO**。
+既存値保護・host 変換の抑止は、正しい読取、通常値、ADD_MISSING、clear / auto OFF、
+後段変更なし、保存検証を満たす部分集合だけ **CONDITIONAL GO**。
+任意 raw の往復と Talker 単独の保存安全性保証は **NO-GO**。
+
+将来の診断専用方式、または明示確認・host 保存直前契約を伴う限定方式は設計に限り
+**CONDITIONAL GO**。現行設定の案内だけではプラグインの保証にならない。
+raw 空白値を参照できる契約、設定とファイルの対応、同時更新、保存検証、
+配布 exe の残る操作試験を解決する必要がある。
+工程 E の全対象保護は未達で、工程 D の authority 供給・失効・監査も未完了。
+**Imprint 自動補完全体は NO-GO**。工程 A～C の基盤の GO は維持する。
+commit / push / merge / tag / GitHub Release は実行していない。
+
 ## CI / Release の証明書対策と Python 3.14 系への対応（2026-10-23）
 
 ### 背景と変更範囲

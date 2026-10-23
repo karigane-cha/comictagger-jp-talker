@@ -914,3 +914,66 @@ default OFF、NDL summary・巻処理、軽量 3 / 0 要求を確認する。
 **Imprint 自動補完は NO-GO**。工程 D では authority の真正性・独立性・対象適合・更新・失効運用の
 実証が必要。工程 E では既存設計 §7 の保存先既存値の保護と host 保存・再読込境界の解決が必要。
 その前提や実装可否は別途判断する。工程 C の完了だけで Imprint 評価・設定・書き込みを有効化しない。
+
+## 16. 工程 E0 の保存境界実証（Phase 2C-2C-3E0）
+
+2026-10-20、ComicTagger `1.6.0b9` / comicinfoxml `0.5.1` の導入済み実装、
+実 GenericMetadata / prepare_metadata / ComicArchive と synthetic CBZ を使用した。
+詳細は [保存境界の調査報告](phase2c2c_host_imprint_boundary.md)、
+実行結果は [validation.md](validation.md) の E0 記録を参照する。
+§13～§15 の確定契約と production code は変更していない。
+
+### 確定した保存フローと §7 からの補足
+
+最終 fetch には archive metadata、raw XML、保存設定が渡らない。
+独自 `search_metadata()` は host callback ではないため、既存値供給の代替にならない。
+GUI はフォーム → prepare → フォーム → 保存前の再変換 → writer → 選択 reader の再読込、
+CLI / 自動 worker は archive metadata → prepare → writer を使う。
+prepare は import transform → clear → merge → auto_imprint の順に処理する。
+
+- OVERLAY は非空の取得 Imprint で既存値を上書きする。ADD_MISSING はメモリ内の非空値を保護するが、
+  reader が既に None にした空白値、未読のタグ、clear 後の値は保護しない。
+- auto_imprint は merge の後に publisher と Imprint を変更できる。現行 import transformer は
+  Imprint を直接変更しない。両者を同じ変換として扱わない。
+- GUI の `metadata_to_form()` は None を代入しないため、clear 後の None が旧フォーム値として
+  保存時に復活するケースを実測した。CLI / 自動 worker の消去と異なり、保護機能として依存しない。
+- CR と CIX は同じ `ComicInfo.xml` を読む。独立した既存値の二重保存ではない。
+  両 writer は raw 外周空白を保存するが、両 reader は xlate で除去し、空白だけなら None にする。
+  CR / CRLF は XML parser が LF に変換する。GUI ではフォーム変換でも外周を失う。
+- XML 不正文字を含む XML でも writer は True を返し得る。両 reader はタグなしとして扱い、
+  再保存で旧値を失う。writer の成功戻り値だけを保存の受入条件にしない。
+- 候補専用 API が共通入口を呼ばない既存契約は維持する。ただし host の
+  `IssueSelectionWindow` は詳細表示の不足を補うために `fetch_comic_data()` を呼ぶことがある。
+  現行 API では保存目的とプレビュー目的も区別できない。§15 を GUI 全操作の通信禁止とは解釈しない。
+
+### 保証範囲と追加の受入条件
+
+通常の日本語・英数字・内部空白・XML 特殊文字・非 BMP 文字は両形式で往復した。
+内部 LF / TAB も今回の範囲では保持されたが、外周空白、CR、XML 不正値を含む任意 raw の保証はできない。
+raw を trim / 改行置換して採用する設計には変更しない。非対応値は停止が必要。
+
+通常既存値を保護する部分集合は、対象の正しい読取、clear / auto_imprint OFF、
+新しい非空値が来る場合の ADD_MISSING、後段編集・同時更新なし、実保存と再読込の検証を要する。
+これらは host 側の実行条件であり、現在の Talker が強制できる条件ではない。
+一般的な保存確認ダイアログも raw 旧値と候補の照合確認にはならない。
+将来の host 契約には raw の存在と値、保存先との対応、予定設定、保存直前の状態確認、
+欠損時のみの適用と保存検証が必要。単に GenericMetadata を追加引数にするだけでは不十分。
+
+| 対象 | 判定 |
+|---|---|
+| E0 の調査・反例の実証 | **GO**。新規 592 件、実 CLI / offscreen GUI / 自動 worker の保存を含む |
+| 通常文字列の CR / CIX 往復 | **GO**。導入版・試験対象値の範囲 |
+| 保存先既存値の保護 | **CONDITIONAL GO**。上述の部分集合のみ。任意 raw / 設定では NO-GO |
+| host の変換・上書き抑止 | **CONDITIONAL GO**。host 側の制約と再検証が必要。Talker からの強制は不可 |
+| 任意 raw の往復 / Talker 単独の保証 | **NO-GO** |
+| 将来の限定方式 | **CONDITIONAL GO**。診断のみ、または保存直前の確認・host 契約の追加設計が先 |
+
+GUI は実 widget の同期した保存経路を offscreen で試験した。
+検索クリック、曖昧候補ダイアログ、開始ダイアログの設定伝搬、配布 exe 全体の操作は未検証。
+特に開始ダイアログの auto_imprint と worker の有効設定は同じとは限らず、実機手順を報告書に残した。
+
+工程 E の全対象保護は未達であり、E0 の調査完了を工程 F / G の着手許可としない。
+工程 D の authority 供給・失効・監査も未完了なので、**Imprint 自動補完全体は NO-GO**。
+工程 A～C の取得共有基盤の GO は維持する。
+推奨順序は、診断 / host 契約の方式選択と E の追加受入、並行する D の実証、
+両者の NO-GO 解除レビュー、その後に F → G。
