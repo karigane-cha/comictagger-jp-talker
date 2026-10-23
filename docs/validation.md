@@ -908,6 +908,117 @@ commit / merge / push / tag / GitHub Release は実行していない。
 LinkageResult は raw bundle を返さないため、同一 snapshot と AcquisitionContext を Series / Imprint に共有する内部契約が必要。
 次フェーズでは OFF 互換性、同時 ON、cache / refresh、要求数、fail-open、CR / CIX 往復、ZIP の実補完を追加検証する。
 
+## Phase 2C-2C-2A: MADB 取得状態モデルと構造化取得台帳
+
+検証日: **2026-10-20 (JST)**。開始時は `main`、`cbce602f07a3559b8299a8e55c2dfc9d13d29022`。
+前工程の `docs/phase2c2c_integration_design.md` だけが未追跡であり、既存本文を保持して工程 A の実装記録を追記した。
+実装範囲は [統合設計](phase2c2c_integration_design.md) の §13 を参照。
+
+### 変更内容と境界
+
+- `acquisition.py`: 既存の AcquisitionState / ResourceAcquisition / AcquisitionContext を移動。
+  AcquisitionStage / AcquisitionReason と frozen な AcquisitionFailure / AcquisitionEvent / AcquisitionTrace を追加。
+- `imprint_candidates.py`: 移動した三つの型を同一オブジェクトとして再公開。評価 algorithm、authority、既存入力検証は変更しない。
+  移動前の三定義と移動後の AST が完全一致することも確認した。
+- `sources/madb_acquisition.py`: 呼び出し内の記録器と frozen な MADBAcquisition を追加。
+  一回の検索 / Book 取得の value、context、trace、error を返す。複数 ISBN / 候補の全体集約は未実装。
+- `sources/madb.py`: `_search_by_isbn_with_trace()` / `_get_with_trace()` を追加。
+  同じ private 取得処理の分岐から状態・根拠を記録し、公開 API の戻り値と例外を維持する。
+- `test_madb_acquisition.py`: synthetic な専用テスト **58 件**。
+  `test_packaging.py`: sdist の新規 module / テスト収録、実 ZIP の型再公開と台帳取得・warm cache の確認を追加。
+- 設計書は工程 A の実装・例外境界を追記。既存の Python コード例だけ Ruff の指摘に従って空行・折返しを修正した。
+  取得共有の CONDITIONAL GO と Imprint 自動補完の NO-GO の判断は変更していない。
+
+`linkage.py`、`talker.py`、Series 補完、NDL mapping、parser、query template、
+endpoint、timeout、limiter、cache namespace / key / 期限 / 保存条件、各上限は変更していない。
+追加 HTTP 要求・自動 retry・Imprint 設定・metadata 書き込み・authority provider は追加していない。
+version は `0.3.0`、identity は `phase2b2-v1`、Imprint 評価は `phase2c2b-v1` のまま。
+
+### 台帳の具体例
+
+以下は HTTP mock による synthetic 結果。実 API の観測ではない。
+
+| 入力・経路 | 結果と台帳 |
+|---|---|
+| Book / Series 各 1 件、軽量 cold | HTTP 2 要求。各 resource に cache miss → network COMPLETE → snapshot COMPLETE。Book / Series / relations が COMPLETE、discovery と Agent / Holding は NOT_REQUESTED |
+| 完全な Book、Series relation なし | HTTP 1 要求。series / relations は NOT_RELATED。Book partial / truncated で参照が見えない場合はこの状態にしない |
+| 正常な discovery 0 件、cold → warm | cold は HTTP 1、warm の追加 HTTP は 0。page.records は空 tuple、discovery は COMPLETE。warm は CACHE_HIT で原取得時刻・HTTP status は None |
+| Series C1 成功、C2 が 503、C3 成功 | Book を含む HTTP 4 要求。C1 / C3 snapshot と C2 の http / 503 / Retry-After=17 を保持。bundle は partial、最上位 error は None、series / relations は PARTIAL。後続 C3 の取得を中断しない |
+| Book が 503 | value=None、error.kind=http、status=503。book は UNAVAILABLE、後続 Series は UPSTREAM_FAILED / NOT_REQUESTED。偽の空 Book / 関係不存在を作らない |
+| 13 Series relation | Book + 12 Series の HTTP 13 要求。13 件目は RELATION_BUDGET / NOT_REQUESTED、limit=12。全 raw relation を保持し、relations は PARTIAL |
+| literal / bnode / 不正 URI の relation | 無効値への HTTP は 0。INVALID_REFERENCE / PARTIAL、raw statement と位置を保持。有効な Series と併存しても relations を COMPLETE にしない |
+| 壊れた cache | CACHE_INVALID と原 bytes の hash / error を保持して従来どおり 1 回再取得。成功結果だけ保存し、過去の破損観測を消さない |
+| byte cap 到達 | BYTE_LIMIT / TRUNCATED、上限値を保持。完全な原応答 hash と受信完了時刻は None。切り詰めを正常な空結果にしない |
+
+context.resources は Book / Series 範囲。同じ URI に対する未要求 Agent の役割で、
+取得済み Series の状態を上書きしない。Agent / Holding の参照は kind 付きの event に保持する。
+原応答本文が完全に得られた場合だけその bytes の SHA-256 を記録する。
+cache 保存時刻、cache の原 HTTP 取得時刻、bundle 共通の取得時刻は推測せず None。
+
+### 実行環境と検証結果
+
+既存 `.venv`、Python `3.12.14`、ComicTagger `1.6.0b9`、comicinfoxml `0.5.1`、
+pytest `9.1.1`、Ruff `0.16.8`、build `1.6.1`、setuptools `84.0.0`。依存追加・更新なし。
+通常テストの外部 HTTP 禁止 fixture を維持し、実通信の opt-in は有効化していない。
+
+| 検証 | 結果 |
+|---|---|
+| 最終の取得台帳専用テスト | **58 passed**、3.18 秒 |
+| 指定コマンドによる全回帰試験 | **1 failed / 1,689 passed / 13 skipped / 1 xfailed**、34.22 秒。失敗は sdist 読み取りの PermissionError |
+| 権限のある環境で packaging を再実行 | **3 passed**、14.49 秒。sdist byte 一致、entry point、実 ZIP の beta9 loader、既存 Series と新規台帳経路を確認 |
+| 全回帰の範囲 | identity、Series、NDL mapping / summary、ComicInfo.xml の既存 CR / CIX 試験、GUI、Imprint pure API を含む |
+| Ruff check | **All checks passed** |
+| Ruff format --check | **63 files already formatted** |
+| sdist → wheel → ZIP | **成功**。Windows の権限問題により sandbox 外の許可された環境で実行 |
+| diff check / 改行 | `git diff --check` と新規未追跡ファイルの `git diff --no-index --check` を確認。変更・新規ファイルは UTF-8 / LF |
+| raw evidence | SHA-256 `780581e27e6041950e12dd93df6e90513d3b8023e7fa4efece411f5a58a43d12` を維持。`.gitattributes` の例外を変更していない |
+
+**全体 suite が一度で成功したとは記録しない。**
+通常環境では sdist の内容検証を実行できず、許可された環境の packaging 再実行でその未確認範囲を解消した。
+13 skipped は既存の opt-in network 試験、1 xfailed は既知の CIX の整数 Volume 0 出力制約。
+今回の実装不具合として残った失敗はない。実 API における最新 endpoint の挙動は未検証。
+
+### 初回の失敗と対応
+
+- 専用テスト初回は 47 passed / 2 failed。cache の complete 行を incomplete へ書き換える想定は、
+  ComicCacher が downgrade を拒否する契約と合わなかった。テスト側で legacy な incomplete 読込結果を明示的に作った。
+- もう一件は synthetic な publisher の URI 追加時に既存 literal も残したため、
+  現行 source がその literal を未解決 relation として正しく partial にしたもの。
+  重複 URI の正常系試験では literal を除いた fixture に修正した。production の規則は緩和していない。
+- 初回 format check は前工程の未追跡設計書にある Python コード例の空行・折返しを指摘した。
+  指摘された配置だけ修正し、判断・本文・raw 値を変更していない。
+- 通常環境の build は既存 sdist の置換で WinError 5、ZIP 生成は wheel 読み取りで PermissionError。
+  許可された環境で再実行して成功した。全回帰時の sdist 読み取りも同種の権限問題であり、
+  テスト削除・skip 化・assertion 緩和は行っていない。
+
+再現コマンド（build / packaging の一部は上記の許可された環境を使用）:
+
+```powershell
+.venv/Scripts/python.exe -X utf8 -m pytest -q -ra -p no:cacheprovider --basetemp .research/phase2c2c2a-trace-release tests/test_madb_acquisition.py
+.venv/Scripts/python.exe -X utf8 -m build --no-isolation
+.venv/Scripts/python.exe -X utf8 scripts/build_plugin.py dist/comictagger_jp_talker-0.3.0-py3-none-any.whl
+.venv/Scripts/python.exe -X utf8 -m pytest -q -ra -p no:cacheprovider --basetemp .research/phase2c2c2a-pytest
+.venv/Scripts/python.exe -X utf8 -m pytest -q -ra -p no:cacheprovider --basetemp .research/phase2c2c2a-packaging tests/test_packaging.py
+.venv/Scripts/python.exe -m ruff check .
+.venv/Scripts/python.exe -m ruff format --check .
+git diff --check
+git status --short
+```
+
+### 未解決事項と工程 B への判断
+
+**CONDITIONAL GO**。工程 A の取得台帳は利用可能。
+工程 B で全 ISBN の予定・discovery の中断・全候補集合を集約し、
+同一 snapshot を既存の照合規則で使用して、公開 LinkageResult と Series 出力を維持することが条件となる。
+本工程では linkage core を変更していない。
+
+原取得時刻がない旧 cache、複数 HTTP 間の snapshot isolation、parser が既に除去した Book の重複は未解決。
+取得台帳を理由にそれらを観測済みへ格上げしない。
+ValueError / RuntimeError / OSError / SQLite error / 内部 assertion は従来の例外境界のまま送出し、
+この場合の trace 返却は今回の内部 outcome 契約の対象外である。
+意味確認の本番供給・失効運用と保存先既存 Imprint の保護も未解決で、自動補完の NO-GO は維持する。
+commit / push / merge / tag / GitHub Release は実行していない。
+
 ## CI / Release の証明書対策と Python 3.14 系への対応（2026-10-23）
 
 ### 背景と変更範囲

@@ -93,6 +93,7 @@ class BookAcquisitionContext:
     book_uri: str
     context: AcquisitionContext
 
+
 @dataclass(frozen=True)
 class LinkedAcquisitionContext:
     run_id: str
@@ -100,6 +101,7 @@ class LinkedAcquisitionContext:
     discovery: DiscoveryAcquisition
     books: tuple[BookAcquisitionContext, ...]
     events: tuple[AcquisitionEvent, ...]
+
 
 @dataclass(frozen=True)
 class LinkedRecordEvidence:
@@ -214,9 +216,7 @@ ISBN が複数ある場合の union、候補ごとの 12 relation 上限も維�
 
 ```python
 need_series = series_enabled and not (metadata.series or "").strip()
-need_imprint = imprint_enabled and (
-    metadata.imprint is None or metadata.imprint == ""
-)
+need_imprint = imprint_enabled and (metadata.imprint is None or metadata.imprint == "")
 ```
 
 Series の空白判定を Imprint へ流用しない。Imprint の `" "`、改行、全角空白は既存値であり保護する。
@@ -556,3 +556,99 @@ cache の原取得時刻不明、複数 request の同時点性、MADB discovery
 
 推奨順序は **A → B → C**。D と E は独立した根拠確認として進められるが、
 両方の受入が成立しない限り F / G の本番自動補完へ進まない。
+
+## 13. 工程 A の実装記録（Phase 2C-2C-2A）
+
+2026-10-20 (JST)。工程 A のみを実装した。上記の工程 B 以降と Imprint 自動補完の NO-GO は変更しない。
+開始時の本書は前工程からの未追跡ファイルだったため、既存本文を保持して本節を追記した。
+基点は引き続き `main` / `cbce602`。以下は本節時点の実装であり、§1 の調査時点のコードとは区別する。
+
+### モデルと内部入口
+
+`acquisition.py` へ `AcquisitionState`、`ResourceAcquisition`、`AcquisitionContext` を移した。
+enum 値、既定値、入力検証はそのまま保持し、`imprint_candidates.py` から同一クラスを再公開する。
+追加した `AcquisitionStage` / `AcquisitionReason` は取得状態とは別軸。
+`AcquisitionFailure`、`AcquisitionEvent`、`AcquisitionTrace` は frozen dataclass であり、
+返却するコレクションは tuple。例外本体・traceback・source・session・callback を返却しない。
+
+MADB 固有の結果と組立処理は `sources/madb_acquisition.py` に分離した。
+`MADBAcquisition(value, context, trace, error)` の value は既存の `MADBSearchPage` または
+`MADBRecordBundle`。成功なら error=None、最上位の `MADBError` による失敗なら value=None とする。
+Series の取得失敗は従来どおり partial bundle の正常返却であり、失敗の詳細は trace に残る。
+
+内部入口は次の二つ。後続の linkage core は各結果を保持し、value を再取得せずに利用できる。
+
+```python
+discovery = source._search_by_isbn_with_trace(isbn, refresh=False)
+acquired = source._get_with_trace(book_id, refresh=False, series_only=True)
+# acquired.value: existing MADBRecordBundle, or None on a fatal MADBError
+# acquired.context: source-call scope, not a completed linkage/discovery assertion
+# acquired.trace.events: immutable ordered observations
+# acquired.error: immutable fatal error facts, never a traceback
+```
+
+full scope は `series_only=False`。公開 `search_by_isbn()` / `get()` / `get_for_series_linkage()` は
+従来の戻り値と例外を維持し、記録器を渡さず同じ取得処理を実行する。
+公開 API を内部 outcome の projection に置換する必要はなかった。
+元の例外をそのまま再送出できるよう、共有する private 処理に記録器を任意で渡す方式を採用した。
+記録器は一回の呼び出し内だけ mutable で、source 属性には保存しない。
+これは §3 の仮称・配置を具体化したものであり、linkage core の実装ではない。
+
+### 記録内容と完全性
+
+cache、network、snapshot、relation、scope の各段階を、実際の分岐で記録する。
+cache hit / miss / invalid / refresh、応答成功、parse 失敗、row / byte cap と上限値、
+relation budget、重複参照、無効参照、未要求 scope、上流失敗を区別する。
+query key / namespace、resource kind / URI、ISBN、親 URI / predicate、raw statement、
+parsed statement の位置、HTTP status / Retry-After / error kind を対応付ける。
+warning の解析は行わず、既存 warning の順序・重複除去を変更しない。
+
+`context.resources` は既存 evaluator の Book / Series 範囲に限定する。
+Agent と Series が同じ URI 空間を使うため、未要求 Agent の記録で取得済み Series の状態を上書きしない。
+Agent / Holding の各参照は kind を伴う trace に保持し、集約状態を `agents` / `holdings` に返す。
+full scope でも URI ではない publisher 参照は現行どおり取得せず、`NON_URI_PUBLISHER` として明示する。
+そのため台帳の Agent 完全性が partial でも、既存 bundle の completeness は従来の complete のままの場合がある。
+台帳の追加情報で旧 bundle の意味や値を変更しない。
+
+完全な Book で raw `isPartOf` がない場合だけ series / relations は NOT_RELATED。
+Book が partial / truncated で参照が見えない場合は series=NOT_REQUESTED、relations=PARTIAL。
+有効 Series がすべて失敗すれば UNAVAILABLE、一部成功なら PARTIAL。
+無効 relation だけなら series=NOT_REQUESTED、relations=PARTIAL。
+Series row cap は TRUNCATED、budget で未試行の resource は NOT_REQUESTED と理由を残す。
+full scope で Series の取得に失敗した場合、その Series 内の Agent 参照も観測できないことを
+UPSTREAM_FAILED の scope event で残す。軽量 scope の Agent / Holding は常に NOT_REQUESTED。
+
+取得済みの各 snapshot と relation の状態は成功後に消さず、途中の Series 失敗後も従来どおり後続取得を続ける。
+Book の失敗では後続の scope を NOT_REQUESTED と記録して終了する。
+入力の ValueError、closed source の RuntimeError、OSError / SQLite error、内部の assertion は
+従来の境界を維持して送出し、正常な outcome に変換しない。それらの異常終了時の台帳返却は今回の契約に含めない。
+
+一回の ISBN 検索の COMPLETE は、全 NDL ISBN の discovery 完了を意味しない。
+Book 取得結果の discovery は NOT_REQUESTED のまま。全 ISBN の予定・中断・候補集合を集約する責務は工程 B に残す。
+`AcquisitionContext` をそのまま本番 Imprint 評価へ渡して COMPLETE に補う処理は追加していない。
+
+### 時刻と原応答
+
+run ID はローカル UUID、開始・観測・終了時刻は UTC の実行時刻。
+network の `origin_fetched_at` は今回の応答本文の受信完了を観測したローカル時刻であり、
+サーバー上の更新日時や全 resource の共通時刻ではない。
+完全な本文が取得できた場合に限り、その bytes の SHA-256 を記録する。
+requests の本文 bytes に対する hash であり、HTTP wire bytes の hash ではない。
+
+cache hit / invalid cache では保存された本文の hash は記録できるが、
+原 HTTP の status / header / 取得時刻、cache 保存時刻は得られないため None。
+本文が未完の timeout / byte cap、HTTP error で本文を読まない場合も完全な応答 hash は None。
+bundle 全体の `acquired_at` は None とし、cache と network を混在させた取得時刻を捏造しない。
+新規の cache envelope、parsed snapshot digest、HTTP 原応答 archive は追加していない。
+
+### 互換性と次工程
+
+専用テストは synthetic な HTTP / cache / parser 入力を使用し、実測 fixture を新たに作成していない。
+実測 evidence と hash は既存の Imprint 回帰試験で保持を確認する。
+公開経路と trace 経路の bundle、warning、例外情報、HTTP の引数・順序・件数、cache 書き込みを比較する。
+packaging では新規 module の収録、旧 import path の同一性、実 ZIP 内での取得台帳と warm cache も確認する。
+最終件数と権限問題を含む実行結果は [validation.md](validation.md) の Phase 2C-2C-2A に記録する。
+
+工程 B は **CONDITIONAL GO**。この台帳を使い、全 discovery / 候補集合の状態を集約し、
+公開 LinkageResult と Series 出力の互換性を保持する条件で進められる。
+今回は `linkage.py`、`talker.py`、Series 補完、NDL mapping、authority、Imprint 設定・書き込みを変更していない。

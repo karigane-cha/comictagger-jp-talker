@@ -13,6 +13,15 @@ from datetime import date, datetime
 from enum import Enum
 from typing import Literal
 
+from comictagger_jp_talker.acquisition import (
+    AcquisitionContext as AcquisitionContext,
+)
+from comictagger_jp_talker.acquisition import (
+    AcquisitionState as AcquisitionState,
+)
+from comictagger_jp_talker.acquisition import (
+    ResourceAcquisition as ResourceAcquisition,
+)
 from comictagger_jp_talker.isbn import isbn13
 from comictagger_jp_talker.linkage import LinkageResult, LinkageStatus, MatchConfidence, RecordMatch
 from comictagger_jp_talker.models import BookRecord
@@ -63,15 +72,6 @@ class AuthoritySourceKind(str, Enum):
     LABEL_AUTHORITY = "label_authority"
     NDL = "ndl"
     MADB = "madb"
-
-
-class AcquisitionState(str, Enum):
-    COMPLETE = "complete"
-    TRUNCATED = "truncated"
-    PARTIAL = "partial"
-    UNAVAILABLE = "unavailable"
-    NOT_REQUESTED = "not_requested"
-    NOT_RELATED = "not_related"
 
 
 class ImprintComparisonState(str, Enum):
@@ -126,53 +126,6 @@ class ImprintEligibilityReason(str, Enum):
     AUTHORITY_SCOPE_MISMATCH = "authority_scope_mismatch"
     AUTHORITY_RAW_MISMATCH = "authority_raw_mismatch"
     AUTHORITY_INDEPENDENCE_UNVERIFIED = "authority_independence_unverified"
-
-
-@dataclass(frozen=True, kw_only=True)
-class ResourceAcquisition:
-    uri: str
-    state: AcquisitionState
-
-    def __post_init__(self) -> None:
-        if not isinstance(self.uri, str) or not self.uri or not isinstance(self.state, AcquisitionState):
-            raise ValueError("Invalid resource acquisition")
-
-
-@dataclass(frozen=True, kw_only=True)
-class AcquisitionContext:
-    """Caller-supplied completion, not an instruction to fetch anything.
-
-    NOT_REQUESTED defaults deliberately withhold eligibility. Resource states
-    augment the Book/Series states; they cannot override incomplete snapshots.
-    Agent/Holding states are informational and never used to infer absence.
-    """
-
-    discovery: AcquisitionState = AcquisitionState.NOT_REQUESTED
-    book: AcquisitionState = AcquisitionState.NOT_REQUESTED
-    series: AcquisitionState = AcquisitionState.NOT_REQUESTED
-    relations: AcquisitionState = AcquisitionState.NOT_REQUESTED
-    resources: tuple[ResourceAcquisition, ...] = ()
-    agents: AcquisitionState = AcquisitionState.NOT_REQUESTED
-    holdings: AcquisitionState = AcquisitionState.NOT_REQUESTED
-    request_id: str | None = None
-    acquired_at: str | None = None
-    medium: str | None = None
-    # Explicitly attested requested Book/Series scope, for a full bundle whose
-    # partial state is confined to unneeded Agent/Holding acquisition.
-    book_series_scope: AcquisitionState = AcquisitionState.NOT_REQUESTED
-
-    def __post_init__(self) -> None:
-        for name in ("discovery", "book", "series", "relations", "agents", "holdings", "book_series_scope"):
-            if not isinstance(getattr(self, name), AcquisitionState):
-                raise ValueError(f"Acquisition {name} must be an enum")
-        if not isinstance(self.resources, tuple) or any(
-            not isinstance(r, ResourceAcquisition) for r in self.resources
-        ):
-            raise ValueError("Acquisition resources must be an immutable tuple")
-        for name in ("request_id", "acquired_at", "medium"):
-            value = getattr(self, name)
-            if value is not None and (not isinstance(value, str) or not value.strip()):
-                raise ValueError(f"Invalid acquisition {name}")
 
 
 @dataclass(frozen=True, kw_only=True)

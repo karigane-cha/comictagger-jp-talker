@@ -30,6 +30,9 @@ def test_sdist_contains_imprint_fixture_and_its_source():
     with tarfile.open(artifact) as archive:
         for path in (
             "comictagger_jp_talker/imprint_candidates.py",
+            "comictagger_jp_talker/acquisition.py",
+            "comictagger_jp_talker/sources/madb_acquisition.py",
+            "tests/test_madb_acquisition.py",
             "tests/test_imprint_candidates.py",
             "tests/fixtures/madb/imprint_measured.json",
             "docs/research/madb/imprint_evidence.json",
@@ -263,12 +266,35 @@ with patch.object(requests.Session, "request", side_effect=AssertionError("No im
     )
     assert ".zip" in evaluate_imprint_eligibility.__code__.co_filename
     assert AcquisitionContext().discovery.value == "not_requested"
+    from comictagger_jp_talker.acquisition import AcquisitionContext as NeutralContext
+    assert AcquisitionContext is NeutralContext
     from comictagger_jp_talker.linkage import LinkageResult, LinkageStatus, RecordMatch, compare_candidates
     from comictagger_jp_talker.provenance import FieldEvidence, SeriesComparison
     from comictagger_jp_talker.models import BookRecord
     assert ".zip" in compare_candidates.__code__.co_filename
     assert compare_candidates(BookRecord("test", "Title"), []).status == LinkageStatus.UNMATCHED
 print("ZIP: optional linkage API imported and evaluated without network")
+import contextlib
+import io
+from pathlib import Path
+from comictagger_jp_talker.sources.madb import MADBSource, _LIMITER
+from comictagger_jp_talker.acquisition import AcquisitionReason
+body = (Path(sys.argv[3]).parent / "madb" / "book_without_series.json").read_bytes()
+reply = requests.Response()
+reply.status_code = 200
+reply.headers["Content-Type"] = "application/sparql-results+json"
+reply.raw = io.BytesIO(body)
+with MADBSource(Path(sys.argv[2]) / "trace") as source, \
+     patch.object(source.session, "post", return_value=reply) as post, \
+     patch.object(_LIMITER, "ratelimit", lambda *a, **kw: contextlib.nullcontext()):
+    result = source._get_with_trace("M1", series_only=True)
+    assert result.error is None and result.value.book.id == "M1"
+    assert result.context.relations.value == "not_related"
+    assert ".zip" in source._get_with_trace.__code__.co_filename
+    warm = source._get_with_trace("M1", series_only=True)
+    assert warm.value == result.value and post.call_count == 1
+    assert any(e.reason == AcquisitionReason.CACHE_HIT for e in warm.trace.events)
+print("ZIP: source trace, neutral type re-export and warm cache passed")
 """
     env = dict(os.environ, PYTHONUTF8="1")
     for snippet in (linkage_code, code):
