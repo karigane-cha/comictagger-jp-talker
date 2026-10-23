@@ -4,6 +4,7 @@ import os
 import subprocess
 import sys
 import tarfile
+import zipfile
 from importlib.metadata import entry_points
 from pathlib import Path
 
@@ -32,7 +33,11 @@ def test_sdist_contains_imprint_fixture_and_its_source():
             "comictagger_jp_talker/imprint_candidates.py",
             "comictagger_jp_talker/acquisition.py",
             "comictagger_jp_talker/sources/madb_acquisition.py",
+            "comictagger_jp_talker/linked_acquisition.py",
+            "comictagger_jp_talker/linkage.py",
             "tests/test_madb_acquisition.py",
+            "tests/test_linkage_evidence.py",
+            "tests/fixtures/linkage_evidence_baseline.json",
             "tests/test_imprint_candidates.py",
             "tests/fixtures/madb/imprint_measured.json",
             "docs/research/madb/imprint_evidence.json",
@@ -47,6 +52,14 @@ def test_built_zip_in_isolated_host(tmp_path):
     artifact = root / "dist" / f"jpbooks_talker-plugin-{__version__}.zip"
     if not artifact.is_file():
         pytest.skip("Build the wheel and local plugin ZIP first")
+    # Verify all production Python, not just the new imports or a stale ZIP name.
+    with zipfile.ZipFile(artifact) as archive:
+        paths = tuple((root / "comictagger_jp_talker").rglob("*.py"))
+        assert {p.relative_to(root).as_posix() for p in paths} == {
+            n for n in archive.namelist() if n.startswith("comictagger_jp_talker/") and n.endswith(".py")
+        }
+        for path in paths:
+            assert archive.read(path.relative_to(root).as_posix()) == path.read_bytes()
     # Separate process: evict an editable install, load actual ZIP, then let the host
     # remove its temporary sys.path entries. Exercise fetch AFTER loader cleanup.
     code = """
@@ -248,6 +261,19 @@ for direct in (False, True):
         assert not any("/C2>" in q or "/C3>" in q or "/ref/S1>" in q for q in calls)
         assert talker.fetch_comic_data(issue_id=ndl.id) == output
         assert len(calls) == 3
+        wrapper = supplement.__globals__["link_ndl_record_for_series"]
+        core = wrapper.__globals__["acquire_linked_record_evidence"]
+        assert ".zip" in core.__code__.co_filename
+        snapshot_type = core.__globals__["NDLInputSnapshot"]
+        assert ".zip" in snapshot_type.from_record.__func__.__code__.co_filename
+        with madb_type(talker.cache_folder) as shared_source:
+            shared = core(ndl, shared_source)
+        assert len(calls) == 3
+        assert shared.acquisition_context.discovery.state.value == "complete"
+        assert shared.acquisition_context.books[0].bundle is shared.bundles[0]
+        assert shared.acquisition_context.books[0].acquisition.value is shared.bundles[0]
+        assert len(shared.acquisition_context.traces) == 2
+        assert shared.acquisition_context.books[0].context.agents.value == "not_requested"
 print("ZIP: beta.9 load, default OFF, summary-free candidates, summary 429 fail-open, "
       "exact/strong lightweight supplement, Agent/Holding zero passed")
 """
@@ -268,11 +294,17 @@ with patch.object(requests.Session, "request", side_effect=AssertionError("No im
     assert AcquisitionContext().discovery.value == "not_requested"
     from comictagger_jp_talker.acquisition import AcquisitionContext as NeutralContext
     assert AcquisitionContext is NeutralContext
-    from comictagger_jp_talker.linkage import LinkageResult, LinkageStatus, RecordMatch, compare_candidates
+    from comictagger_jp_talker.linkage import (
+        LinkageResult, LinkageStatus, RecordMatch, compare_candidates, acquire_linked_record_evidence,
+    )
+    from comictagger_jp_talker.linked_acquisition import NDLInputSnapshot
     from comictagger_jp_talker.provenance import FieldEvidence, SeriesComparison
     from comictagger_jp_talker.models import BookRecord
     assert ".zip" in compare_candidates.__code__.co_filename
     assert compare_candidates(BookRecord("test", "Title"), []).status == LinkageStatus.UNMATCHED
+    assert ".zip" in acquire_linked_record_evidence.__code__.co_filename
+    no_isbn = acquire_linked_record_evidence(BookRecord("test", "Title"), object())
+    assert no_isbn.bundles == () and no_isbn.acquisition_context.discovery.state.value == "not_requested"
 print("ZIP: optional linkage API imported and evaluated without network")
 import contextlib
 import io

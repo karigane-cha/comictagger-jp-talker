@@ -652,3 +652,137 @@ packaging では新規 module の収録、旧 import path の同一性、実 ZIP
 工程 B は **CONDITIONAL GO**。この台帳を使い、全 discovery / 候補集合の状態を集約し、
 公開 LinkageResult と Series 出力の互換性を保持する条件で進められる。
 今回は `linkage.py`、`talker.py`、Series 補完、NDL mapping、authority、Imprint 設定・書き込みを変更していない。
+
+## 14. 工程 B の確定契約（Phase 2C-2C-2B）
+
+工程 A の §13 はその時点の記録として維持する。本節は工程 B で実装した契約。
+`linkage.py` の取得ループを一つの core へ移し、公開 wrapper はその `linkage` のみを返す。
+`talker.py` / `series_supplement.py` の入口、設定、採用条件、書き込みは変更していない。
+既存 Series 補完は従来の wrapper を経由するため、内部では共通 core を通るが、
+補完側を共有結果へ移行する工程 C は未実装。
+
+### 内部入口と型配置
+
+```python
+evidence = acquire_linked_record_evidence(record, madb_source, refresh=False, scope="series_linkage")
+# evidence.linkage: historical LinkageResult
+# evidence.bundles: accepted, already-acquired MADBRecordBundle objects
+# evidence.acquisition_context: complete local run ledger
+```
+
+`scope` は `series_linkage`（既定）または `full`。不正な値は通信前に ValueError。
+公開 `link_ndl_record()` は full、`link_ndl_record_for_series()` は series_linkage を使用する。
+両関数の引数と戻り値は従来どおり。`compare_candidates()` と `_evaluate()` の比較規則は変更していない。
+package `0.3.0`、identity `phase2b2-v1`、Imprint evaluator `phase2c2b-v1` を維持する。
+
+| 型 | 配置と責務 |
+|---|---|
+| `NDLInputSnapshot` | 新規 `linked_acquisition.py`。取得開始前の比較入力 |
+| `ISBNDiscovery` | 同上。正規化 ISBN ごとの state / reason / page / 元の acquisition / error |
+| `DiscoveryAcquisition` | 同上。全 ISBN の予定順、個別結果、全体状態、truncated と複数の理由 |
+| `BookAcquisitionContext` | 同上。発見した Book ID / URI、統合 context、元の acquisition、bundle、error、採用対象の区別 |
+| `LinkedAcquisitionContext` | 同上。run ID、UTC 開始・終了、scope、NDL 入力、discovery、全 Book、元の traces、issues |
+| `LinkedRecordEvidence` | `linkage.py`。`linkage`、`bundles`、`acquisition_context` |
+
+全 dataclass は frozen、コレクションは tuple。mutable な source / session / cache / callback /
+recorder / 例外本体を保持しない。新規モデルは工程 A の取得状態 enum を再利用し、
+`imprint_candidates.py` を import しない。旧 import path の 3 型は引き続き同一クラス。
+`LinkedAcquisitionContext.events` は各 trace の元 event を取得順に並べた tuple の property。
+元の source outcome / trace / bundle / statement はコピーして作り直さず参照を保持する。
+
+### NDL 入力の固定範囲
+
+`id`、`url`、`title` と、`isbns`、`volumes`、`publishers`、`editions`、`issued`、
+`dates`、`series_titles` の raw 値を保持する。現行 identity、Series 比較、Imprint 比較の参照箇所を確認した。
+list は tuple へコピーし、文字列の NFC / NFKC 正規化、版・出版社・巻の補正はしない。
+`volumes` と `title` が巻の原値であり、推定した巻番号は既存の比較処理が求める。
+snapshot の `to_record()` は呼ぶたびに新しい list を持つ private な `BookRecord` を作る。
+一回の core は最初に作った private 入力だけを使用し、取得中の呼び出し元による変更を混在させない。
+
+書誌の全フィールドを複製する契約ではない。現在の比較で参照しない `raw_xml`、
+`content_dates`、著者・説明等は含めない。将来の authority 検証で媒体や追加の日付・書誌情報が必要なら、
+その用途と raw 型を確認して契約を追加する。今回の snapshot を媒体確認済みの根拠にはできない。
+
+### 一回の取得フローと集約
+
+1. 既存の `isbn13()` で有効 ISBN を正規化・重複除去し、昇順の tuple に固定する。
+2. 全 ISBN を順番に `_search_by_isbn_with_trace()` で検索する。
+3. 全 discovery の候補を Book ID でまとめ、Book ID 順に `_get_with_trace()` で取得する。
+4. `MADBAcquisition.value` をそのまま比較・共有に使い、追加取得を行わない。
+5. 全体の discovery 状態を各 Book の context に付加する。元の source context は outcome 内に変更せず残す。
+6. 従来の判定と warning 生成を行い、共有結果を返す。
+
+最上位の discovery / Book failure で直ちに後続の取得を中断する。
+残った ISBN は個別に NOT_REQUESTED / `upstream_failed`。
+発見済み・未取得 Book も bundle=None、book=NOT_REQUESTED / `upstream_failed` として返す。
+Series 内部失敗は source の従来動作どおり partial bundle として取得が続き、各失敗 event を保持する。
+
+| discovery の条件 | 集約状態と根拠 |
+|---|---|
+| 有効 ISBN なし | NOT_REQUESTED / `no_valid_isbn` |
+| 全 ISBN が trace 上 COMPLETE | COMPLETE。正常な 0 件も含む |
+| 最初の discovery が失敗 | UNAVAILABLE。後続は NOT_REQUESTED |
+| 一部成功後に失敗 | PARTIAL。成功 page、failure、後続未実行をすべて保持 |
+| 成功した discovery に row cap | TRUNCATED。各 ISBN の状態と `discovery_truncated` を保持 |
+| truncated と失敗の混在 | PARTIAL、truncated=True、両方の理由を保持 |
+| trace 不足・その他の不完全性 | PARTIAL。trace がない非 truncated 成功を COMPLETE にしない |
+
+一回の source call の COMPLETE だけでは全体を COMPLETE にしない。
+byte cap 等で page が返らない failure の場合、全体は UNAVAILABLE / PARTIAL となり、
+TRUNCATED の event と cap 値は元 trace 内に残る。公開 `LinkageResult.truncated` は、
+従来どおり返却済み search page の truncated の OR であり、台帳を理由に意味を拡張しない。
+
+### 現行コードを優先した互換性判断
+
+- 同じ ID / URI の重複発見は一回だけ取得する。同じ ID に異なる URI が出る場合、
+  旧 core は最後の URI を使っていた。この挙動を維持し、全 search page と
+  `conflicting_discovery_uri:<ID>` を別に保存する。将来の採用側は安全性阻害条件として扱う必要がある。
+- 取得した Book の ID / URI が discovery と違う場合、従来どおり schema failure / UNAVAILABLE。
+  その bundle は `evidence.bundles` に含めず、該当 `BookAcquisitionContext.bundle` と元 outcome に保存する。
+  `included_in_linkage=False`、error と `discovered_book_mismatch:<ID>` を明示する。
+  source の COMPLETE は取得自体の状態なので、identity 整合性の証明と混同しない。
+- source は候補を既に parser で重複除去している。parser 内で失われた元の行を復元する契約ではない。
+- `Mock(spec=MADBSource)` 等の既存 fake や公開メソッドの monkeypatch は、通信前に選ぶ adapter で対応する。
+  実 MADBSource の変更されていない公開メソッドは trace 経路を使い、公開メソッドが置換されていれば
+  そのメソッドを一度だけ呼ぶ。別クラスの fake は class に trace メソッドを明示した場合だけ trace 対応とする。
+  trace を試してから公開メソッドを再実行する fallback はない。
+- trace がない正常値は既存の identity 比較には使用するが、新台帳では `trace_unavailable` を残す。
+  Book / Series / relations の完全性を推定せず、空 Series を NOT_RELATED にしない。
+  軽量 scope の Agent / Holding は NOT_REQUESTED。元の trace、HTTP 時刻、hash は捏造しない。
+
+この adapter と不整合診断は §3 の概略を具体化したもの。公開結果を保つため、
+新しい台帳上の阻害条件を identity algorithm に混入させない設計とした。
+本番 Imprint 評価への接続時には、個別の context だけでなく run 全体の issues と
+`included_in_linkage` も検証する必要がある。今回 evaluator には接続しない。
+
+### 例外・provenance・制限
+
+工程 A の最上位 `MADBError` は outcome.error から従来の UNAVAILABLE に変換する。
+既存の matches / confidence / candidate count、取得済み candidate completeness、
+warning の内容・順序・重複除去、error kind / message / status / Retry-After を保持する。
+ValueError / RuntimeError / OSError / SQLite error / assertion は従来どおり送出する。
+これらの異常終了時に途中台帳を返す契約は追加しない。NDL のエラー履歴にも書き込まない。
+
+run ID は linkage 全体と各 source call で別。UTC 開始・終了は実行時刻であり、
+bundle の原取得日時ではない。原 HTTP 時刻、cache 保存日時、hash の意味は §13 のまま。
+HTTP 本文 hash は parsed RDF snapshot hash ではなく、複数 HTTP の同時点性も保証しない。
+新しい cache envelope / parsed snapshot digest は未実装。endpoint、query、parser、
+timeout、limiter、cap、cache key / namespace / 期限 / 保存条件、refresh、自動 retry 禁止を維持した。
+
+### 検証と次工程の受入条件
+
+旧 core の段階で 24 ケース × 2 scope の公開結果を
+`tests/fixtures/linkage_evidence_baseline.json` に固定した。
+この fixture と新規専用テストの HTTP 応答・fake trace はすべて synthetic。
+既存の実測 evidence は変更していない。新 wrapper と新 core の比較だけに依存しない。
+工程 A の 58 テスト、既存 Series / identity / NDL / Imprint / packaging の回帰も実行する。
+詳細な件数、build・権限問題・ZIP の結果は [validation.md](validation.md) の工程 B に追記する。
+
+取得共有基盤は工程 C へ **CONDITIONAL GO**。次工程では以下を受入条件とする。
+
+1. Series / Imprint の要否を個別判定し、必要な場合だけ一回の共有取得へ接続する。
+2. 既存 Series の結果、標準経路の通信数、候補一覧等での補完用通信ゼロを維持する。
+3. Imprint の判定前に全 discovery・各 Book・relation・issues と snapshot の対応を検証する。
+4. Imprint の本番 authority 供給・真正性・失効・適用範囲が解決するまで、自動補完を有効化しない。
+
+**Imprint 自動補完は NO-GO を維持する。** 取得台帳の完成は意味確認の供給問題を解消しない。

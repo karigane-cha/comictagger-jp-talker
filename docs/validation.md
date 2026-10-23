@@ -1019,6 +1019,155 @@ ValueError / RuntimeError / OSError / SQLite error / 内部 assertion は従来�
 意味確認の本番供給・失効運用と保存先既存 Imprint の保護も未解決で、自動補完の NO-GO は維持する。
 commit / push / merge / tag / GitHub Release は実行していない。
 
+## Phase 2C-2C-2B：共通 linkage core と取得済み snapshot（2026-10-20）
+
+### 開始時点と変更範囲
+
+開始時の branch は `main`、HEAD は `cbce602f07a3559b8299a8e55c2dfc9d13d29022`。
+工程 A の未コミット変更が存在した。開始時の内容を
+`.research/phase2c2c2b-start/` に保存して、今回の差分と区別した。
+
+| 開始時の状態 | ファイル |
+|---|---|
+| 変更済み | `imprint_candidates.py`、`sources/madb.py`、`docs/validation.md`、`tests/test_packaging.py` |
+| 未追跡 | `acquisition.py`、`sources/madb_acquisition.py`、`docs/phase2c2c_integration_design.md`、`tests/test_madb_acquisition.py` |
+
+上記の production code と工程 A の専用テストは開始時と byte 単位で一致する。
+設計書と本記録の既存部分もそのまま保持し、工程 B の節を追記した。
+packaging テストは工程 A の assertion を維持したうえで拡張した。
+
+工程 B の変更は次の 7 ファイル。
+
+- `comictagger_jp_talker/linkage.py`：単一 core、公開 wrapper の projection、共有結果型。
+- `comictagger_jp_talker/linked_acquisition.py`（新規）：NDL 入力、ISBN / Book / run 全体の immutable モデル。
+- `tests/test_linkage_evidence.py`（新規）：165 件の専用テスト。
+- `tests/fixtures/linkage_evidence_baseline.json`（新規）：旧 core で取得した synthetic な公開結果。
+- `tests/test_packaging.py`：新規モデルと固定 fixture の sdist 収録、全 production Python の ZIP byte 比較、
+  loader 後の共有 core と warm cache の検証。
+- `docs/phase2c2c_integration_design.md`：§14 に確定契約と次工程の条件。
+- `docs/validation.md`：本記録。
+
+`talker.py`、`series_supplement.py`、NDL mapping、authority、Imprint 設定・書き込みには変更を加えていない。
+package `0.3.0`、identity `phase2b2-v1`、evaluator `phase2c2b-v1` を維持した。
+
+### 確定した内部契約と互換性
+
+`acquire_linked_record_evidence(record, source, *, refresh=False, scope="series_linkage")` は、
+`LinkedRecordEvidence(linkage, bundles, acquisition_context)` を返す。
+公開 `link_ndl_record()` は full、`link_ndl_record_for_series()` は軽量 scope を使い、
+従来の `LinkageResult` のみを返す。取得ループは一本で、source の trace outcome.value を再利用する。
+`_evaluate()` / `_url()` / `compare_candidates()` は開始時と AST が一致する。
+
+`NDLInputSnapshot` は ID、URL、title、ISBN、volumes、publishers、editions、issued、dates、
+series_titles の raw 値を固定する。比較には独立した private BookRecord を使う。
+全 ISBN の予定順・成功・失敗・中断を `DiscoveryAcquisition` に集約し、発見した全 Book に
+`BookAcquisitionContext` を対応付ける。元 source outcome / trace と、全体 discovery を加えた
+context を分け、同じ取得を二度実行しない。全成果物を frozen / tuple とし、mutable handle を保持しない。
+
+旧 core を変更する前に 24 ケース × full / series_linkage の公開結果を JSON に固定した。
+新しい trace 対応 source と既存 fake source の両方で固定値と比較したため、
+新 wrapper と新 core に同じ誤りがある場合にも回帰を検出できる。
+status、confidence、reason / conflict、候補の順序・URI・completeness、warnings、error、
+Retry-After、truncated、SeriesComparison を全体比較している。
+
+同じ ID に別 URI が出た場合の「最後の URI を採用する」既存処理も維持した。
+新台帳には全 page と `conflicting_discovery_uri:<ID>` を保存する。
+取得した Book が discovery と一致しない場合の公開 schema failure は維持し、
+その raw bundle は Book 個別の台帳に保存して `included_in_linkage=False` とする。
+
+trace を持たない fake / 公開メソッドの monkeypatch は、一回だけ公開メソッドを呼ぶ adapter で対応。
+非 truncated 成功でも台帳は PARTIAL / `trace_unavailable` とし、COMPLETE を推測しない。
+最上位 MADBError は既存 UNAVAILABLE、Series 内の失敗は従来の partial bundle。
+ValueError / RuntimeError / OSError / SQLite error / assertion はそのまま送出する。
+これらの例外での途中台帳の返却は内部 outcome 契約に含めない。
+
+### 台帳の具体例と通信数
+
+| 入力・結果 | 新しい台帳 |
+|---|---|
+| ISBN 1 件 → Book 1 件 → Series 1 件 | discovery COMPLETE、Book / Series COMPLETE。元の source trace 2 個と同一 bundle を保持 |
+| ISBN 1 件目成功、2 件目 timeout、3 件目未実行 | discovery PARTIAL。個別に COMPLETE / UNAVAILABLE / NOT_REQUESTED。発見済み Book は未要求 |
+| discovery row cap と後続 timeout | discovery PARTIAL、truncated=True、cap と failure の双方を保持 |
+| Book M1 成功、M2 が 503、M9 未実行 | M1 の bundle と trace を保持、M2 は UNAVAILABLE / status=503 / Retry-After、M9 は NOT_REQUESTED |
+| Series C1 成功、C2 失敗 | Book の outcome は partial bundle、Series は PARTIAL。成功と失敗両方の event を保持 |
+| Book と discovery の ID / URI 不一致 | 公開結果は従来の UNAVAILABLE。取得した raw bundle は個別台帳だけに保存 |
+| 有効 ISBN なし | NOT_REQUESTED / `no_valid_isbn`、通信ゼロ |
+| 正常な空 discovery | COMPLETE、候補ゼロ。未取得や failure と区別 |
+
+標準 synthetic fixture の軽量 linkage は cold **3**、warm **0**、refresh **3** 要求。
+full fixture は Agent / Holding を含み cold **6**、warm **0**、refresh **6** 要求。
+Series cache だけの失効・不正 cache は追加 **1** 要求。
+取得前に公開メソッド経路／trace 経路を切り替えた対照試験で、cold / warm / refresh と
+discovery / Book / Series の 429 における HTTP 引数・順序・回数、cache 保存呼び出しの一致を確認した。
+再取得や追加 retry はない。標準 Talker の default OFF、候補取得、既存 Series 補完の通信数も既存試験で確認した。
+
+新規 fixture、fake trace、HTTP mock はすべて **synthetic**。新しい実測データや authority は含まない。
+既存実測 evidence の SHA-256 は
+`780581e27e6041950e12dd93df6e90513d3b8023e7fa4efece411f5a58a43d12` を維持する。
+
+### 実行結果
+
+既存 `.venv` と工程 A と同じ依存環境を使用。外部 HTTP を禁止する autouse fixture を維持した。
+依存の追加・更新、実 API の opt-in、テストの無効化、権限設定の変更は行っていない。
+
+| 検証 | 結果 |
+|---|---|
+| 変更前の関連試験 | **575 passed / 2 skipped**、6.98 秒 |
+| 共通 core 移行後の初期回帰 | **239 passed / 2 skipped**、5.24 秒 |
+| 新規専用試験の初回実行 | **157 passed**、1.39 秒。その後、公開 source と trace の I/O 対照 8 件を追加 |
+| 新規 165 件を含む最終の関連試験 | **740 passed / 2 skipped**、9.53 秒。工程 A の専用 58 件を含む |
+| 指定形式の全回帰 | **1 failed / 1,854 passed / 13 skipped / 1 xfailed**、32.70 秒 |
+| 権限のある環境で packaging を再実行 | **3 passed**、14.13 秒 |
+| Ruff check | **All checks passed** |
+| Ruff format --check | 新規コード例の折返し 1 箇所を修正後、**65 files already formatted** |
+| sdist → wheel → plugin ZIP | **成功**。既存スクリプトを使用し、現在の production code を収録 |
+| 実 ZIP | production Python **21 ファイルすべて byte 一致**。新規モデル、工程 A のモデル、最新 linkage を含む |
+| ComicTagger 1.6.0b9 loader | 実 ZIP の path cleanup 後、既存 Series 補完と共有 core、取得済み bundle、warm cache を確認 |
+| 改行・差分 | UTF-8 / BOM なし / LF。`git diff --check`、新規ファイルの差分検査を確認 |
+| 保護対象 | 工程 A の code / 専用テストは開始時と byte 一致。旧文書部分、raw evidence、`.gitattributes` を維持 |
+
+全回帰の唯一の失敗は `test_sdist_contains_imprint_fixture_and_its_source` が
+`dist/comictagger_jp_talker-0.3.0.tar.gz` を開く際の `PermissionError`。
+今回の traceback でファイルを開く段階の拒否であることを確認し、
+権限のある環境で同じ packaging assertion を再実行して成功した。
+**全体 suite が一度で成功したとは記録しない。**
+13 skipped は既存の実通信 opt-in、1 xfailed は既知の CIX writer の整数 Volume 0 出力制約。
+NDL mapping、summary、Series、Imprint pure API、CR / CIX、GUI を含む既存回帰に実装上の失敗は残っていない。
+
+最初の build は既存 sdist の置換時に WinError 5、ZIP 生成は wheel 読み取り時に PermissionError。
+それぞれ権限のある環境で同一コマンドを再実行した。旧成果物を成功の根拠にしていない。
+最初の Ruff check では追加テストの import 順・折返し・zip の strict 指定を修正し、
+format check では設計書の新規 Python コード例だけを修正した。無関係な整形はしていない。
+
+再現コマンド（上記の build / ZIP / packaging の再実行は許可された環境）:
+
+```powershell
+.venv/Scripts/python.exe -X utf8 -m pytest -q -ra -p no:cacheprovider --basetemp .research/phase2c2c2b-focused-final tests/test_linkage_evidence.py tests/test_linkage.py tests/test_linkage_integration.py tests/test_madb_acquisition.py tests/test_madb.py tests/test_madb_boundary.py tests/test_series_supplement.py tests/test_series_retrieval.py tests/test_imprint_candidates.py
+.venv/Scripts/python.exe -X utf8 -m build --no-isolation
+.venv/Scripts/python.exe -X utf8 scripts/build_plugin.py dist/comictagger_jp_talker-0.3.0-py3-none-any.whl
+.venv/Scripts/python.exe -X utf8 -m pytest -q -ra -p no:cacheprovider --basetemp .research/phase2c2c2b-full
+.venv/Scripts/python.exe -X utf8 -m pytest -q -ra -p no:cacheprovider --basetemp .research/phase2c2c2b-packaging tests/test_packaging.py
+.venv/Scripts/python.exe -m ruff check .
+.venv/Scripts/python.exe -m ruff format --check .
+git diff --check
+git status --short
+```
+
+### 工程 C への判断と未解決事項
+
+取得共有基盤は **CONDITIONAL GO**。公開 linkage の互換性と一回の取得による snapshot 共有を確認した。
+次工程は補完要否の個別判定 → 共有取得の接続 → 既存 Series の出力・通信回帰の順とする。
+Imprint の採用には run 全体の issues、discovery、Book 対応、relation 完全性を検証する必要がある。
+
+**Imprint 自動補完は NO-GO**。信頼済み authority の供給・失効・対象適合性は未解決で、
+この取得基盤では意味確認を VERIFIED へ変更できない。
+旧 cache の原 HTTP 時刻、cache 保存日時、複数 HTTP の同時点性、parser 内で除去された重複、
+parsed snapshot digest は引き続き未確認・未実装。bundle 共通の取得時刻は捏造しない。
+NDL snapshot は現行比較の参照フィールドに限り、将来の媒体等の authority 検証には別途拡張が必要。
+trace がない adapter の結果は自動補完の完全性根拠に使えない。
+工程 C の本番統合、Imprint 設定・書き込み、authority provider は実装していない。
+commit / push / merge / tag / GitHub Release は行っていない。
+
 ## CI / Release の証明書対策と Python 3.14 系への対応（2026-10-23）
 
 ### 背景と変更範囲

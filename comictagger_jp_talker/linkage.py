@@ -5,11 +5,21 @@ from __future__ import annotations
 from collections.abc import Sequence
 from dataclasses import dataclass, replace
 from enum import Enum
+from uuid import uuid4
 
+from comictagger_jp_talker.acquisition import AcquisitionContext, AcquisitionState, ResourceAcquisition
 from comictagger_jp_talker.isbn import isbn13, normalize_isbn
+from comictagger_jp_talker.linked_acquisition import (
+    BookAcquisitionContext,
+    DiscoveryAcquisition,
+    ISBNDiscovery,
+    LinkedAcquisitionContext,
+    NDLInputSnapshot,
+)
 from comictagger_jp_talker.models import BookRecord
 from comictagger_jp_talker.provenance import EvidenceSource, FieldEvidence, SeriesComparison, compare_series
 from comictagger_jp_talker.sources.madb import MADBSource
+from comictagger_jp_talker.sources.madb_acquisition import MADBAcquisition, failure, utc_now
 from comictagger_jp_talker.sources.madb_models import MADBError, MADBRecordBundle
 from comictagger_jp_talker.sources.madb_parser import terms
 from comictagger_jp_talker.sources.madb_queries import PROPERTY_NS, SCHEMA_NS
@@ -82,6 +92,23 @@ class LinkageResult:
     warnings: tuple[str, ...] = ()
     error: LinkageError | None = None
     truncated: bool = False
+
+
+@dataclass(frozen=True)
+class LinkedRecordEvidence:
+    linkage: LinkageResult
+    bundles: tuple[MADBRecordBundle, ...]
+    acquisition_context: LinkedAcquisitionContext
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.linkage, LinkageResult) or not isinstance(
+            self.acquisition_context, LinkedAcquisitionContext
+        ):
+            raise ValueError("Invalid linked evidence")
+        if not isinstance(self.bundles, tuple) or any(
+            not isinstance(bundle, MADBRecordBundle) for bundle in self.bundles
+        ):
+            raise ValueError("Linked bundles must be an immutable tuple")
 
 
 def _url(value: str) -> str | None:
@@ -266,36 +293,206 @@ def link_ndl_record(record: BookRecord, madb_source: MADBSource, *, refresh: boo
     Any discovery/Book failure makes the overall result unavailable, retaining
     completed evidence but withholding automatic Series comparison.
     """
-    return _link_ndl_record(record, madb_source, madb_source.get, refresh=refresh)
+    return acquire_linked_record_evidence(record, madb_source, refresh=refresh, scope="full").linkage
 
 
 def link_ndl_record_for_series(
     record: BookRecord, madb_source: MADBSource, *, refresh: bool = False
 ) -> LinkageResult:
     """Use the same discovery/identity rules with Book/Series-only acquisition."""
-    return _link_ndl_record(record, madb_source, madb_source.get_for_series_linkage, refresh=refresh)
+    return acquire_linked_record_evidence(record, madb_source, refresh=refresh).linkage
 
 
-def _link_ndl_record(record: BookRecord, madb_source: MADBSource, acquire, *, refresh: bool) -> LinkageResult:
-    isbns = sorted({value for raw in record.isbns if (value := isbn13(raw))})
+# Capture native public methods before an application/test replaces them. Selecting
+# an adapter happens before I/O; probing a trace and then fetching again is forbidden.
+_NATIVE_METHODS = {
+    "search_by_isbn": MADBSource.search_by_isbn,
+    "get": MADBSource.get,
+    "get_for_series_linkage": MADBSource.get_for_series_linkage,
+}
+
+
+def _acquire(source, key, *, discovery, refresh, scope):
+    name = "search_by_isbn" if discovery else ("get" if scope == "full" else "get_for_series_linkage")
+    trace_name = "_search_by_isbn_with_trace" if discovery else "_get_with_trace"
+    public = getattr(source, name)
+    if issubclass(type(source), MADBSource):
+        traced = getattr(public, "__func__", None) is _NATIVE_METHODS[name]
+    else:
+        # Mock(spec=MADBSource) fabricates attributes and even __class__. Only an
+        # explicitly declared class method opts a third-party fake into tracing.
+        traced = callable(getattr(type(source), trace_name, None))
+    try:
+        if traced:
+            kwargs = {} if discovery else {"series_only": scope == "series_linkage"}
+            outcome = getattr(source, trace_name)(key, refresh=refresh, **kwargs)
+            if not isinstance(outcome, MADBAcquisition):
+                raise TypeError("Trace source must return MADBAcquisition")
+            return outcome.value, outcome, outcome.error
+        return public(key, refresh=refresh), None, None
+    except MADBError as exc:
+        return None, None, failure(exc)
+
+
+def _discovery_acquisition(isbns, attempts, truncated):
+    attempts = tuple(attempts) + tuple(
+        ISBNDiscovery(isbn=value, state=AcquisitionState.NOT_REQUESTED, reason="upstream_failed")
+        for value in isbns[len(attempts) :]
+    )
+    reasons = []
+    if not isbns:
+        state = AcquisitionState.NOT_REQUESTED
+        reasons.append("no_valid_isbn")
+    elif any(item.error for item in attempts):
+        state = (
+            AcquisitionState.PARTIAL
+            if any(item.page is not None for item in attempts)
+            else AcquisitionState.UNAVAILABLE
+        )
+        reasons.append("discovery_failed")
+    elif any(item.state not in (AcquisitionState.COMPLETE, AcquisitionState.TRUNCATED) for item in attempts):
+        state = AcquisitionState.PARTIAL
+        reasons.append("discovery_incomplete")
+    else:
+        state = AcquisitionState.TRUNCATED if truncated else AcquisitionState.COMPLETE
+        reasons.append("all_isbns_completed")
+    if truncated:
+        reasons.append("discovery_truncated")
+    if any(item.reason == "trace_unavailable" for item in attempts):
+        reasons.append("trace_unavailable")
+    return DiscoveryAcquisition(
+        planned_isbns=isbns, attempts=attempts, state=state, truncated=truncated, reasons=tuple(reasons)
+    )
+
+
+def _untraced_book_context(candidate, bundle, error, scope):
+    """Compatibility calls supply data, but cannot attest acquisition completeness."""
+    state = (
+        AcquisitionState.UNAVAILABLE
+        if error
+        else AcquisitionState.TRUNCATED
+        if bundle.book.completeness == "truncated"
+        else AcquisitionState.PARTIAL
+    )
+    return AcquisitionContext(
+        book=state,
+        series=AcquisitionState.NOT_REQUESTED if error else AcquisitionState.PARTIAL,
+        relations=AcquisitionState.NOT_REQUESTED if error else AcquisitionState.PARTIAL,
+        resources=(ResourceAcquisition(uri=candidate.uri, state=state),),
+        agents=AcquisitionState.PARTIAL if scope == "full" and not error else AcquisitionState.NOT_REQUESTED,
+        holdings=AcquisitionState.PARTIAL
+        if scope == "full" and not error
+        else AcquisitionState.NOT_REQUESTED,
+        book_series_scope=state,
+    )
+
+
+def acquire_linked_record_evidence(
+    record: BookRecord, madb_source: MADBSource, *, refresh: bool = False, scope: str = "series_linkage"
+) -> LinkedRecordEvidence:
+    """Internal shared snapshot. Public wrappers project only the historical result.
+
+    The NDL input is fixed before any callback. Traced source outcomes are reused
+    directly; legacy/overridden public methods are called once with unknown
+    completeness. Acquisition facts never change the identity algorithm.
+    """
+    if scope not in ("full", "series_linkage"):
+        raise ValueError("Invalid acquisition scope")
+    run_id, started_at = uuid4().hex, utc_now()
+    ndl_input = NDLInputSnapshot.from_record(record)
+    record = ndl_input.to_record()
+    isbns = tuple(sorted({value for raw in record.isbns if (value := isbn13(raw))}))
     discovered: dict[str, CandidateSummary] = {}
     bundles = []
+    attempts, books, traces, issues = [], [], [], []
     warnings: list[str] = []
     truncated = False
-    try:
-        for value in isbns:
-            page = madb_source.search_by_isbn(value, refresh=refresh)
-            truncated |= page.truncated
-            warnings.extend(page.warnings)
-            for candidate in page.records:
-                discovered[candidate.id] = CandidateSummary(candidate.id, candidate.uri)
+    error = None
+    for value in isbns:
+        page, outcome, error = _acquire(madb_source, value, discovery=True, refresh=refresh, scope=scope)
+        if outcome:
+            traces.append(outcome.trace)
+        state = (
+            outcome.context.discovery
+            if outcome
+            else AcquisitionState.UNAVAILABLE
+            if error
+            else AcquisitionState.TRUNCATED
+            if page.truncated
+            else AcquisitionState.PARTIAL
+        )
+        attempts.append(
+            ISBNDiscovery(
+                isbn=value,
+                state=state,
+                reason="source_trace" if outcome else "trace_unavailable",
+                page=page,
+                acquisition=outcome,
+                error=error,
+            )
+        )
+        if error:
+            break
+        truncated |= page.truncated
+        warnings.extend(page.warnings)
+        for candidate in page.records:
+            previous = discovered.get(candidate.id)
+            if previous is not None and previous.uri != candidate.uri:
+                issues.append(f"conflicting_discovery_uri:{candidate.id}")
+            # Historical last-observed URI wins; the original pages retain both.
+            discovered[candidate.id] = CandidateSummary(candidate.id, candidate.uri)
+    discovery = _discovery_acquisition(isbns, attempts, truncated)
+    if "trace_unavailable" in discovery.reasons:
+        issues.append("discovery_trace_unavailable")
+    if error is None:
         for candidate in sorted(discovered.values(), key=lambda item: item.id):
-            bundle = acquire(candidate.id, refresh=refresh)
-            if bundle.book.id != candidate.id or bundle.book.uri != candidate.uri:
-                raise MADBError("schema", "Retrieved Book differs from discovered candidate")
+            bundle, outcome, error = _acquire(
+                madb_source, candidate.id, discovery=False, refresh=refresh, scope=scope
+            )
+            if outcome:
+                traces.append(outcome.trace)
+                context = outcome.context
+            else:
+                issues.append(f"book_trace_unavailable:{candidate.id}")
+                context = _untraced_book_context(candidate, bundle, error, scope)
+            mismatch = bundle is not None and (
+                bundle.book.id != candidate.id or bundle.book.uri != candidate.uri
+            )
+            if mismatch:
+                error = failure(MADBError("schema", "Retrieved Book differs from discovered candidate"))
+                issues.append(f"discovered_book_mismatch:{candidate.id}")
+            books.append(
+                BookAcquisitionContext(
+                    book_id=candidate.id,
+                    book_uri=candidate.uri,
+                    context=replace(context, discovery=discovery.state),
+                    reason="identity_mismatch"
+                    if mismatch
+                    else "source_trace"
+                    if outcome
+                    else "trace_unavailable",
+                    acquisition=outcome,
+                    bundle=bundle,
+                    error=error,
+                    included_in_linkage=error is None,
+                )
+            )
+            if error:
+                break
             bundles.append(bundle)
             discovered[candidate.id] = replace(candidate, completeness=bundle.completeness)
-    except MADBError as exc:
+    acquired_ids = {item.book_id for item in books}
+    books.extend(
+        BookAcquisitionContext(
+            book_id=candidate.id,
+            book_uri=candidate.uri,
+            context=AcquisitionContext(discovery=discovery.state),
+            reason="upstream_failed",
+        )
+        for candidate in sorted(discovered.values(), key=lambda item: item.id)
+        if candidate.id not in acquired_ids
+    )
+    if error is not None:
         # Retain observations without invoking Series comparison on a failed run.
         matches = tuple(
             match
@@ -314,12 +511,28 @@ def _link_ndl_record(record: BookRecord, madb_source: MADBSource, acquire, *, re
         if truncated:
             warnings.append("MADB candidate discovery truncated; ISBN uniqueness is not established")
         warnings.append("MADB acquisition failed; candidate evaluation and ISBN uniqueness are incomplete")
-        return LinkageResult(
+        linkage = LinkageResult(
             LinkageStatus.UNAVAILABLE,
             matches,
             tuple(discovered[key] for key in sorted(discovered)),
             tuple(dict.fromkeys(warnings)),
-            LinkageError(exc.kind, exc.desc, exc.status, exc.retry_after),
+            LinkageError(error.kind, error.message, error.status, error.retry_after),
             truncated=truncated,
         )
-    return compare_candidates(record, bundles, truncated=truncated, warnings=warnings)
+    else:
+        linkage = compare_candidates(record, bundles, truncated=truncated, warnings=warnings)
+    return LinkedRecordEvidence(
+        linkage,
+        tuple(bundles),
+        LinkedAcquisitionContext(
+            run_id=run_id,
+            started_at=started_at,
+            finished_at=utc_now(),
+            scope=scope,
+            ndl_input=ndl_input,
+            discovery=discovery,
+            books=tuple(books),
+            traces=tuple(traces),
+            issues=tuple(dict.fromkeys(issues)),
+        ),
+    )
