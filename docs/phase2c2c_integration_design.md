@@ -786,3 +786,131 @@ timeout、limiter、cap、cache key / namespace / 期限 / 保存条件、refres
 4. Imprint の本番 authority 供給・真正性・失効・適用範囲が解決するまで、自動補完を有効化しない。
 
 **Imprint 自動補完は NO-GO を維持する。** 取得台帳の完成は意味確認の供給問題を解消しない。
+
+## 15. 工程 C の確定契約（Phase 2C-2C-2C）
+
+工程 A / B の §13 / §14 はその時点の記録として保持する。本工程では既存 Series 補完だけを
+共通取得入口へ接続した。Imprint の設定、意味確認 provider、evaluator の本番接続、書き込み、
+工程 D / E の追加調査は行っていない。version `0.3.0` と既存の各 algorithm version を維持する。
+
+### 共通入口と依存方向
+
+新規 `metadata_supplement.py` に次の入口を置く。
+
+```python
+def supplement_metadata(
+    metadata: GenericMetadata,
+    record: BookRecord,
+    cache_folder: Path,
+    *,
+    series_enabled: bool = False,
+) -> GenericMetadata: ...
+```
+
+必要条件は `series_enabled and not (metadata.series or "").strip()`。
+OFF、または非空 Series がある場合は、source / session / cache を生成せず入力オブジェクトを返す。
+ON で None / 空文字列 / 空白だけの場合に限り、一つの `MADBSource` と一回の
+`acquire_linked_record_evidence(record, source, scope="series_linkage")` を使用する。
+full scope、旧 linkage wrapper を先に呼ぶ経路、二重取得はない。
+
+`LinkedRecordEvidence` は local 変数に保持し、取得済み `.linkage` だけを Series 採用関数へ渡す。
+`.bundles` / `.acquisition_context` を再構築しない。source の close 後も同じ immutable な結果を
+入口内で参照でき、将来の別評価もこの位置で共有できる。今回の返却値は従来どおり metadata のみ。
+source、session、cache、recorder を module の global 属性へ保存しない。
+
+循環 import を避けるため、純粋な採用関数だけを新規 `series_supplement_policy.py` に分離した。
+これは §4 の概略を具体化する際の配置変更であり、関数本体は移行前と AST が一致する。
+`series_supplement.py` は `apply_series_supplement` を同一オブジェクトとして再公開し、
+`supplement_series(metadata, record, cache_folder, *, enabled=False)` を互換 wrapper として残す。
+wrapper は `series_enabled=enabled` で共通入口へ一度だけ委譲し、取得・ログ・close・Notes を処理しない。
+
+```text
+talker.py ────────────────────→ metadata_supplement.py → linkage.py / MADBSource
+series_supplement.py（互換）───→ metadata_supplement.py → series_supplement_policy.py
+series_supplement.py（再公開）────────────────────────→ series_supplement_policy.py
+```
+
+共通入口から互換 wrapper への逆参照はない。両 module を先に import する順序をそれぞれ試験し、
+import 時に session を作らないことも確認する。従来の constructor の monkeypatch は内部依存位置が
+変わるため、既存テストでは `metadata_supplement.MADBSource` へ対象を移した。assertion は保持する。
+
+### Talker の接続点と設定
+
+`fetch_comic_data()` の `to_metadata()` 直後だけを新入口へ切り替えた。
+NDL ID の決定、`get(summary_mode="fetch")`、巻の解決、要求巻との照合、metadata 変換は変更しない。
+取得失敗・巻不一致・ID 未選択では共通入口へ到達しない。
+候補検索、`search_metadata()`、`fetch_series()`、両 issue 候補 API、`check_status()` では
+共通入口を実行しない。候補取得の `summary_mode="cache"` を保持する。
+
+公開設定は既存の `jpbooks_madb_series_supplement` のみで、既定 False、保存・復元・検証規則もそのまま。
+新入口には refresh 引数を追加していない。検索の `refresh_cache=True` は NDL にだけ伝わり、
+最終 MADB 取得は既存どおり core の既定 refresh=False を使う。
+core を直接呼ぶ明示的な refresh=True の契約は工程 B のまま。
+
+### Series / Notes と障害の等価性
+
+EXACT / STRONG、一意性、取得完全性、MADB_ONLY、一つの display を要求する従来の採用条件を維持する。
+AMBIGUOUS / UNSAFE / UNAVAILABLE、truncated、reading-only、複数表示・Series URI、
+XML 不正値を救済しない。raw display は変更せず、既存 Series を上書きしない。
+採用時の変更は `series` / `notes` だけ。既存 Notes の本文・改行、行単位の重複抑止を維持する。
+Imprint 等の他フィールドは変更しない。
+
+取得 → `with` 終了による close → warning → 採用関数、の順。
+constructor / 取得 / close の `MADBError`、`OSError`、`sqlite3.Error` は元の metadata を返す。
+source の生成が成功した場合は正常・異常にかかわらず close を一度試みる。
+source 内の既存 `close()` が session と cache の close を試み、入口から二度目の close は呼ばない。
+close が失敗した場合も補完前の入力を返す。close 成功を偽って記録するものではない。
+constructor が例外で返らなかった場合の部分初期化処理は既存 source の責務で、今回変更していない。
+
+UNAVAILABLE の warning、個別 warning、例外時 warning の文言・順序・回数を保持した。
+既存のログ設定も壊さないよう logger 名は `comictagger_jp_talker.series_supplement` を継続使用する。
+`latest-error.txt` を更新せず、既存ファイルの bytes を保持する。
+TypeError / ValueError / RuntimeError / assertion は隠蔽せず伝播する。
+複数の例外が同時に起きた際の Python context manager の例外処理も変更していない。
+
+### 通信・試験・配布物
+
+すべて HTTP mock による synthetic 試験。実測 fixture / raw evidence は変更していない。
+
+| 条件 | 確認する MADB 通信 |
+|---|---|
+| OFF / 既存 Series あり | source 生成 0、HTTP 0 |
+| 単一 ISBN / Book / Series の最終 fetch | source 1、共有 core 1、cold HTTP 3、warm 追加 0 |
+| 同じ条件の明示的な内部 refresh | HTTP 3。検索 refresh からは伝搬しない |
+| Series relation なし | discovery + Book の 2 |
+| 二つの正規化 ISBN、同じ Book | discovery 2 + Book + Series の 4 |
+| 二つの Book、同じ Series URI | discovery + Book / Series 各 2 の 5 |
+| Series cache の部分失効・破損 | 追加 HTTP 1 |
+| discovery / Book / Series で 429 / 503 / timeout | 各 1 / 2 / 3 で終了、自動 retry なし |
+| Agent / Holding | 詳細 HTTP 0 |
+
+同じ Series URI でも relation cache key は親 Book を含むため、複数 Book の cold では
+各 Book の取得範囲に従って要求する。今回、Book 間の追加共有や query 削減は導入していない。
+
+実 NDL parser は欠落タイトルを拒否し、通常の mapping はそのタイトルから Series を作る。
+そのため欠損 Series の試験は synthetic な BookRecord を用いる。
+SRU / summary と補完を併せた試験では、正当な XML を既存 parser で取得した後に、
+欠損比較入力だけを test adapter で注入する。通常タイトルの対照では MADB が 0 要求であることを確認する。
+本番 parser / mapping を緩和した実測例や、補完対象の実在性を証明したものではない。
+
+移行前に `metadata_supplement_baseline.json` へ 29 ケースの全 GenericMetadata フィールドと
+warning の名前・level・本文を固定した。新入口、互換入口、Talker の三経路で同じ固定値と比較する。
+既存の採用試験、工程 A の 58 件、工程 B の 165 件と公開 linkage の固定 fixture も維持する。
+新規専用試験は 163 件。関連試験は 871 passed / 2 skipped。
+全回帰・build・実 ZIP の結果と権限問題は [validation.md](validation.md) の工程 C に記録する。
+
+配布検証は現在の source から sdist → wheel → 既存 `build_plugin.py` の ZIP を作る。
+全 production Python を実ファイル一覧で byte 比較し、ファイル数を工程 B の 21 に固定しない。
+beta9 loader の path cleanup 後に新入口・既存 Series 補完・共有 core を実行し、
+default OFF、NDL summary・巻処理、軽量 3 / 0 要求を確認する。
+
+### 受入判断と残る阻害条件
+
+工程 A～C は **既存 Series 補完を対象とする取得共有基盤として GO**。
+これは取得台帳、共有 snapshot、既存 Series の出力・通信・障害処理の範囲の判断。
+取得時刻が不明な旧 cache、複数応答の同時点性、parsed snapshot digest 等は工程 B の制限を継承する。
+工程 C で解消したとは扱わない。
+
+**Imprint 自動補完は NO-GO**。工程 D では authority の真正性・独立性・対象適合・更新・失効運用の
+実証が必要。工程 E では既存設計 §7 の保存先既存値の保護と host 保存・再読込境界の解決が必要。
+その前提や実装可否は別途判断する。工程 C の完了だけで Imprint 評価・設定・書き込みを有効化しない。

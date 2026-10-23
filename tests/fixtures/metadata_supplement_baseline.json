@@ -1,0 +1,2244 @@
+{
+  "fixture_kind": "synthetic",
+  "baseline": "stage B worktree before stage C migration (main/cbce602)",
+  "cases": {
+    "no_isbn": {
+      "metadata": {
+        "is_empty": false,
+        "data_origin": [
+          "jpbooks",
+          "Japanese Books"
+        ],
+        "issue_id": "R100000002-I025437130",
+        "series_id": "R100000002-I025437130",
+        "original_hash": null,
+        "series": "",
+        "series_aliases": [],
+        "issue": null,
+        "issue_count": null,
+        "title": "",
+        "title_aliases": [],
+        "volume": null,
+        "volume_count": null,
+        "genres": [
+          "genre"
+        ],
+        "description": "NDL summary",
+        "notes": "既存 Notes\r\n原文末尾 ",
+        "alternate_series": null,
+        "alternate_number": null,
+        "alternate_count": null,
+        "story_arcs": [],
+        "series_groups": [],
+        "gtin": null,
+        "publisher": "NDL publisher",
+        "imprint": " 既存 Imprint ",
+        "day": null,
+        "month": null,
+        "year": null,
+        "language": null,
+        "country": null,
+        "web_links": [
+          [
+            "https",
+            null,
+            "ndlsearch.ndl.go.jp",
+            null,
+            "/books/R100000002-I025437130",
+            null,
+            null
+          ]
+        ],
+        "format": null,
+        "manga": null,
+        "black_and_white": null,
+        "maturity_rating": null,
+        "critical_rating": null,
+        "scan_info": null,
+        "tags": [
+          "tag"
+        ],
+        "pages": [],
+        "page_count": null,
+        "characters": [],
+        "teams": [],
+        "locations": [],
+        "credits": [],
+        "price": null,
+        "is_version_of": null,
+        "rights": null,
+        "identifier": null,
+        "last_mark": null,
+        "_cover_image": null,
+        "_alternate_images": []
+      },
+      "logs": []
+    },
+    "empty": {
+      "metadata": {
+        "is_empty": false,
+        "data_origin": [
+          "jpbooks",
+          "Japanese Books"
+        ],
+        "issue_id": "R100000002-I025437130",
+        "series_id": "R100000002-I025437130",
+        "original_hash": null,
+        "series": "",
+        "series_aliases": [],
+        "issue": null,
+        "issue_count": null,
+        "title": "",
+        "title_aliases": [],
+        "volume": null,
+        "volume_count": null,
+        "genres": [
+          "genre"
+        ],
+        "description": "NDL summary",
+        "notes": "既存 Notes\r\n原文末尾 ",
+        "alternate_series": null,
+        "alternate_number": null,
+        "alternate_count": null,
+        "story_arcs": [],
+        "series_groups": [],
+        "gtin": "9784592880714",
+        "publisher": "NDL publisher",
+        "imprint": " 既存 Imprint ",
+        "day": null,
+        "month": null,
+        "year": null,
+        "language": null,
+        "country": null,
+        "web_links": [
+          [
+            "https",
+            null,
+            "ndlsearch.ndl.go.jp",
+            null,
+            "/books/R100000002-I025437130",
+            null,
+            null
+          ]
+        ],
+        "format": null,
+        "manga": null,
+        "black_and_white": null,
+        "maturity_rating": null,
+        "critical_rating": null,
+        "scan_info": null,
+        "tags": [
+          "tag"
+        ],
+        "pages": [],
+        "page_count": null,
+        "characters": [],
+        "teams": [],
+        "locations": [],
+        "credits": [],
+        "price": null,
+        "is_version_of": null,
+        "rights": null,
+        "identifier": null,
+        "last_mark": null,
+        "_cover_image": null,
+        "_alternate_images": []
+      },
+      "logs": []
+    },
+    "exact": {
+      "metadata": {
+        "is_empty": false,
+        "data_origin": [
+          "jpbooks",
+          "Japanese Books"
+        ],
+        "issue_id": "R100000002-I025437130",
+        "series_id": "R100000002-I025437130",
+        "original_hash": null,
+        "series": " Series ",
+        "series_aliases": [],
+        "issue": null,
+        "issue_count": null,
+        "title": "",
+        "title_aliases": [],
+        "volume": null,
+        "volume_count": null,
+        "genres": [
+          "genre"
+        ],
+        "description": "NDL summary",
+        "notes": "既存 Notes\r\n原文末尾 \nMADB Series（補完）:  Series \nMADB Book ID: M1\nMADB Series ID: C1\nMADB 照合: exact (direct_ndl_url, isbn_normalized, isbn_raw)",
+        "alternate_series": null,
+        "alternate_number": null,
+        "alternate_count": null,
+        "story_arcs": [],
+        "series_groups": [],
+        "gtin": "9784592880714",
+        "publisher": "NDL publisher",
+        "imprint": " 既存 Imprint ",
+        "day": null,
+        "month": null,
+        "year": null,
+        "language": null,
+        "country": null,
+        "web_links": [
+          [
+            "https",
+            null,
+            "ndlsearch.ndl.go.jp",
+            null,
+            "/books/R100000002-I025437130",
+            null,
+            null
+          ]
+        ],
+        "format": null,
+        "manga": null,
+        "black_and_white": null,
+        "maturity_rating": null,
+        "critical_rating": null,
+        "scan_info": null,
+        "tags": [
+          "tag"
+        ],
+        "pages": [],
+        "page_count": null,
+        "characters": [],
+        "teams": [],
+        "locations": [],
+        "credits": [],
+        "price": null,
+        "is_version_of": null,
+        "rights": null,
+        "identifier": null,
+        "last_mark": null,
+        "_cover_image": null,
+        "_alternate_images": []
+      },
+      "logs": []
+    },
+    "strong": {
+      "metadata": {
+        "is_empty": false,
+        "data_origin": [
+          "jpbooks",
+          "Japanese Books"
+        ],
+        "issue_id": "R100000002-I025437130",
+        "series_id": "R100000002-I025437130",
+        "original_hash": null,
+        "series": " Series ",
+        "series_aliases": [],
+        "issue": null,
+        "issue_count": null,
+        "title": "",
+        "title_aliases": [],
+        "volume": null,
+        "volume_count": null,
+        "genres": [
+          "genre"
+        ],
+        "description": "NDL summary",
+        "notes": "既存 Notes\r\n原文末尾 \nMADB Series（補完）:  Series \nMADB Book ID: M1\nMADB Series ID: C1\nMADB 照合: strong (isbn_normalized, isbn_raw)",
+        "alternate_series": null,
+        "alternate_number": null,
+        "alternate_count": null,
+        "story_arcs": [],
+        "series_groups": [],
+        "gtin": "9784592880714",
+        "publisher": "NDL publisher",
+        "imprint": " 既存 Imprint ",
+        "day": null,
+        "month": null,
+        "year": null,
+        "language": null,
+        "country": null,
+        "web_links": [
+          [
+            "https",
+            null,
+            "ndlsearch.ndl.go.jp",
+            null,
+            "/books/R100000002-I025437130",
+            null,
+            null
+          ]
+        ],
+        "format": null,
+        "manga": null,
+        "black_and_white": null,
+        "maturity_rating": null,
+        "critical_rating": null,
+        "scan_info": null,
+        "tags": [
+          "tag"
+        ],
+        "pages": [],
+        "page_count": null,
+        "characters": [],
+        "teams": [],
+        "locations": [],
+        "credits": [],
+        "price": null,
+        "is_version_of": null,
+        "rights": null,
+        "identifier": null,
+        "last_mark": null,
+        "_cover_image": null,
+        "_alternate_images": []
+      },
+      "logs": []
+    },
+    "ambiguous": {
+      "metadata": {
+        "is_empty": false,
+        "data_origin": [
+          "jpbooks",
+          "Japanese Books"
+        ],
+        "issue_id": "R100000002-I025437130",
+        "series_id": "R100000002-I025437130",
+        "original_hash": null,
+        "series": "",
+        "series_aliases": [],
+        "issue": null,
+        "issue_count": null,
+        "title": "",
+        "title_aliases": [],
+        "volume": null,
+        "volume_count": null,
+        "genres": [
+          "genre"
+        ],
+        "description": "NDL summary",
+        "notes": "既存 Notes\r\n原文末尾 ",
+        "alternate_series": null,
+        "alternate_number": null,
+        "alternate_count": null,
+        "story_arcs": [],
+        "series_groups": [],
+        "gtin": "9784592880714",
+        "publisher": "NDL publisher",
+        "imprint": " 既存 Imprint ",
+        "day": null,
+        "month": null,
+        "year": null,
+        "language": null,
+        "country": null,
+        "web_links": [
+          [
+            "https",
+            null,
+            "ndlsearch.ndl.go.jp",
+            null,
+            "/books/R100000002-I025437130",
+            null,
+            null
+          ]
+        ],
+        "format": null,
+        "manga": null,
+        "black_and_white": null,
+        "maturity_rating": null,
+        "critical_rating": null,
+        "scan_info": null,
+        "tags": [
+          "tag"
+        ],
+        "pages": [],
+        "page_count": null,
+        "characters": [],
+        "teams": [],
+        "locations": [],
+        "credits": [],
+        "price": null,
+        "is_version_of": null,
+        "rights": null,
+        "identifier": null,
+        "last_mark": null,
+        "_cover_image": null,
+        "_alternate_images": []
+      },
+      "logs": [
+        [
+          "comictagger_jp_talker.series_supplement",
+          "WARNING",
+          "Optional MADB Series supplement: 2 distinct MADB candidates retained; no first-result selection"
+        ]
+      ]
+    },
+    "direct_winner": {
+      "metadata": {
+        "is_empty": false,
+        "data_origin": [
+          "jpbooks",
+          "Japanese Books"
+        ],
+        "issue_id": "R100000002-I025437130",
+        "series_id": "R100000002-I025437130",
+        "original_hash": null,
+        "series": " Series ",
+        "series_aliases": [],
+        "issue": null,
+        "issue_count": null,
+        "title": "",
+        "title_aliases": [],
+        "volume": null,
+        "volume_count": null,
+        "genres": [
+          "genre"
+        ],
+        "description": "NDL summary",
+        "notes": "既存 Notes\r\n原文末尾 \nMADB Series（補完）:  Series \nMADB Book ID: M1\nMADB Series ID: C1\nMADB 照合: exact (direct_ndl_url, isbn_normalized, isbn_raw)",
+        "alternate_series": null,
+        "alternate_number": null,
+        "alternate_count": null,
+        "story_arcs": [],
+        "series_groups": [],
+        "gtin": "9784592880714",
+        "publisher": "NDL publisher",
+        "imprint": " 既存 Imprint ",
+        "day": null,
+        "month": null,
+        "year": null,
+        "language": null,
+        "country": null,
+        "web_links": [
+          [
+            "https",
+            null,
+            "ndlsearch.ndl.go.jp",
+            null,
+            "/books/R100000002-I025437130",
+            null,
+            null
+          ]
+        ],
+        "format": null,
+        "manga": null,
+        "black_and_white": null,
+        "maturity_rating": null,
+        "critical_rating": null,
+        "scan_info": null,
+        "tags": [
+          "tag"
+        ],
+        "pages": [],
+        "page_count": null,
+        "characters": [],
+        "teams": [],
+        "locations": [],
+        "credits": [],
+        "price": null,
+        "is_version_of": null,
+        "rights": null,
+        "identifier": null,
+        "last_mark": null,
+        "_cover_image": null,
+        "_alternate_images": []
+      },
+      "logs": [
+        [
+          "comictagger_jp_talker.series_supplement",
+          "WARNING",
+          "Optional MADB Series supplement: 2 distinct MADB candidates retained; no first-result selection"
+        ]
+      ]
+    },
+    "two_direct": {
+      "metadata": {
+        "is_empty": false,
+        "data_origin": [
+          "jpbooks",
+          "Japanese Books"
+        ],
+        "issue_id": "R100000002-I025437130",
+        "series_id": "R100000002-I025437130",
+        "original_hash": null,
+        "series": "",
+        "series_aliases": [],
+        "issue": null,
+        "issue_count": null,
+        "title": "",
+        "title_aliases": [],
+        "volume": null,
+        "volume_count": null,
+        "genres": [
+          "genre"
+        ],
+        "description": "NDL summary",
+        "notes": "既存 Notes\r\n原文末尾 ",
+        "alternate_series": null,
+        "alternate_number": null,
+        "alternate_count": null,
+        "story_arcs": [],
+        "series_groups": [],
+        "gtin": "9784592880714",
+        "publisher": "NDL publisher",
+        "imprint": " 既存 Imprint ",
+        "day": null,
+        "month": null,
+        "year": null,
+        "language": null,
+        "country": null,
+        "web_links": [
+          [
+            "https",
+            null,
+            "ndlsearch.ndl.go.jp",
+            null,
+            "/books/R100000002-I025437130",
+            null,
+            null
+          ]
+        ],
+        "format": null,
+        "manga": null,
+        "black_and_white": null,
+        "maturity_rating": null,
+        "critical_rating": null,
+        "scan_info": null,
+        "tags": [
+          "tag"
+        ],
+        "pages": [],
+        "page_count": null,
+        "characters": [],
+        "teams": [],
+        "locations": [],
+        "credits": [],
+        "price": null,
+        "is_version_of": null,
+        "rights": null,
+        "identifier": null,
+        "last_mark": null,
+        "_cover_image": null,
+        "_alternate_images": []
+      },
+      "logs": [
+        [
+          "comictagger_jp_talker.series_supplement",
+          "WARNING",
+          "Optional MADB Series supplement: 2 distinct MADB candidates retained; no first-result selection"
+        ],
+        [
+          "comictagger_jp_talker.series_supplement",
+          "WARNING",
+          "Optional MADB Series supplement: Multiple Books assert the same direct NDL identity"
+        ]
+      ]
+    },
+    "unsafe": {
+      "metadata": {
+        "is_empty": false,
+        "data_origin": [
+          "jpbooks",
+          "Japanese Books"
+        ],
+        "issue_id": "R100000002-I025437130",
+        "series_id": "R100000002-I025437130",
+        "original_hash": null,
+        "series": "",
+        "series_aliases": [],
+        "issue": null,
+        "issue_count": null,
+        "title": "",
+        "title_aliases": [],
+        "volume": null,
+        "volume_count": null,
+        "genres": [
+          "genre"
+        ],
+        "description": "NDL summary",
+        "notes": "既存 Notes\r\n原文末尾 ",
+        "alternate_series": null,
+        "alternate_number": null,
+        "alternate_count": null,
+        "story_arcs": [],
+        "series_groups": [],
+        "gtin": "9784592880714",
+        "publisher": "NDL publisher",
+        "imprint": " 既存 Imprint ",
+        "day": null,
+        "month": null,
+        "year": null,
+        "language": null,
+        "country": null,
+        "web_links": [
+          [
+            "https",
+            null,
+            "ndlsearch.ndl.go.jp",
+            null,
+            "/books/R100000002-I025437130",
+            null,
+            null
+          ]
+        ],
+        "format": null,
+        "manga": null,
+        "black_and_white": null,
+        "maturity_rating": null,
+        "critical_rating": null,
+        "scan_info": null,
+        "tags": [
+          "tag"
+        ],
+        "pages": [],
+        "page_count": null,
+        "characters": [],
+        "teams": [],
+        "locations": [],
+        "credits": [],
+        "price": null,
+        "is_version_of": null,
+        "rights": null,
+        "identifier": null,
+        "last_mark": null,
+        "_cover_image": null,
+        "_alternate_images": []
+      },
+      "logs": []
+    },
+    "exact_isbn_conflict": {
+      "metadata": {
+        "is_empty": false,
+        "data_origin": [
+          "jpbooks",
+          "Japanese Books"
+        ],
+        "issue_id": "R100000002-I025437130",
+        "series_id": "R100000002-I025437130",
+        "original_hash": null,
+        "series": " Series ",
+        "series_aliases": [],
+        "issue": null,
+        "issue_count": null,
+        "title": "",
+        "title_aliases": [],
+        "volume": null,
+        "volume_count": null,
+        "genres": [
+          "genre"
+        ],
+        "description": "NDL summary",
+        "notes": "既存 Notes\r\n原文末尾 \nMADB Series（補完）:  Series \nMADB Book ID: M1\nMADB Series ID: C1\nMADB 照合: exact (direct_ndl_url)",
+        "alternate_series": null,
+        "alternate_number": null,
+        "alternate_count": null,
+        "story_arcs": [],
+        "series_groups": [],
+        "gtin": "9784592880714",
+        "publisher": "NDL publisher",
+        "imprint": " 既存 Imprint ",
+        "day": null,
+        "month": null,
+        "year": null,
+        "language": null,
+        "country": null,
+        "web_links": [
+          [
+            "https",
+            null,
+            "ndlsearch.ndl.go.jp",
+            null,
+            "/books/R100000002-I025437130",
+            null,
+            null
+          ]
+        ],
+        "format": null,
+        "manga": null,
+        "black_and_white": null,
+        "maturity_rating": null,
+        "critical_rating": null,
+        "scan_info": null,
+        "tags": [
+          "tag"
+        ],
+        "pages": [],
+        "page_count": null,
+        "characters": [],
+        "teams": [],
+        "locations": [],
+        "credits": [],
+        "price": null,
+        "is_version_of": null,
+        "rights": null,
+        "identifier": null,
+        "last_mark": null,
+        "_cover_image": null,
+        "_alternate_images": []
+      },
+      "logs": []
+    },
+    "truncated": {
+      "metadata": {
+        "is_empty": false,
+        "data_origin": [
+          "jpbooks",
+          "Japanese Books"
+        ],
+        "issue_id": "R100000002-I025437130",
+        "series_id": "R100000002-I025437130",
+        "original_hash": null,
+        "series": "",
+        "series_aliases": [],
+        "issue": null,
+        "issue_count": null,
+        "title": "",
+        "title_aliases": [],
+        "volume": null,
+        "volume_count": null,
+        "genres": [
+          "genre"
+        ],
+        "description": "NDL summary",
+        "notes": "既存 Notes\r\n原文末尾 ",
+        "alternate_series": null,
+        "alternate_number": null,
+        "alternate_count": null,
+        "story_arcs": [],
+        "series_groups": [],
+        "gtin": "9784592880714",
+        "publisher": "NDL publisher",
+        "imprint": " 既存 Imprint ",
+        "day": null,
+        "month": null,
+        "year": null,
+        "language": null,
+        "country": null,
+        "web_links": [
+          [
+            "https",
+            null,
+            "ndlsearch.ndl.go.jp",
+            null,
+            "/books/R100000002-I025437130",
+            null,
+            null
+          ]
+        ],
+        "format": null,
+        "manga": null,
+        "black_and_white": null,
+        "maturity_rating": null,
+        "critical_rating": null,
+        "scan_info": null,
+        "tags": [
+          "tag"
+        ],
+        "pages": [],
+        "page_count": null,
+        "characters": [],
+        "teams": [],
+        "locations": [],
+        "credits": [],
+        "price": null,
+        "is_version_of": null,
+        "rights": null,
+        "identifier": null,
+        "last_mark": null,
+        "_cover_image": null,
+        "_alternate_images": []
+      },
+      "logs": [
+        [
+          "comictagger_jp_talker.series_supplement",
+          "WARNING",
+          "Optional MADB Series supplement: MADB candidate discovery truncated; ISBN uniqueness is not established"
+        ]
+      ]
+    },
+    "truncated_exact": {
+      "metadata": {
+        "is_empty": false,
+        "data_origin": [
+          "jpbooks",
+          "Japanese Books"
+        ],
+        "issue_id": "R100000002-I025437130",
+        "series_id": "R100000002-I025437130",
+        "original_hash": null,
+        "series": "",
+        "series_aliases": [],
+        "issue": null,
+        "issue_count": null,
+        "title": "",
+        "title_aliases": [],
+        "volume": null,
+        "volume_count": null,
+        "genres": [
+          "genre"
+        ],
+        "description": "NDL summary",
+        "notes": "既存 Notes\r\n原文末尾 ",
+        "alternate_series": null,
+        "alternate_number": null,
+        "alternate_count": null,
+        "story_arcs": [],
+        "series_groups": [],
+        "gtin": "9784592880714",
+        "publisher": "NDL publisher",
+        "imprint": " 既存 Imprint ",
+        "day": null,
+        "month": null,
+        "year": null,
+        "language": null,
+        "country": null,
+        "web_links": [
+          [
+            "https",
+            null,
+            "ndlsearch.ndl.go.jp",
+            null,
+            "/books/R100000002-I025437130",
+            null,
+            null
+          ]
+        ],
+        "format": null,
+        "manga": null,
+        "black_and_white": null,
+        "maturity_rating": null,
+        "critical_rating": null,
+        "scan_info": null,
+        "tags": [
+          "tag"
+        ],
+        "pages": [],
+        "page_count": null,
+        "characters": [],
+        "teams": [],
+        "locations": [],
+        "credits": [],
+        "price": null,
+        "is_version_of": null,
+        "rights": null,
+        "identifier": null,
+        "last_mark": null,
+        "_cover_image": null,
+        "_alternate_images": []
+      },
+      "logs": [
+        [
+          "comictagger_jp_talker.series_supplement",
+          "WARNING",
+          "Optional MADB Series supplement: MADB candidate discovery truncated; ISBN uniqueness is not established"
+        ]
+      ]
+    },
+    "book_truncated": {
+      "metadata": {
+        "is_empty": false,
+        "data_origin": [
+          "jpbooks",
+          "Japanese Books"
+        ],
+        "issue_id": "R100000002-I025437130",
+        "series_id": "R100000002-I025437130",
+        "original_hash": null,
+        "series": "",
+        "series_aliases": [],
+        "issue": null,
+        "issue_count": null,
+        "title": "",
+        "title_aliases": [],
+        "volume": null,
+        "volume_count": null,
+        "genres": [
+          "genre"
+        ],
+        "description": "NDL summary",
+        "notes": "既存 Notes\r\n原文末尾 ",
+        "alternate_series": null,
+        "alternate_number": null,
+        "alternate_count": null,
+        "story_arcs": [],
+        "series_groups": [],
+        "gtin": "9784592880714",
+        "publisher": "NDL publisher",
+        "imprint": " 既存 Imprint ",
+        "day": null,
+        "month": null,
+        "year": null,
+        "language": null,
+        "country": null,
+        "web_links": [
+          [
+            "https",
+            null,
+            "ndlsearch.ndl.go.jp",
+            null,
+            "/books/R100000002-I025437130",
+            null,
+            null
+          ]
+        ],
+        "format": null,
+        "manga": null,
+        "black_and_white": null,
+        "maturity_rating": null,
+        "critical_rating": null,
+        "scan_info": null,
+        "tags": [
+          "tag"
+        ],
+        "pages": [],
+        "page_count": null,
+        "characters": [],
+        "teams": [],
+        "locations": [],
+        "credits": [],
+        "price": null,
+        "is_version_of": null,
+        "rights": null,
+        "identifier": null,
+        "last_mark": null,
+        "_cover_image": null,
+        "_alternate_images": []
+      },
+      "logs": [
+        [
+          "comictagger_jp_talker.series_supplement",
+          "WARNING",
+          "Optional MADB Series supplement: M1: Book evidence incomplete"
+        ]
+      ]
+    },
+    "series_missing": {
+      "metadata": {
+        "is_empty": false,
+        "data_origin": [
+          "jpbooks",
+          "Japanese Books"
+        ],
+        "issue_id": "R100000002-I025437130",
+        "series_id": "R100000002-I025437130",
+        "original_hash": null,
+        "series": "",
+        "series_aliases": [],
+        "issue": null,
+        "issue_count": null,
+        "title": "",
+        "title_aliases": [],
+        "volume": null,
+        "volume_count": null,
+        "genres": [
+          "genre"
+        ],
+        "description": "NDL summary",
+        "notes": "既存 Notes\r\n原文末尾 ",
+        "alternate_series": null,
+        "alternate_number": null,
+        "alternate_count": null,
+        "story_arcs": [],
+        "series_groups": [],
+        "gtin": "9784592880714",
+        "publisher": "NDL publisher",
+        "imprint": " 既存 Imprint ",
+        "day": null,
+        "month": null,
+        "year": null,
+        "language": null,
+        "country": null,
+        "web_links": [
+          [
+            "https",
+            null,
+            "ndlsearch.ndl.go.jp",
+            null,
+            "/books/R100000002-I025437130",
+            null,
+            null
+          ]
+        ],
+        "format": null,
+        "manga": null,
+        "black_and_white": null,
+        "maturity_rating": null,
+        "critical_rating": null,
+        "scan_info": null,
+        "tags": [
+          "tag"
+        ],
+        "pages": [],
+        "page_count": null,
+        "characters": [],
+        "teams": [],
+        "locations": [],
+        "credits": [],
+        "price": null,
+        "is_version_of": null,
+        "rights": null,
+        "identifier": null,
+        "last_mark": null,
+        "_cover_image": null,
+        "_alternate_images": []
+      },
+      "logs": [
+        [
+          "comictagger_jp_talker.series_supplement",
+          "WARNING",
+          "Optional MADB Series supplement: Synthetic missing Series"
+        ]
+      ]
+    },
+    "series_truncated": {
+      "metadata": {
+        "is_empty": false,
+        "data_origin": [
+          "jpbooks",
+          "Japanese Books"
+        ],
+        "issue_id": "R100000002-I025437130",
+        "series_id": "R100000002-I025437130",
+        "original_hash": null,
+        "series": "",
+        "series_aliases": [],
+        "issue": null,
+        "issue_count": null,
+        "title": "",
+        "title_aliases": [],
+        "volume": null,
+        "volume_count": null,
+        "genres": [
+          "genre"
+        ],
+        "description": "NDL summary",
+        "notes": "既存 Notes\r\n原文末尾 ",
+        "alternate_series": null,
+        "alternate_number": null,
+        "alternate_count": null,
+        "story_arcs": [],
+        "series_groups": [],
+        "gtin": "9784592880714",
+        "publisher": "NDL publisher",
+        "imprint": " 既存 Imprint ",
+        "day": null,
+        "month": null,
+        "year": null,
+        "language": null,
+        "country": null,
+        "web_links": [
+          [
+            "https",
+            null,
+            "ndlsearch.ndl.go.jp",
+            null,
+            "/books/R100000002-I025437130",
+            null,
+            null
+          ]
+        ],
+        "format": null,
+        "manga": null,
+        "black_and_white": null,
+        "maturity_rating": null,
+        "critical_rating": null,
+        "scan_info": null,
+        "tags": [
+          "tag"
+        ],
+        "pages": [],
+        "page_count": null,
+        "characters": [],
+        "teams": [],
+        "locations": [],
+        "credits": [],
+        "price": null,
+        "is_version_of": null,
+        "rights": null,
+        "identifier": null,
+        "last_mark": null,
+        "_cover_image": null,
+        "_alternate_images": []
+      },
+      "logs": []
+    },
+    "first_discovery_failure": {
+      "metadata": {
+        "is_empty": false,
+        "data_origin": [
+          "jpbooks",
+          "Japanese Books"
+        ],
+        "issue_id": "R100000002-I025437130",
+        "series_id": "R100000002-I025437130",
+        "original_hash": null,
+        "series": "",
+        "series_aliases": [],
+        "issue": null,
+        "issue_count": null,
+        "title": "",
+        "title_aliases": [],
+        "volume": null,
+        "volume_count": null,
+        "genres": [
+          "genre"
+        ],
+        "description": "NDL summary",
+        "notes": "既存 Notes\r\n原文末尾 ",
+        "alternate_series": null,
+        "alternate_number": null,
+        "alternate_count": null,
+        "story_arcs": [],
+        "series_groups": [],
+        "gtin": "9784592880714",
+        "publisher": "NDL publisher",
+        "imprint": " 既存 Imprint ",
+        "day": null,
+        "month": null,
+        "year": null,
+        "language": null,
+        "country": null,
+        "web_links": [
+          [
+            "https",
+            null,
+            "ndlsearch.ndl.go.jp",
+            null,
+            "/books/R100000002-I025437130",
+            null,
+            null
+          ]
+        ],
+        "format": null,
+        "manga": null,
+        "black_and_white": null,
+        "maturity_rating": null,
+        "critical_rating": null,
+        "scan_info": null,
+        "tags": [
+          "tag"
+        ],
+        "pages": [],
+        "page_count": null,
+        "characters": [],
+        "teams": [],
+        "locations": [],
+        "credits": [],
+        "price": null,
+        "is_version_of": null,
+        "rights": null,
+        "identifier": null,
+        "last_mark": null,
+        "_cover_image": null,
+        "_alternate_images": []
+      },
+      "logs": [
+        [
+          "comictagger_jp_talker.series_supplement",
+          "WARNING",
+          "Optional MADB Series supplement unavailable: LinkageError(kind='rate_limited', message='synthetic search', status=429, retry_after='17')"
+        ],
+        [
+          "comictagger_jp_talker.series_supplement",
+          "WARNING",
+          "Optional MADB Series supplement: MADB acquisition failed; candidate evaluation and ISBN uniqueness are incomplete"
+        ]
+      ]
+    },
+    "second_discovery_failure": {
+      "metadata": {
+        "is_empty": false,
+        "data_origin": [
+          "jpbooks",
+          "Japanese Books"
+        ],
+        "issue_id": "R100000002-I025437130",
+        "series_id": "R100000002-I025437130",
+        "original_hash": null,
+        "series": "",
+        "series_aliases": [],
+        "issue": null,
+        "issue_count": null,
+        "title": "",
+        "title_aliases": [],
+        "volume": null,
+        "volume_count": null,
+        "genres": [
+          "genre"
+        ],
+        "description": "NDL summary",
+        "notes": "既存 Notes\r\n原文末尾 ",
+        "alternate_series": null,
+        "alternate_number": null,
+        "alternate_count": null,
+        "story_arcs": [],
+        "series_groups": [],
+        "gtin": null,
+        "publisher": "NDL publisher",
+        "imprint": " 既存 Imprint ",
+        "day": null,
+        "month": null,
+        "year": null,
+        "language": null,
+        "country": null,
+        "web_links": [
+          [
+            "https",
+            null,
+            "ndlsearch.ndl.go.jp",
+            null,
+            "/books/R100000002-I025437130",
+            null,
+            null
+          ]
+        ],
+        "format": null,
+        "manga": null,
+        "black_and_white": null,
+        "maturity_rating": null,
+        "critical_rating": null,
+        "scan_info": null,
+        "tags": [
+          "tag"
+        ],
+        "pages": [],
+        "page_count": null,
+        "characters": [],
+        "teams": [],
+        "locations": [],
+        "credits": [],
+        "price": null,
+        "is_version_of": null,
+        "rights": null,
+        "identifier": null,
+        "last_mark": null,
+        "_cover_image": null,
+        "_alternate_images": []
+      },
+      "logs": [
+        [
+          "comictagger_jp_talker.series_supplement",
+          "WARNING",
+          "Optional MADB Series supplement unavailable: LinkageError(kind='timeout', message='synthetic later search', status=None, retry_after=None)"
+        ],
+        [
+          "comictagger_jp_talker.series_supplement",
+          "WARNING",
+          "Optional MADB Series supplement: discovery observation"
+        ],
+        [
+          "comictagger_jp_talker.series_supplement",
+          "WARNING",
+          "Optional MADB Series supplement: MADB acquisition failed; candidate evaluation and ISBN uniqueness are incomplete"
+        ]
+      ]
+    },
+    "truncated_then_failure": {
+      "metadata": {
+        "is_empty": false,
+        "data_origin": [
+          "jpbooks",
+          "Japanese Books"
+        ],
+        "issue_id": "R100000002-I025437130",
+        "series_id": "R100000002-I025437130",
+        "original_hash": null,
+        "series": "",
+        "series_aliases": [],
+        "issue": null,
+        "issue_count": null,
+        "title": "",
+        "title_aliases": [],
+        "volume": null,
+        "volume_count": null,
+        "genres": [
+          "genre"
+        ],
+        "description": "NDL summary",
+        "notes": "既存 Notes\r\n原文末尾 ",
+        "alternate_series": null,
+        "alternate_number": null,
+        "alternate_count": null,
+        "story_arcs": [],
+        "series_groups": [],
+        "gtin": null,
+        "publisher": "NDL publisher",
+        "imprint": " 既存 Imprint ",
+        "day": null,
+        "month": null,
+        "year": null,
+        "language": null,
+        "country": null,
+        "web_links": [
+          [
+            "https",
+            null,
+            "ndlsearch.ndl.go.jp",
+            null,
+            "/books/R100000002-I025437130",
+            null,
+            null
+          ]
+        ],
+        "format": null,
+        "manga": null,
+        "black_and_white": null,
+        "maturity_rating": null,
+        "critical_rating": null,
+        "scan_info": null,
+        "tags": [
+          "tag"
+        ],
+        "pages": [],
+        "page_count": null,
+        "characters": [],
+        "teams": [],
+        "locations": [],
+        "credits": [],
+        "price": null,
+        "is_version_of": null,
+        "rights": null,
+        "identifier": null,
+        "last_mark": null,
+        "_cover_image": null,
+        "_alternate_images": []
+      },
+      "logs": [
+        [
+          "comictagger_jp_talker.series_supplement",
+          "WARNING",
+          "Optional MADB Series supplement unavailable: LinkageError(kind='timeout', message='synthetic later search', status=None, retry_after=None)"
+        ],
+        [
+          "comictagger_jp_talker.series_supplement",
+          "WARNING",
+          "Optional MADB Series supplement: discovery observation"
+        ],
+        [
+          "comictagger_jp_talker.series_supplement",
+          "WARNING",
+          "Optional MADB Series supplement: MADB candidate discovery truncated; ISBN uniqueness is not established"
+        ],
+        [
+          "comictagger_jp_talker.series_supplement",
+          "WARNING",
+          "Optional MADB Series supplement: MADB acquisition failed; candidate evaluation and ISBN uniqueness are incomplete"
+        ]
+      ]
+    },
+    "first_book_failure": {
+      "metadata": {
+        "is_empty": false,
+        "data_origin": [
+          "jpbooks",
+          "Japanese Books"
+        ],
+        "issue_id": "R100000002-I025437130",
+        "series_id": "R100000002-I025437130",
+        "original_hash": null,
+        "series": "",
+        "series_aliases": [],
+        "issue": null,
+        "issue_count": null,
+        "title": "",
+        "title_aliases": [],
+        "volume": null,
+        "volume_count": null,
+        "genres": [
+          "genre"
+        ],
+        "description": "NDL summary",
+        "notes": "既存 Notes\r\n原文末尾 ",
+        "alternate_series": null,
+        "alternate_number": null,
+        "alternate_count": null,
+        "story_arcs": [],
+        "series_groups": [],
+        "gtin": "9784592880714",
+        "publisher": "NDL publisher",
+        "imprint": " 既存 Imprint ",
+        "day": null,
+        "month": null,
+        "year": null,
+        "language": null,
+        "country": null,
+        "web_links": [
+          [
+            "https",
+            null,
+            "ndlsearch.ndl.go.jp",
+            null,
+            "/books/R100000002-I025437130",
+            null,
+            null
+          ]
+        ],
+        "format": null,
+        "manga": null,
+        "black_and_white": null,
+        "maturity_rating": null,
+        "critical_rating": null,
+        "scan_info": null,
+        "tags": [
+          "tag"
+        ],
+        "pages": [],
+        "page_count": null,
+        "characters": [],
+        "teams": [],
+        "locations": [],
+        "credits": [],
+        "price": null,
+        "is_version_of": null,
+        "rights": null,
+        "identifier": null,
+        "last_mark": null,
+        "_cover_image": null,
+        "_alternate_images": []
+      },
+      "logs": [
+        [
+          "comictagger_jp_talker.series_supplement",
+          "WARNING",
+          "Optional MADB Series supplement unavailable: LinkageError(kind='http', message='synthetic Book', status=503, retry_after='23')"
+        ],
+        [
+          "comictagger_jp_talker.series_supplement",
+          "WARNING",
+          "Optional MADB Series supplement: MADB acquisition failed; candidate evaluation and ISBN uniqueness are incomplete"
+        ]
+      ]
+    },
+    "second_book_failure": {
+      "metadata": {
+        "is_empty": false,
+        "data_origin": [
+          "jpbooks",
+          "Japanese Books"
+        ],
+        "issue_id": "R100000002-I025437130",
+        "series_id": "R100000002-I025437130",
+        "original_hash": null,
+        "series": "",
+        "series_aliases": [],
+        "issue": null,
+        "issue_count": null,
+        "title": "",
+        "title_aliases": [],
+        "volume": null,
+        "volume_count": null,
+        "genres": [
+          "genre"
+        ],
+        "description": "NDL summary",
+        "notes": "既存 Notes\r\n原文末尾 ",
+        "alternate_series": null,
+        "alternate_number": null,
+        "alternate_count": null,
+        "story_arcs": [],
+        "series_groups": [],
+        "gtin": "9784592880714",
+        "publisher": "NDL publisher",
+        "imprint": " 既存 Imprint ",
+        "day": null,
+        "month": null,
+        "year": null,
+        "language": null,
+        "country": null,
+        "web_links": [
+          [
+            "https",
+            null,
+            "ndlsearch.ndl.go.jp",
+            null,
+            "/books/R100000002-I025437130",
+            null,
+            null
+          ]
+        ],
+        "format": null,
+        "manga": null,
+        "black_and_white": null,
+        "maturity_rating": null,
+        "critical_rating": null,
+        "scan_info": null,
+        "tags": [
+          "tag"
+        ],
+        "pages": [],
+        "page_count": null,
+        "characters": [],
+        "teams": [],
+        "locations": [],
+        "credits": [],
+        "price": null,
+        "is_version_of": null,
+        "rights": null,
+        "identifier": null,
+        "last_mark": null,
+        "_cover_image": null,
+        "_alternate_images": []
+      },
+      "logs": [
+        [
+          "comictagger_jp_talker.series_supplement",
+          "WARNING",
+          "Optional MADB Series supplement unavailable: LinkageError(kind='not_found', message='synthetic disappeared', status=None, retry_after=None)"
+        ],
+        [
+          "comictagger_jp_talker.series_supplement",
+          "WARNING",
+          "Optional MADB Series supplement: MADB acquisition failed; candidate evaluation and ISBN uniqueness are incomplete"
+        ]
+      ]
+    },
+    "two_exact_then_failure": {
+      "metadata": {
+        "is_empty": false,
+        "data_origin": [
+          "jpbooks",
+          "Japanese Books"
+        ],
+        "issue_id": "R100000002-I025437130",
+        "series_id": "R100000002-I025437130",
+        "original_hash": null,
+        "series": "",
+        "series_aliases": [],
+        "issue": null,
+        "issue_count": null,
+        "title": "",
+        "title_aliases": [],
+        "volume": null,
+        "volume_count": null,
+        "genres": [
+          "genre"
+        ],
+        "description": "NDL summary",
+        "notes": "既存 Notes\r\n原文末尾 ",
+        "alternate_series": null,
+        "alternate_number": null,
+        "alternate_count": null,
+        "story_arcs": [],
+        "series_groups": [],
+        "gtin": "9784592880714",
+        "publisher": "NDL publisher",
+        "imprint": " 既存 Imprint ",
+        "day": null,
+        "month": null,
+        "year": null,
+        "language": null,
+        "country": null,
+        "web_links": [
+          [
+            "https",
+            null,
+            "ndlsearch.ndl.go.jp",
+            null,
+            "/books/R100000002-I025437130",
+            null,
+            null
+          ]
+        ],
+        "format": null,
+        "manga": null,
+        "black_and_white": null,
+        "maturity_rating": null,
+        "critical_rating": null,
+        "scan_info": null,
+        "tags": [
+          "tag"
+        ],
+        "pages": [],
+        "page_count": null,
+        "characters": [],
+        "teams": [],
+        "locations": [],
+        "credits": [],
+        "price": null,
+        "is_version_of": null,
+        "rights": null,
+        "identifier": null,
+        "last_mark": null,
+        "_cover_image": null,
+        "_alternate_images": []
+      },
+      "logs": [
+        [
+          "comictagger_jp_talker.series_supplement",
+          "WARNING",
+          "Optional MADB Series supplement unavailable: LinkageError(kind='timeout', message='synthetic third Book', status=None, retry_after=None)"
+        ],
+        [
+          "comictagger_jp_talker.series_supplement",
+          "WARNING",
+          "Optional MADB Series supplement: MADB acquisition failed; candidate evaluation and ISBN uniqueness are incomplete"
+        ]
+      ]
+    },
+    "book_id_mismatch": {
+      "metadata": {
+        "is_empty": false,
+        "data_origin": [
+          "jpbooks",
+          "Japanese Books"
+        ],
+        "issue_id": "R100000002-I025437130",
+        "series_id": "R100000002-I025437130",
+        "original_hash": null,
+        "series": "",
+        "series_aliases": [],
+        "issue": null,
+        "issue_count": null,
+        "title": "",
+        "title_aliases": [],
+        "volume": null,
+        "volume_count": null,
+        "genres": [
+          "genre"
+        ],
+        "description": "NDL summary",
+        "notes": "既存 Notes\r\n原文末尾 ",
+        "alternate_series": null,
+        "alternate_number": null,
+        "alternate_count": null,
+        "story_arcs": [],
+        "series_groups": [],
+        "gtin": "9784592880714",
+        "publisher": "NDL publisher",
+        "imprint": " 既存 Imprint ",
+        "day": null,
+        "month": null,
+        "year": null,
+        "language": null,
+        "country": null,
+        "web_links": [
+          [
+            "https",
+            null,
+            "ndlsearch.ndl.go.jp",
+            null,
+            "/books/R100000002-I025437130",
+            null,
+            null
+          ]
+        ],
+        "format": null,
+        "manga": null,
+        "black_and_white": null,
+        "maturity_rating": null,
+        "critical_rating": null,
+        "scan_info": null,
+        "tags": [
+          "tag"
+        ],
+        "pages": [],
+        "page_count": null,
+        "characters": [],
+        "teams": [],
+        "locations": [],
+        "credits": [],
+        "price": null,
+        "is_version_of": null,
+        "rights": null,
+        "identifier": null,
+        "last_mark": null,
+        "_cover_image": null,
+        "_alternate_images": []
+      },
+      "logs": [
+        [
+          "comictagger_jp_talker.series_supplement",
+          "WARNING",
+          "Optional MADB Series supplement unavailable: LinkageError(kind='schema', message='Retrieved Book differs from discovered candidate', status=None, retry_after=None)"
+        ],
+        [
+          "comictagger_jp_talker.series_supplement",
+          "WARNING",
+          "Optional MADB Series supplement: MADB acquisition failed; candidate evaluation and ISBN uniqueness are incomplete"
+        ]
+      ]
+    },
+    "book_uri_mismatch": {
+      "metadata": {
+        "is_empty": false,
+        "data_origin": [
+          "jpbooks",
+          "Japanese Books"
+        ],
+        "issue_id": "R100000002-I025437130",
+        "series_id": "R100000002-I025437130",
+        "original_hash": null,
+        "series": "",
+        "series_aliases": [],
+        "issue": null,
+        "issue_count": null,
+        "title": "",
+        "title_aliases": [],
+        "volume": null,
+        "volume_count": null,
+        "genres": [
+          "genre"
+        ],
+        "description": "NDL summary",
+        "notes": "既存 Notes\r\n原文末尾 ",
+        "alternate_series": null,
+        "alternate_number": null,
+        "alternate_count": null,
+        "story_arcs": [],
+        "series_groups": [],
+        "gtin": "9784592880714",
+        "publisher": "NDL publisher",
+        "imprint": " 既存 Imprint ",
+        "day": null,
+        "month": null,
+        "year": null,
+        "language": null,
+        "country": null,
+        "web_links": [
+          [
+            "https",
+            null,
+            "ndlsearch.ndl.go.jp",
+            null,
+            "/books/R100000002-I025437130",
+            null,
+            null
+          ]
+        ],
+        "format": null,
+        "manga": null,
+        "black_and_white": null,
+        "maturity_rating": null,
+        "critical_rating": null,
+        "scan_info": null,
+        "tags": [
+          "tag"
+        ],
+        "pages": [],
+        "page_count": null,
+        "characters": [],
+        "teams": [],
+        "locations": [],
+        "credits": [],
+        "price": null,
+        "is_version_of": null,
+        "rights": null,
+        "identifier": null,
+        "last_mark": null,
+        "_cover_image": null,
+        "_alternate_images": []
+      },
+      "logs": [
+        [
+          "comictagger_jp_talker.series_supplement",
+          "WARNING",
+          "Optional MADB Series supplement unavailable: LinkageError(kind='schema', message='Retrieved Book differs from discovered candidate', status=None, retry_after=None)"
+        ],
+        [
+          "comictagger_jp_talker.series_supplement",
+          "WARNING",
+          "Optional MADB Series supplement: MADB acquisition failed; candidate evaluation and ISBN uniqueness are incomplete"
+        ]
+      ]
+    },
+    "duplicate_discovery": {
+      "metadata": {
+        "is_empty": false,
+        "data_origin": [
+          "jpbooks",
+          "Japanese Books"
+        ],
+        "issue_id": "R100000002-I025437130",
+        "series_id": "R100000002-I025437130",
+        "original_hash": null,
+        "series": " Series ",
+        "series_aliases": [],
+        "issue": null,
+        "issue_count": null,
+        "title": "",
+        "title_aliases": [],
+        "volume": null,
+        "volume_count": null,
+        "genres": [
+          "genre"
+        ],
+        "description": "NDL summary",
+        "notes": "既存 Notes\r\n原文末尾 \nMADB Series（補完）:  Series \nMADB Book ID: M1\nMADB Series ID: C1\nMADB 照合: exact (direct_ndl_url, isbn_normalized, isbn_raw, isbn_10_13_equivalent)",
+        "alternate_series": null,
+        "alternate_number": null,
+        "alternate_count": null,
+        "story_arcs": [],
+        "series_groups": [],
+        "gtin": null,
+        "publisher": "NDL publisher",
+        "imprint": " 既存 Imprint ",
+        "day": null,
+        "month": null,
+        "year": null,
+        "language": null,
+        "country": null,
+        "web_links": [
+          [
+            "https",
+            null,
+            "ndlsearch.ndl.go.jp",
+            null,
+            "/books/R100000002-I025437130",
+            null,
+            null
+          ]
+        ],
+        "format": null,
+        "manga": null,
+        "black_and_white": null,
+        "maturity_rating": null,
+        "critical_rating": null,
+        "scan_info": null,
+        "tags": [
+          "tag"
+        ],
+        "pages": [],
+        "page_count": null,
+        "characters": [],
+        "teams": [],
+        "locations": [],
+        "credits": [],
+        "price": null,
+        "is_version_of": null,
+        "rights": null,
+        "identifier": null,
+        "last_mark": null,
+        "_cover_image": null,
+        "_alternate_images": []
+      },
+      "logs": []
+    },
+    "conflicting_discovery_uri": {
+      "metadata": {
+        "is_empty": false,
+        "data_origin": [
+          "jpbooks",
+          "Japanese Books"
+        ],
+        "issue_id": "R100000002-I025437130",
+        "series_id": "R100000002-I025437130",
+        "original_hash": null,
+        "series": " Series ",
+        "series_aliases": [],
+        "issue": null,
+        "issue_count": null,
+        "title": "",
+        "title_aliases": [],
+        "volume": null,
+        "volume_count": null,
+        "genres": [
+          "genre"
+        ],
+        "description": "NDL summary",
+        "notes": "既存 Notes\r\n原文末尾 \nMADB Series（補完）:  Series \nMADB Book ID: M1\nMADB Series ID: C1\nMADB 照合: exact (direct_ndl_url, isbn_normalized, isbn_raw, isbn_10_13_equivalent)",
+        "alternate_series": null,
+        "alternate_number": null,
+        "alternate_count": null,
+        "story_arcs": [],
+        "series_groups": [],
+        "gtin": null,
+        "publisher": "NDL publisher",
+        "imprint": " 既存 Imprint ",
+        "day": null,
+        "month": null,
+        "year": null,
+        "language": null,
+        "country": null,
+        "web_links": [
+          [
+            "https",
+            null,
+            "ndlsearch.ndl.go.jp",
+            null,
+            "/books/R100000002-I025437130",
+            null,
+            null
+          ]
+        ],
+        "format": null,
+        "manga": null,
+        "black_and_white": null,
+        "maturity_rating": null,
+        "critical_rating": null,
+        "scan_info": null,
+        "tags": [
+          "tag"
+        ],
+        "pages": [],
+        "page_count": null,
+        "characters": [],
+        "teams": [],
+        "locations": [],
+        "credits": [],
+        "price": null,
+        "is_version_of": null,
+        "rights": null,
+        "identifier": null,
+        "last_mark": null,
+        "_cover_image": null,
+        "_alternate_images": []
+      },
+      "logs": []
+    },
+    "raw_display": {
+      "metadata": {
+        "is_empty": false,
+        "data_origin": [
+          "jpbooks",
+          "Japanese Books"
+        ],
+        "issue_id": "R100000002-I025437130",
+        "series_id": "R100000002-I025437130",
+        "original_hash": null,
+        "series": " 髙﨑𠮷ば? ",
+        "series_aliases": [],
+        "issue": null,
+        "issue_count": null,
+        "title": "",
+        "title_aliases": [],
+        "volume": null,
+        "volume_count": null,
+        "genres": [
+          "genre"
+        ],
+        "description": "NDL summary",
+        "notes": "既存 Notes\r\n原文末尾 \nMADB Series（補完）:  髙﨑𠮷ば? \nMADB Book ID: M1\nMADB Series ID: C1\nMADB 照合: strong (isbn_normalized, isbn_raw)",
+        "alternate_series": null,
+        "alternate_number": null,
+        "alternate_count": null,
+        "story_arcs": [],
+        "series_groups": [],
+        "gtin": "9784592880714",
+        "publisher": "NDL publisher",
+        "imprint": " 既存 Imprint ",
+        "day": null,
+        "month": null,
+        "year": null,
+        "language": null,
+        "country": null,
+        "web_links": [
+          [
+            "https",
+            null,
+            "ndlsearch.ndl.go.jp",
+            null,
+            "/books/R100000002-I025437130",
+            null,
+            null
+          ]
+        ],
+        "format": null,
+        "manga": null,
+        "black_and_white": null,
+        "maturity_rating": null,
+        "critical_rating": null,
+        "scan_info": null,
+        "tags": [
+          "tag"
+        ],
+        "pages": [],
+        "page_count": null,
+        "characters": [],
+        "teams": [],
+        "locations": [],
+        "credits": [],
+        "price": null,
+        "is_version_of": null,
+        "rights": null,
+        "identifier": null,
+        "last_mark": null,
+        "_cover_image": null,
+        "_alternate_images": []
+      },
+      "logs": []
+    },
+    "reading_only": {
+      "metadata": {
+        "is_empty": false,
+        "data_origin": [
+          "jpbooks",
+          "Japanese Books"
+        ],
+        "issue_id": "R100000002-I025437130",
+        "series_id": "R100000002-I025437130",
+        "original_hash": null,
+        "series": "",
+        "series_aliases": [],
+        "issue": null,
+        "issue_count": null,
+        "title": "",
+        "title_aliases": [],
+        "volume": null,
+        "volume_count": null,
+        "genres": [
+          "genre"
+        ],
+        "description": "NDL summary",
+        "notes": "既存 Notes\r\n原文末尾 ",
+        "alternate_series": null,
+        "alternate_number": null,
+        "alternate_count": null,
+        "story_arcs": [],
+        "series_groups": [],
+        "gtin": "9784592880714",
+        "publisher": "NDL publisher",
+        "imprint": " 既存 Imprint ",
+        "day": null,
+        "month": null,
+        "year": null,
+        "language": null,
+        "country": null,
+        "web_links": [
+          [
+            "https",
+            null,
+            "ndlsearch.ndl.go.jp",
+            null,
+            "/books/R100000002-I025437130",
+            null,
+            null
+          ]
+        ],
+        "format": null,
+        "manga": null,
+        "black_and_white": null,
+        "maturity_rating": null,
+        "critical_rating": null,
+        "scan_info": null,
+        "tags": [
+          "tag"
+        ],
+        "pages": [],
+        "page_count": null,
+        "characters": [],
+        "teams": [],
+        "locations": [],
+        "credits": [],
+        "price": null,
+        "is_version_of": null,
+        "rights": null,
+        "identifier": null,
+        "last_mark": null,
+        "_cover_image": null,
+        "_alternate_images": []
+      },
+      "logs": []
+    },
+    "multiple_display": {
+      "metadata": {
+        "is_empty": false,
+        "data_origin": [
+          "jpbooks",
+          "Japanese Books"
+        ],
+        "issue_id": "R100000002-I025437130",
+        "series_id": "R100000002-I025437130",
+        "original_hash": null,
+        "series": "",
+        "series_aliases": [],
+        "issue": null,
+        "issue_count": null,
+        "title": "",
+        "title_aliases": [],
+        "volume": null,
+        "volume_count": null,
+        "genres": [
+          "genre"
+        ],
+        "description": "NDL summary",
+        "notes": "既存 Notes\r\n原文末尾 ",
+        "alternate_series": null,
+        "alternate_number": null,
+        "alternate_count": null,
+        "story_arcs": [],
+        "series_groups": [],
+        "gtin": "9784592880714",
+        "publisher": "NDL publisher",
+        "imprint": " 既存 Imprint ",
+        "day": null,
+        "month": null,
+        "year": null,
+        "language": null,
+        "country": null,
+        "web_links": [
+          [
+            "https",
+            null,
+            "ndlsearch.ndl.go.jp",
+            null,
+            "/books/R100000002-I025437130",
+            null,
+            null
+          ]
+        ],
+        "format": null,
+        "manga": null,
+        "black_and_white": null,
+        "maturity_rating": null,
+        "critical_rating": null,
+        "scan_info": null,
+        "tags": [
+          "tag"
+        ],
+        "pages": [],
+        "page_count": null,
+        "characters": [],
+        "teams": [],
+        "locations": [],
+        "credits": [],
+        "price": null,
+        "is_version_of": null,
+        "rights": null,
+        "identifier": null,
+        "last_mark": null,
+        "_cover_image": null,
+        "_alternate_images": []
+      },
+      "logs": []
+    },
+    "multiple_series": {
+      "metadata": {
+        "is_empty": false,
+        "data_origin": [
+          "jpbooks",
+          "Japanese Books"
+        ],
+        "issue_id": "R100000002-I025437130",
+        "series_id": "R100000002-I025437130",
+        "original_hash": null,
+        "series": "",
+        "series_aliases": [],
+        "issue": null,
+        "issue_count": null,
+        "title": "",
+        "title_aliases": [],
+        "volume": null,
+        "volume_count": null,
+        "genres": [
+          "genre"
+        ],
+        "description": "NDL summary",
+        "notes": "既存 Notes\r\n原文末尾 ",
+        "alternate_series": null,
+        "alternate_number": null,
+        "alternate_count": null,
+        "story_arcs": [],
+        "series_groups": [],
+        "gtin": "9784592880714",
+        "publisher": "NDL publisher",
+        "imprint": " 既存 Imprint ",
+        "day": null,
+        "month": null,
+        "year": null,
+        "language": null,
+        "country": null,
+        "web_links": [
+          [
+            "https",
+            null,
+            "ndlsearch.ndl.go.jp",
+            null,
+            "/books/R100000002-I025437130",
+            null,
+            null
+          ]
+        ],
+        "format": null,
+        "manga": null,
+        "black_and_white": null,
+        "maturity_rating": null,
+        "critical_rating": null,
+        "scan_info": null,
+        "tags": [
+          "tag"
+        ],
+        "pages": [],
+        "page_count": null,
+        "characters": [],
+        "teams": [],
+        "locations": [],
+        "credits": [],
+        "price": null,
+        "is_version_of": null,
+        "rights": null,
+        "identifier": null,
+        "last_mark": null,
+        "_cover_image": null,
+        "_alternate_images": []
+      },
+      "logs": []
+    },
+    "xml_invalid": {
+      "metadata": {
+        "is_empty": false,
+        "data_origin": [
+          "jpbooks",
+          "Japanese Books"
+        ],
+        "issue_id": "R100000002-I025437130",
+        "series_id": "R100000002-I025437130",
+        "original_hash": null,
+        "series": "",
+        "series_aliases": [],
+        "issue": null,
+        "issue_count": null,
+        "title": "",
+        "title_aliases": [],
+        "volume": null,
+        "volume_count": null,
+        "genres": [
+          "genre"
+        ],
+        "description": "NDL summary",
+        "notes": "既存 Notes\r\n原文末尾 ",
+        "alternate_series": null,
+        "alternate_number": null,
+        "alternate_count": null,
+        "story_arcs": [],
+        "series_groups": [],
+        "gtin": "9784592880714",
+        "publisher": "NDL publisher",
+        "imprint": " 既存 Imprint ",
+        "day": null,
+        "month": null,
+        "year": null,
+        "language": null,
+        "country": null,
+        "web_links": [
+          [
+            "https",
+            null,
+            "ndlsearch.ndl.go.jp",
+            null,
+            "/books/R100000002-I025437130",
+            null,
+            null
+          ]
+        ],
+        "format": null,
+        "manga": null,
+        "black_and_white": null,
+        "maturity_rating": null,
+        "critical_rating": null,
+        "scan_info": null,
+        "tags": [
+          "tag"
+        ],
+        "pages": [],
+        "page_count": null,
+        "characters": [],
+        "teams": [],
+        "locations": [],
+        "credits": [],
+        "price": null,
+        "is_version_of": null,
+        "rights": null,
+        "identifier": null,
+        "last_mark": null,
+        "_cover_image": null,
+        "_alternate_images": []
+      },
+      "logs": []
+    }
+  }
+}

@@ -35,9 +35,15 @@ def test_sdist_contains_imprint_fixture_and_its_source():
             "comictagger_jp_talker/sources/madb_acquisition.py",
             "comictagger_jp_talker/linked_acquisition.py",
             "comictagger_jp_talker/linkage.py",
+            "comictagger_jp_talker/metadata_supplement.py",
+            "comictagger_jp_talker/series_supplement_policy.py",
+            "comictagger_jp_talker/series_supplement.py",
+            "comictagger_jp_talker/talker.py",
             "tests/test_madb_acquisition.py",
             "tests/test_linkage_evidence.py",
             "tests/fixtures/linkage_evidence_baseline.json",
+            "tests/test_metadata_supplement.py",
+            "tests/fixtures/metadata_supplement_baseline.json",
             "tests/test_imprint_candidates.py",
             "tests/fixtures/madb/imprint_measured.json",
             "docs/research/madb/imprint_evidence.json",
@@ -187,8 +193,9 @@ from dataclasses import asdict
 from unittest.mock import Mock
 adapter_globals = talker.fetch_comic_data.__wrapped__.__globals__
 mapper = adapter_globals["to_metadata"]
-supplement = adapter_globals["supplement_series"]
+supplement = adapter_globals["supplement_metadata"]
 assert ".zip" in supplement.__code__.co_filename
+assert ".zip" in supplement.__globals__["apply_series_supplement"].__code__.co_filename
 record_type = mapper.__globals__["BookRecord"]
 madb_type = supplement.__globals__["MADBSource"]
 assert ".zip" in madb_type.get_for_series_linkage.__code__.co_filename
@@ -261,8 +268,7 @@ for direct in (False, True):
         assert not any("/C2>" in q or "/C3>" in q or "/ref/S1>" in q for q in calls)
         assert talker.fetch_comic_data(issue_id=ndl.id) == output
         assert len(calls) == 3
-        wrapper = supplement.__globals__["link_ndl_record_for_series"]
-        core = wrapper.__globals__["acquire_linked_record_evidence"]
+        core = supplement.__globals__["acquire_linked_record_evidence"]
         assert ".zip" in core.__code__.co_filename
         snapshot_type = core.__globals__["NDLInputSnapshot"]
         assert ".zip" in snapshot_type.from_record.__func__.__code__.co_filename
@@ -298,6 +304,12 @@ with patch.object(requests.Session, "request", side_effect=AssertionError("No im
         LinkageResult, LinkageStatus, RecordMatch, compare_candidates, acquire_linked_record_evidence,
     )
     from comictagger_jp_talker.linked_acquisition import NDLInputSnapshot
+    from comictagger_jp_talker.metadata_supplement import supplement_metadata
+    from comictagger_jp_talker.series_supplement import supplement_series, apply_series_supplement
+    from comictagger_jp_talker.series_supplement_policy import apply_series_supplement as policy
+    assert apply_series_supplement is policy
+    assert ".zip" in supplement_metadata.__code__.co_filename
+    assert supplement_series.__globals__["supplement_metadata"] is supplement_metadata
     from comictagger_jp_talker.provenance import FieldEvidence, SeriesComparison
     from comictagger_jp_talker.models import BookRecord
     assert ".zip" in compare_candidates.__code__.co_filename

@@ -1168,6 +1168,169 @@ trace がない adapter の結果は自動補完の完全性根拠に使えな�
 工程 C の本番統合、Imprint 設定・書き込み、authority provider は実装していない。
 commit / push / merge / tag / GitHub Release は行っていない。
 
+## Phase 2C-2C-2C：既存 Series 補完の共通取得入口への移行（2026-10-20）
+
+### 開始時点と差分の区別
+
+実際の開始状態は `main` / `cbce602f07a3559b8299a8e55c2dfc9d13d29022`、package `0.3.0`。
+工程 A / B の変更が未コミットで残っていた。
+
+| 開始時の状態 | ファイル |
+|---|---|
+| 変更済み 5 ファイル | `imprint_candidates.py`、`linkage.py`、`sources/madb.py`、`docs/validation.md`、`tests/test_packaging.py` |
+| 未追跡 7 ファイル | `acquisition.py`、`linked_acquisition.py`、`sources/madb_acquisition.py`、`docs/phase2c2c_integration_design.md`、`tests/fixtures/linkage_evidence_baseline.json`、`tests/test_linkage_evidence.py`、`tests/test_madb_acquisition.py` |
+
+開始時の production code、既存テスト、設計・検証文書、固定 fixture、`.gitattributes` の
+52 ファイルを `.research/phase2c2c2c-start/` に byte 単位で保存した。
+工程 A / B の production code、専用テスト、公開 linkage 固定 fixture は開始時と byte 一致。
+既存文書の内容も prefix としてそのまま保持し、工程 C を追記した。
+packaging は工程 A / B の assertion を残して、新しい接続位置と収録ファイルへ対応させた。
+
+今回の変更は次の 11 ファイル。
+
+| 区分 | ファイルと変更 |
+|---|---|
+| production 新規 | `metadata_supplement.py`：共通取得入口。`series_supplement_policy.py`：既存の純粋な採用関数を移動 |
+| production 変更 | `series_supplement.py`：互換 wrapper と採用関数の再公開。`talker.py`：最終 fetch の補完入口だけ変更 |
+| テスト新規 | `tests/test_metadata_supplement.py`、`tests/fixtures/metadata_supplement_baseline.json` |
+| テスト変更 | `tests/test_series_supplement.py`、`tests/test_series_retrieval.py`：constructor の monkeypatch 対象だけ移動。`tests/test_packaging.py`：新入口・収録内容を追加 |
+| 文書 | `docs/phase2c2c_integration_design.md` に §15、本記録 |
+
+### 入口・出力・失敗の契約
+
+`supplement_metadata(metadata, record, cache_folder, *, series_enabled=False)` を追加した。
+`series_enabled and not (metadata.series or "").strip()` が False なら入力をそのまま返す。
+source、session、cache は生成しない。
+必要なときだけ一つの MADBSource から一回の
+`acquire_linked_record_evidence(..., scope="series_linkage")` を実行し、close 完了後に
+`evidence.linkage` を既存の `apply_series_supplement()` へ渡す。
+取得済み bundles / context は同じ evidence に保持し、再取得・再構築しない。
+
+`supplement_series(..., enabled=False)` は同じ引数・戻り値を保つ wrapper とした。
+純粋な採用関数を独立 module に移し、旧 path から同一関数を再公開することで循環 import を避けた。
+移動した関数本体は開始時と AST が一致する。
+Talker は NDL get、巻の解決・照合、to_metadata 後の呼び出しだけを新入口へ切り替えた。
+候補取得・check_status・NDL summary policy・mapping・巻処理・設定の挙動は変更しない。
+
+EXACT / STRONG、MADB_ONLY、一意な表示、完全性の既存条件を維持し、
+truncated / ambiguous / unsafe / unavailable / XML 不正値を救済しない。
+採用時に変わる全フィールド集合は `series` / `notes` のみ。
+raw display、既存 Notes 本文・改行、行単位の重複抑止、既存 Imprint 等を保持する。
+
+source 生成成功後は正常・異常とも close を一度試みる。取得・close が完了するまで apply しない。
+constructor / 取得 / close の MADBError / OSError / sqlite3.Error は baseline を返す。
+UNAVAILABLE と warning の扱いは従来どおり。
+logger 名 `comictagger_jp_talker.series_supplement` とメッセージ・順序・回数も維持した。
+TypeError / ValueError / RuntimeError / assertion は伝播し、包括的な except は追加しない。
+実 source の session / cache の close をそれぞれ観測し、一方が失敗しても二重 close しないことを確認した。
+constructor が失敗してオブジェクトを返さない場合の部分初期化処理は既存 source の責務を維持する。
+
+### 独立した移行前の基準と通信確認
+
+production code を変更する前に、29 ケースの全 GenericMetadata と warning の
+logger 名・level・本文を `metadata_supplement_baseline.json` へ固定した。
+fixture と HTTP 応答は **synthetic**。実測 evidence の追加や authority の意味確認ではない。
+新入口・互換入口・Talker の三経路をこの固定値と比較し、新旧入口同士の比較だけに依存していない。
+比較対象には EXACT / STRONG / ambiguous / unsafe、途中失敗、ID / URI 不整合、
+raw display、reading-only、複数 display / Series、XML 不正値を含める。
+
+| 条件 | MADB の観測 |
+|---|---|
+| OFF、または非空 Series | source 0、HTTP 0 |
+| 単一 ISBN / Book / Series の最終 fetch | source 1、共有 core 1、cold 3 要求 |
+| 次の最終 fetch | 別の source で既存 cache を利用、追加 HTTP 0 |
+| 明示的な内部 refresh=True | 3 要求。検索 refresh_cache からは伝搬しない |
+| relation なし | 2 要求 |
+| 二つの有効 ISBN、同じ Book | 4 要求 |
+| 二つの Book、同じ Series URI | 5 要求。既存 relation cache key が親 Book を含むため |
+| Series cache の部分失効・破損 | 追加 1 要求 |
+| discovery / Book / Series の 429 / 503 / timeout | 各 1 / 2 / 3 要求、追加 retry なし |
+| Agent / Holding | 0 要求 |
+
+NDL の SRU / summary は別カウンターで計測。
+summary 200 / 429 と欠損 Series の組合せでは cold は SRU 1、summary 1、MADB 3、
+warm はそれぞれ追加 0。既存 Series があれば MADB source の生成は 0。
+summary の既存抑止期限・cache を変更していない。
+候補 API と check_status は共通入口を呼ばず、NDL エラー・巻不一致も補完前に終了する。
+optional MADB の constructor / 取得 / close と実 transport の各失敗で、
+既存 `latest-error.txt` の bytes を保持することを確認した。
+
+NDL parser はタイトル欠落を拒否する。通常の NDL mapping ではタイトルが Series になるため、
+欠損 Series の複合試験は正常な SRU / summary 取得後に test adapter で欠損 BookRecord を注入した。
+本番 parser を緩めたものではなく、実 API に補完対象が存在するという実測証明でもない。
+
+### 検証結果
+
+既存 `.venv`、Python `3.12.14`、ComicTagger `1.6.0b9` と既存依存を使用し、追加・更新はしていない。
+通常テストの外部通信禁止を維持し、network opt-in は有効化していない。
+
+| 検証 | 結果 |
+|---|---|
+| 移行前の関連試験 | **394 passed**、9.51 秒 |
+| 初期の新規入口試験＋既存 Series 試験 | **243 passed**、7.13 秒 |
+| 最終の工程 C 専用試験 | **163 passed**、6.50 秒 |
+| 工程 A / B・Series・Talker・summary・Imprint を含む関連試験 | **871 passed / 2 skipped**、15.72 秒 |
+| 全回帰 | **1 failed / 2,017 passed / 13 skipped / 1 xfailed**、39.88 秒 |
+| 権限のある環境で packaging を再実行 | **3 passed**、14.14 秒 |
+| Ruff check / format check | **All checks passed / 68 files already formatted** |
+| sdist → wheel → plugin ZIP | **成功**。既存 build 手順と `scripts/build_plugin.py` を使用 |
+| ZIP の production Python | **23 ファイルすべて byte 一致**。実一覧から比較し、旧 21 ファイルに固定していない |
+| beta9 loader | path cleanup 後の新入口、既存 Series、共有 core、NDL summary / 巻処理、default OFF、軽量 3 / 0 要求が成功 |
+| 差分・形式 | `git diff --check`、新規ファイルの差分検査、UTF-8 / BOM なし / LF を確認 |
+| 保護対象 | 工程 A / B の code・専用テスト・固定 fixture と `.gitattributes` を維持。過去文書もそのまま保持 |
+
+全回帰の唯一の失敗は、sdist の `tarfile.open()` が
+`dist/comictagger_jp_talker-0.3.0.tar.gz` を読み取る際の `PermissionError`。
+今回の traceback で内容検証前の権限拒否と確認し、許可された環境の packaging 再実行で全件成功した。
+**全体 suite が一度で成功したとは記録しない。**
+13 skipped は既存 network opt-in、1 xfailed は既知の CIX writer の整数 Volume 0 の制約。
+既存 CR / CIX 回帰は実行したが、工程 E の新しい保存境界の調査や実装は行っていない。
+
+今回も通常 build は sdist 置換の WinError 5、ZIP 生成は wheel 読み取りの PermissionError で停止した。
+同一コマンドを許可された環境で再実行し、現在の production code を含む配布物を生成した。
+テスト削除・skip 化・権限設定変更による回避は行っていない。
+
+通信試験を追加した初回は **5 failed / 156 passed**。いずれもテスト側の想定を修正した。
+
+- refresh 比較の baseline に要求巻由来の Notes が欠けていたため、同じ `existing_issue` を渡した。
+- 複数 ISBN の mock が検索 ISBN と違う binding を返し、既存 parser が schema failure として拒否した。
+  検索条件に一致する synthetic 応答へ修正した。
+- 複数 Book の同じ Series を一回に共有できるという想定を、親 Book を含む既存 cache key に合わせた。
+  このケースだけの確認でも 1 failed を記録し、最終期待値を従来どおり 5 要求とした。
+- summary 200 / 429 の二つの fixture はタイトルを削除していたため、NDL parser が正しく拒否した。
+  正常な XML と取得後の synthetic 入力注入に分け、通常タイトルの対照も追加した。
+
+production の安全性判定・parser・cache・Series 採用条件は変更していない。
+raw evidence の SHA-256 は次の値を維持する。
+`780581e27e6041950e12dd93df6e90513d3b8023e7fa4efece411f5a58a43d12`
+
+再現コマンド（build / ZIP / packaging の再実行は上記の許可された環境）:
+
+```powershell
+.venv/Scripts/python.exe -X utf8 -m pytest -q -ra -p no:cacheprovider --basetemp .research/phase2c2c2c-focused tests/test_metadata_supplement.py tests/test_series_supplement.py tests/test_series_retrieval.py tests/test_linkage_evidence.py tests/test_madb_acquisition.py tests/test_linkage.py tests/test_linkage_integration.py tests/test_talker.py tests/test_summary_policy.py tests/test_imprint_candidates.py
+.venv/Scripts/python.exe -X utf8 -m build --no-isolation
+.venv/Scripts/python.exe -X utf8 scripts/build_plugin.py dist/comictagger_jp_talker-0.3.0-py3-none-any.whl
+.venv/Scripts/python.exe -X utf8 -m pytest -q -ra -p no:cacheprovider --basetemp .research/phase2c2c2c-full
+.venv/Scripts/python.exe -X utf8 -m pytest -q -ra -p no:cacheprovider --basetemp .research/phase2c2c2c-packaging tests/test_packaging.py
+.venv/Scripts/python.exe -m ruff check .
+.venv/Scripts/python.exe -m ruff format --check .
+git diff --check
+git status --short
+```
+
+### 受入判断と未解決事項
+
+工程 A～C は **既存 Series 補完を対象とする取得共有基盤として GO**。
+出力・ログ・HTTP 回数・cache・障害時の処理が移行前と等価であることを上記の範囲で確認した。
+旧 cache の原 HTTP 時刻、保存日時、複数 HTTP 応答の同時点性、parsed snapshot digest、
+parser が既に除去した重複等の制限は工程 B のままである。
+
+**Imprint 自動補完は NO-GO を維持する。**
+工程 D の authority 真正性・独立性・対象適合・失効運用の実証、
+工程 E の host 保存先既存値保護と保存・再読込境界の解決が別途必要。
+これらの調査・実装、Imprint 設定・評価の本番接続・書き込みには進んでいない。
+commit / push / merge / tag / GitHub Release は実行していない。
+
 ## CI / Release の証明書対策と Python 3.14 系への対応（2026-10-23）
 
 ### 背景と変更範囲
