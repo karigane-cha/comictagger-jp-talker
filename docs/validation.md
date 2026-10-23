@@ -1451,6 +1451,131 @@ raw 空白値を参照できる契約、設定とファイルの対応、同時�
 **Imprint 自動補完全体は NO-GO**。工程 A～C の基盤の GO は維持する。
 commit / push / merge / tag / GitHub Release は実行していない。
 
+## Phase 2C-2C-3E1：Imprint 提供方式と host 保存契約（2026-10-20）
+
+### 調査・設計の範囲
+
+開始状態は `main`、HEAD `cbce602f07a3559b8299a8e55c2dfc9d13d29022`。
+工程 A～C・E0 等の既存差分は変更済み 9 / 未追跡 13 ファイル。
+Windows 11、既存 `.venv` の Python `3.12.14`、ComicTagger `1.6.0b9`、
+comicinfoxml `0.5.1` を使用し、依存を変更していない。
+
+E0 報告・専用 592 件、統合設計 §5～§7・§15・§16、工程 A～C・E0 の履歴、
+現在の共有取得 / Imprint evaluator / Talker、導入済み host の ComicTalker、
+IssueSelectionWindow / QueryThread、ログ表示・ファイル出力、ZIP writer を確認した。
+
+変更は次の 4 ファイルに限定する。
+
+- `docs/phase2c2c_imprint_delivery_design.md`: 新規の提供方式・保存契約の詳細設計。
+- `docs/phase2c2c_integration_design.md`: §16 までを保持し §17 を追記。
+- `tests/test_imprint_delivery_contract.py`: 現行 API の能力と制約の test-only 実験。
+- 本記録: 過去の成功・失敗を保持して E1 を追記。
+
+開始時の既存 84 ファイルの hash と文書コピーを `.research/phase2c2c3e1-start/` に保存した。
+production、既存テスト・fixture、E0 報告書、`.gitattributes` は byte 一致を確認した。
+設計書と validation の旧本文が完全な prefix として残ることも検査した。
+package version `0.3.0`、identity `phase2b2-v1`、evaluator `phase2c2b-v1` は維持。
+診断 command、設定、authority provider、Imprint への代入、host patch は追加していない。
+
+### 現行 API の確認と選定
+
+ComicTalker に診断専用 callback / 保存先 / purpose はない。
+進捗 callback と `RLCallBack(callback, interval)` は archive の同一性を伝えない。
+metadata の Notes / description、check_status、NDL エラー履歴を候補表示の代替に使わない。
+ApplicationLogWindow と ComicTagger.log は実在する閲覧経路だが、独立した診断実行口は別途必要。
+
+第一候補は **明示診断 command（比較方式 B、CONDITIONAL GO）**。
+NDL ID 一件・通信許可・既存の制限を使い、raw / 完全性 / issues / 理由・unknown 時刻と、
+authority 未供給・保存先未評価・書込なしを表示する。通常 fetch / Series OFF に通信を追加しない。
+現行 Series 入口は evidence を外へ返さないため、別 command の取得を同じ snapshot と称しない。
+pure report は供給された evidence を再利用して通信ゼロにできる。
+
+将来候補は host の保存直前確認付き限定補完（比較方式 C）。
+raw の存在、ファイル同一性、operation token、最終 metadata、設定、authority、有効な receipt、
+排他と条件付き commit、fresh reader 検証・監査を別々の責務として定義した。
+現在の ZIP writer は append / remove / repack / write で、原子的な欠損時適用契約はない。
+事前・事後 hash、plugin 内 mutex、atomic rename だけで TOCTOU を解消したと扱わない。
+初期契約案は空要素も既存値として保護し、正常に確認した要素不存在だけを適用対象とする。
+E0 の reader 損失を normalize で隠さず、通常単一行だけに出力範囲を限定する。
+CR / CIX は同じ XML なので初期版は一 writer を選択し、両 reader で検証する。
+これらの gate / transaction は今回実装しておらず、その動作を実証済みとはしない。
+
+### test-only 実測
+
+新規 6 件はすべて synthetic / offline。
+
+| 対象 | 実測 |
+|---|---|
+| host の API | 公開メソッド 8 種、fetch の引数を base / plugin 両方で確認。診断・archive・purpose 引数なし |
+| 取得済み evidence の評価（cold / warm 各 1 件） | native source を HTTP mock で取得し、同じ bundle / context を既存 pure API で評価。cold の 3 要求から追加 0。metadata 全体・二つの CBZ の bytes は不変 |
+| authority・時刻 | authority tuple は空、ELIGIBLE なし、SEMANTIC_UNVERIFIED を保持。warm の origin_fetched_at と bundle 共通の acquired_at は unknown |
+| プレビュー（候補完備 / 不足 各 1 件） | 実 `_fetch()` を周辺 widget の test double で実行。同じ Talker / ID を二つの呼出側で各二回使用。不足時 4 fetch、完備時 0。詳細結果は issue_list に戻らない |
+| 最終 fetch との比較 | 実 QueryThread.run() を同期実行。callback が別でも archive / purpose は渡らず、CBZ は不変 |
+| 実ログ表示 | host file handler と実 ApplicationLogWindow へ JSON と markup の可逆 escape を行った raw を渡し、ファイルと画面から元の値を復元 |
+
+ログ画面の rich text 解釈を避ける表示形式の検証であり、production renderer ではない。
+プレビューの関数単位実行は、検索クリック、取消の競合、実スレッド並行実行、exe 全体の試験ではない。
+原子的な保存・利用者確認・保存 gate・authority 供給は未実装のため、後続試験計画と阻害条件に残した。
+通常試験の外部 HTTP 禁止を維持し、実 API の opt-in は使っていない。
+
+### 検証結果
+
+| 検証 | 結果 |
+|---|---|
+| E1 専用試験 | **6 passed**、0.65 秒 |
+| E0 保存境界試験の再利用 | **592 passed**、20.88 秒。既存テストは変更なし |
+| E1 / Imprint / 共有 evidence / Series 入口 / Talker / GUI / ComicInfo 関連試験 | **616 passed / 1 xfailed**、12.70 秒 |
+| 全回帰 | **1 failed / 2,615 passed / 13 skipped / 1 xfailed**、58.12 秒 |
+| 権限のある環境で packaging 再実行 | **3 passed**、14.16 秒 |
+| Ruff check | **All checks passed** |
+| Ruff format check | **72 files already formatted** |
+| 差分・形式 | `git diff --check` と未追跡文書・試験の差分検査、UTF-8 / BOM なし / LF を確認 |
+
+全回帰の唯一の失敗は既知の sdist 読み取り `PermissionError`。
+`tarfile.open(dist/comictagger_jp_talker-0.3.0.tar.gz)` が内容検証前に失敗した。
+同じ既存 packaging 試験を許可された環境で再実行して 3 件成功した。
+**全体 suite が一度で成功したとは記録しない。**
+13 skipped は既存の network opt-in、1 xfailed は既知の CIX の整数 Volume 0 制約。
+今回配布物を再生成していない。工程 C の sdist / ZIP と既存 beta9 loader の互換性を再確認した結果であり、
+E1 の文書・試験・将来の command が配布済みという意味ではない。
+
+専用試験の初回は **1 failed / 5 passed**、0.71 秒。
+test-only の `RLCallBack` フィールド名の期待値を誤って `sleep_before_callback` としていた。
+導入実装の `callback / interval` を確認してテストを訂正し、6 件成功後に関連・全回帰を実行した。
+host や production を修正して合わせたものではない。
+
+再現コマンド（packaging 再実行のみ許可された環境）:
+
+```powershell
+.venv/Scripts/python.exe -X utf8 -m pytest -q -ra -p no:cacheprovider --basetemp .research/phase2c2c3e1-probes-final tests/test_imprint_delivery_contract.py
+.venv/Scripts/python.exe -X utf8 -m pytest -q -ra -p no:cacheprovider --basetemp .research/phase2c2c3e1-e0 tests/test_imprint_host_boundary.py
+.venv/Scripts/python.exe -X utf8 -m pytest -q -ra -p no:cacheprovider --basetemp .research/phase2c2c3e1-related tests/test_imprint_delivery_contract.py tests/test_imprint_candidates.py tests/test_linkage_evidence.py tests/test_metadata_supplement.py tests/test_talker.py tests/test_gui.py tests/test_comicinfo.py
+.venv/Scripts/python.exe -X utf8 -m pytest -q -ra -p no:cacheprovider --basetemp .research/phase2c2c3e1-full
+.venv/Scripts/python.exe -X utf8 -m pytest -q -ra -p no:cacheprovider --basetemp .research/phase2c2c3e1-packaging tests/test_packaging.py
+.venv/Scripts/python.exe -m ruff check .
+.venv/Scripts/python.exe -m ruff format --check .
+git diff --check
+git status --short
+```
+
+raw evidence の SHA-256 は維持:
+`780581e27e6041950e12dd93df6e90513d3b8023e7fa4efece411f5a58a43d12`
+
+### 判定と次工程
+
+- 比較 A（現行 Talker API だけの独立診断）: **NO-GO**。既存ログという表示手段と専用入口を区別する。
+- 比較 B（明示診断 command）: **CONDITIONAL GO**、第一候補。pure report → 明示実行 → 配布受入の順。
+- 比較 C（host の確認付き限定保存）: host 側の設計・実験は **CONDITIONAL GO**、現行の補完実装は **NO-GO**。
+- 比較 D（限定自動補完）: **NO-GO**。保存契約・authority・無人処理の受入が不足。
+- 比較 E（自動補完を見送る）: **GO**。B の診断と両立する現在の production 方針。
+
+host 改変、Windows / filesystem ごとの transaction 保証、raw 状態の契約、receipt と複数 archive の対応、
+監査・復旧、配布 exe の操作確認が残る。工程 D の真正性・独立性・対象適合・期限・失効・監査も未解決。
+工程 D が成功しても host 保存が未達なら F を開始しない。
+工程 A～C の基盤と E0 の調査 GO を保持し、**Imprint 自動補完全体は NO-GO**。
+commit / push / merge / tag / GitHub Release は実行していない。
+
+
 ## CI / Release の証明書対策と Python 3.14 系への対応（2026-10-23）
 
 ### 背景と変更範囲

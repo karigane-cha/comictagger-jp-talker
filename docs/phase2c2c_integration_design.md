@@ -977,3 +977,88 @@ GUI は実 widget の同期した保存経路を offscreen で試験した。
 工程 A～C の取得共有基盤の GO は維持する。
 推奨順序は、診断 / host 契約の方式選択と E の追加受入、並行する D の実証、
 両者の NO-GO 解除レビュー、その後に F → G。
+
+## 17. 工程 E1 の提供方式と host 保存契約（Phase 2C-2C-3E1）
+
+2026-10-20。[提供方式の詳細設計](phase2c2c_imprint_delivery_design.md) に、
+現行 API の能力、診断の出力契約、将来の保存責務・対象識別・競合・検証・監査を定義した。
+§16 までの記録を保持し、production code / 公開設定 / host / 既存テストは変更していない。
+E0 の「調査 GO」と「Talker 単独の保存保証 NO-GO」を引き継ぐ。
+
+### 選定結果と診断の契約
+
+**第一候補は独立した明示診断コマンド（詳細設計の比較方式 B、CONDITIONAL GO）**。
+NDL ID 一件と明示的な通信許可を受け、既存の固定 endpoint / 制限 / cache を使い、
+NDL summary は取得せず、共有 core の軽量 scope で一度取得する。現在コマンドは未実装。
+純粋な report 関数は既存 `LinkedRecordEvidence` だけを受け、再取得しない。
+通常 Series 補完の evidence はローカル変数であり、後から取り出せる host API はない。
+別の明示診断実行を、cache hit という理由で通常 fetch と同じ snapshot と称しない。
+
+出力は stdout の text / 版付き JSON。Imprint / Notes / description / ComicInfo.xml を変更しない。
+Book / Series の raw term、language / datatype、identity、全候補・競合、完全性、
+`LinkedAcquisitionContext.issues`、分類・保留・拒否理由、unknown 時刻を保持する。
+authority は初期版で未供給、意味確認は UNVERIFIED。保存先は not_supplied、
+既存値は未評価、保存処理なしを表示する。診断成功は採用・保存成功を意味しない。
+
+現行 Talker に診断専用 callback / UI 登録口 / 保存先引数 / purpose はない。
+ログファイルと ApplicationLogWindow は実在する補助表示先だが、実行入口の代替ではない。
+通常 fetch / check_status に診断通信を加えず、NDL の `latest-error.txt` を流用しない。
+比較方式 A は「現行 API だけで独立した診断機能」として NO-GO。
+診断コマンドの Python module 配布と、ComicTagger.exe 内での起動能力を混同しない。
+
+### 将来の保存責務と §6 の扱い
+
+将来の拡張候補は **host の保存直前確認付き限定補完（比較方式 C）**。
+候補・意味評価は plugin、raw 保存先観測・確認・条件付き適用・writer・検証・監査は host が担当する。
+`SaveIntent` / `ArchiveObservation` / `ReviewReceipt` / `PreparedSave` 等は提案名で、
+現行 API には存在しない。beta9 は保存能力なしとして fail-closed にし、旧 fetch への fallback は作らない。
+
+§6 の pure apply / 最小限 Notes 案だけでは保存先保護を保証できないため、
+初期の限定保存案は host が最終 metadata に Imprint delta だけを適用し、Notes 追加は別受入へ延期する。
+既存 Series / Notes は通常 host 処理後の予定値を基準に保持し、診断情報を混ぜない。
+これは責務と初期範囲を狭める設計上の補足であり、現行 apply / evaluator を変更するものではない。
+
+初期の host 契約は次を要求する。
+
+- 実ファイル同一性、operation_id、metadata / settings revision、raw XML の bytes と読取状態。
+  同じ ISBN / NDL ID / Talker instance / callback で archive を識別しない。
+- 正常に確認した XML の Imprint 要素なし、または正常な archive 列挙で XML 自体なしの場合だけ適用可能。
+  空要素も既存値として停止する。空白、未読、不正 XML、重複 member / 要素を欠損にしない。
+- clear / auto_imprint OFF、フォーム・import transform・merge 後の最終 metadata を固定。
+  raw 欠損と metadata 欠損を両方要求し、確認後の再変換・編集で計画を失効させる。
+- authority ready と evaluator ELIGIBLE は独立の必須条件。context の issues も未解決なら停止。
+  候補は XML 有効、外周空白・CR / LF / TAB・C0 / C1 なしの通常単一行に限定し、normalize しない。
+- 一つの CBZ / 物理 XML に一つの writer を明示選択。CR と CIX への同時 write は初期版では停止。
+  両 reader による fresh な再読込と期待値比較は必須。
+- 確認後の再検査、排他または同等の transaction、既存 writer による stage、commit と事後検証、監査。
+  現行 ZIP writer に原子的な欠損時適用契約はない。hash / mutex / atomic rename だけで
+  TOCTOU 解消を宣言しない。実証できない環境は BLOCKED。
+
+READ_ONLY / REVIEW_REQUIRED / CONDITIONAL_APPLY / BLOCKED は新しい概念状態。
+既存の意味評価 ELIGIBLE と統合しない。取得・authority・target・purpose・保存結果の各軸で
+停止理由を保持し、writer True だけで VERIFIED_SAVE にしない。既存 production enum への追加はない。
+
+### プレビューと受入条件
+
+詳細表示の不足した候補は `_fetch()` の繰返しで再度最終 fetch を呼び、callback に archive / purpose はない。
+通常の Series 条件・通信は変更しない。新しい診断は通常 fetch に接続しない。
+将来 host は per-operation token と取消・世代管理を持ち、同じ候補を使う複数 archive の結果を混ぜない。
+authority はプレビュー時の成功を再利用せず、確認時・保存直前に供給版・期限・失効を再評価する。
+
+| 対象 | E1 の判断 |
+|---|---|
+| 比較 A: 現行 Talker API のみの独立診断 | **NO-GO**。実行・報告の専用契約がない。ログ表示手段の存在とは別 |
+| 比較 B: 明示診断 command | **CONDITIONAL GO**。第一候補。非書込、明示通信、UNVERIFIED、版付き出力、配布・回帰受入が必要 |
+| 比較 C: 確認付き限定保存 | host 側の設計・実験は **CONDITIONAL GO**。現行環境への補完実装は **NO-GO** |
+| 比較 D: 限定自動補完 | **NO-GO**。C の契約と D の authority、別の無人処理受入が必要 |
+| 比較 E: 自動補完を見送る | **GO**。現在の production 方針として B と両立 |
+
+追加の test-only 6 件で API 能力、evidence の無通信評価、metadata / CBZ 不変、
+プレビューの反復と引数不足、escaped raw の実ログ表示を確認した。
+保存 gate / transaction / 診断 command は未実装であり、それらの安全性をテストで証明したとはしない。
+詳細な試験結果は [validation.md](validation.md) の E1 記録を参照。
+
+推奨順序は純粋 report → 明示 command → 診断配布。
+並行して host raw 観測 / transaction の feasibility と D の実供給を別々に検証する。
+双方の受入・レビュー前に F / G を開始しない。
+工程 A～C の GO と E0 の実測を維持し、**Imprint 自動補完全体は NO-GO**。
