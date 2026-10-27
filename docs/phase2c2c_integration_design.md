@@ -1125,3 +1125,25 @@ package version は `0.3.0`。module / wheel 起動と ZIP / beta9 loader の検
 exe 内の起動機構や R3 の配布受入完了を主張しない。
 R3 は配布方式、実環境での可読性・日本語・終了コード・beta9 共存の受入を別途行う。
 本番 authority と host 保存契約は未実装であり、**Imprint 自動補完全体は NO-GO**。
+
+## 20. 工程 R3 の配布受入（Phase 2C-2C-4R3）
+
+2026-10-26。R2 の既存 Wheel を専用 Python venv にインストールし、
+`python -m comictagger_jp_talker.imprint_diagnostics` で明示実行する方式を採用する。
+従来の ComicTagger 用 ZIP は通常 Talker / Series 補完用として維持する。
+診断 Wheel に ComicTagger.exe は不要で、通常の ComicTagger 利用に診断 Wheel は必須ではない。
+専用 exe、console_scripts、GUI 統合、取得・評価・保存処理、version / build metadata は変更しない。
+
+利用者向けの導入・実行・更新・削除・手動受入手順は
+[R3 配布ガイド](phase2c2c_imprint_distribution_r3.md)、測定結果と検証範囲は
+[validation.md](validation.md) を参照する。
+独立インストール、実 module 起動、mock / fixture、beta9 loader、ユーザー報告による実測を区別する。
+実 ComicTagger.exe の GUI 操作は NOT RUN であり、独立 Wheel 実行の阻害条件とはしない。
+
+R3 は **GO 候補・ユーザー レビュー待ち**。今回の成果物は未ステージの文書とローカル検証記録であり、
+正式受入・commit・Release 公開は行わない。R1 / R2 の読み取り専用契約を維持し、
+**Imprint 自動補完全体は NO-GO**。
+
+レビュー後の確認でも配布方式は Wheel / `python -m` のまま。
+CLI の固定案内文は既に英語であり、表示文言の変更は不要だった。
+JSON schema、日本語の書誌原文、通常 Talker の日本語 UI は不変。利用ガイドの保存・読込・終了コード確認を補強した。

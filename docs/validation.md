@@ -1989,3 +1989,352 @@ constructor 内部の部分初期化など、既存 source の制限は R2 文�
 R3 は配布方式の合意、実環境での表示・文字コード・終了コード・beta9 共存の受入を条件に開始できる。
 実通信の実用性、exe 利用者向け提供、一般配布は R2 の結果だけで完了扱いしない。
 本番 authority と host 保存契約は未実装。**Imprint 自動補完全体は NO-GO を維持する。**
+
+## Phase 2C-2C-4R3：Wheel / python -m 配布・実環境利用の受入（2026-10-26）
+
+### 判定と開始状態
+
+**GO 候補・ユーザー レビュー待ち**。既存 Wheel を独立 Python venv に導入し、
+`python -m comictagger_jp_talker.imprint_diagnostics` で利用する方式の必須検証は成功した。
+未解決の配布阻害要因は見つかっていない。実 exe GUI 操作は NOT RUN だが、独立 Wheel 実行の阻害条件ではない。
+正式受入・commit・公開の承認を意味しない。**Imprint 自動補完全体は NO-GO**。
+
+開始時の branch は `feat/madb-imprint-integration`、HEAD は
+`450ee5d78eaecb5034f95db39c7ee95915489be6`。status / diff / cached diff は空。
+package version は 0.3.0、開発 Python は 3.12.14。
+`commit.gpgsign=true`、`gpg.format=ssh` を確認し、変更していない。
+使用した PowerShell は 7.6.9。ユーザー報告の実環境は Windows 11 / PowerShell 7.6.8。
+
+今回の検証用ディレクトリは `.research/r3-acceptance-20261026-2aed5ca7/`。
+既存 dist の 3 成果物は同ディレクトリの `artifacts-before/` に複製してから build した。
+ユーザーの `.research/phase2c2c4r3/` の 5 ファイルは変更せず、前後 hash の一致を確認した。
+リポジトリ直下の `report.json` は存在しなかった。
+
+### 独立 Wheel インストールと実行
+
+開発 `.venv` の Python で新しい venv を作成し、site-packages をコピーせず、生成 Wheel を
+通常の `pip install` で導入した。依存解決は成功し、外部 package のダウンロードと既存 cache の利用があった。
+この package 取得は NDL / MADB の実 endpoint 試験とは別である。
+`pip-install.json` に取得元・解決結果、`outputs/pip-freeze.stdout` に導入一覧を保存した。
+
+| 項目 | 実測 |
+|---|---|
+| Python | 3.12.14。metadata の要件は 3.10 以上で、全 version の実測ではない |
+| 独立 venv | `.research/r3-acceptance-20261026-2aed5ca7/venv` |
+| package | comictagger-jp-talker 0.3.0 |
+| 解決した主な依存 | comictagger 1.6.0b11.dev0 / requests 2.34.2 |
+| pip check | No broken requirements found |
+| GUI / CIX extras | 独立診断の導入では指定していない |
+| 最終 Wheel の反映 | 依存解決済み venv に `--force-reinstall --no-deps` で同一版を反映。metadata の依存指定は変更なし |
+
+実 import 元は
+`C:\Work\VSCode\comictagger-jp-talker\.research\r3-acceptance-20261026-2aed5ca7\venv\Lib\site-packages\comictagger_jp_talker\imprint_diagnostics.py`。
+`sys.executable / sys.prefix / sys.path / __file__ / direct_url.json` を記録した。
+実行 cwd はリポジトリ外の新規 temp ディレクトリ、PYTHONPATH / PYTHONHOME は除去し、editable install は不使用。
+`-I` は追加の独立性確認で、正式起動に必須とする変更ではない。
+通常モードと `-I` の実 `python -m` で、help / version と 6 種の入力拒否をそれぞれ確認した。
+拒否時の stdout は空、exit 2、診断 cache は未生成。
+installed module の入力検証には、source factory / HTTP session / cache / mkdir が呼ばれれば失敗する guard も適用した。
+
+`acceptance.py` は既存 packaging test の fixture / HTTP mock を再利用し、Wheel を sys.path に追加する処理を除き、
+インストール済み module を実行する検証用スクリプト。合計 **29 subprocess 確認**を記録した
+（pip check / freeze 2、実 `-m` 16、入力 guard 1、既存 8 mode、追加 HOLD / 不完全取得 2）。
+JSON は単一 document として parse 可能で、schema / version / 全 evidence / 日本語の復元を確認した。
+text は日本語を表示し、正常時 stderr は空。ASCII JSON は成功、ASCII text と broken pipe は 4、
+中断は 130、取得不完全は report と 3、HOLD / REJECT は 0。
+`authority_state=archive_state=not_supplied`、`apply_allowed=writes_performed=false` を維持した。
+このスクリプトと結果は Git 管理外に置き、production / 既存テストは変更していない。
+
+### 回帰試験と共存の範囲
+
+| 検証 | 結果 |
+|---|---|
+| 指定の関連 10 ファイル | **1,718 passed**、75.44 秒 |
+| 全体 pytest | **3,024 passed / 13 skipped / 1 xfailed**、86.11 秒、failed 0 |
+| Ruff check | **All checks passed** |
+| Ruff format check | **80 files already formatted** |
+| sdist → Wheel → ZIP | 既存 build / build_plugin.py で成功 |
+| production 整合性 | **25 ファイル**。HEAD / source / sdist / Wheel / ZIP / installed の集合・bytes を確認 |
+| 配布 metadata | version 0.3.0、Python 要件、従来の Talker entry point を維持。console_scripts なし |
+| 混入監査 | .research / venv / 実測 report / 資格情報ファイル / cache DB なし。全 member 一覧を記録 |
+| beta9 loader | 最終 ZIP を用いた実 loader コードのロード、path cleanup、NDL 検索・取得が成功 |
+| Series 回帰 | default OFF、opt-in ON、exact / strong、cold MADB 3 回・warm 追加 0 回を HTTP mock で確認 |
+| Imprint 境界 | 通常経路への診断接続・自動保存なし。E0 / E1 と既存設定を維持 |
+| 実 ComicTagger.exe GUI | **NOT RUN**。検索した PATH / 配置候補で exe を確認できず、機械全体での不存在は断定しない |
+| 実 NDL / MADB | **今回 Codex は未実行**。追加ライブ通信・opt-in の有効化なし |
+
+13 skipped は既存の opt-in 実通信試験（NDL 9、linkage 2、MADB 2）。
+1 xfailed は既知の beta9 CIX writer による整数 Volume 0 の省略。変更・除外による合格ではない。
+開発環境の beta9 loader 試験と、独立 venv に解決された beta11.dev0 は別の検証である。
+通常検索・候補選択時の不要な MADB 追加取得、Agent / Holding の取得は行わない。
+GUI preview の一部は最終 fetch を呼ぶ既知の経路であり、全 preview の通信 0 を保証するものではない。
+Series 補完由来の既存 Notes と、禁止する Imprint 診断内容の迂回出力も区別する。
+
+専用 venv は host の Python package と分離され、CLI は host 設定ファイルを読み込まない。
+通常 Talker は host から渡された cache folder、診断は専用 root を使用する。
+ただし同一ユーザーの診断 venv 同士は root を共有し得る。任意の host カスタム設定まで絶対分離を保証しない。
+実 exe での隔離 config / テスト用 CBZ を用いた共存手順は
+[R3 配布ガイド](phase2c2c_imprint_distribution_r3.md#6-実測の読み方と手動受入) に記載した。
+offscreen 自動試験や loader の成功を、実 exe の画面操作の成功に置き換えない。
+
+### ユーザー報告による実 endpoint 実測と保存証拠
+
+次は **ユーザー報告による実測**であり、Codex は保存ファイルを読み取って照合した。
+今回 Codex が同じ書誌を live 再取得した結果ではない。
+対象は `R100000002-I023440575`、title は `ご注文はうさぎですか? volume 1`。
+ユーザー報告の exit は 0、JSON parse 成功、日本語 text は PowerShell 7.6.8 で正常。
+schema は imprint-report-v1、plugin は 0.3.0、identity は phase2b2-v1、evaluator は phase2c2b-v1。
+linkage は matched、discovery は complete、Book 1 件、acquisition issues 0 件。
+Book M381096 / Series C334830、strong / isbn_normalized、identity conflicts なし。
+
+評価は evaluated / reject、selected candidate は null。
+理由は context_conflict / multiple_displays / semantic_unverified。
+Book brand は `Kirara menu` と `Manga time KR comics`、Series brand は
+`Manga time KR comics　／　Kirara menu`。
+MADB publisher `芳文社　∥　ホウブンシャ` と NDL `芳文社` の比較で conflict=true。
+表記差が原因の可能性はあるが、確認済み候補の誤拒否とは断定せず、比較アルゴリズムは変更しない。
+READ_ONLY、authority / archive 未供給、target_known / existing_value_assessed /
+apply_allowed / writes_performed=false を保存 JSON で確認した。matched は保存許可ではない。
+
+保存ファイルは `.research/phase2c2c4r3/` にあった。JSON は UTF-16LE BOM 付きであり、
+読み取り時に BOM に従って decode した。既存ファイルを UTF-8 に上書き変換していない。
+これは今回の CLI 自身の stdout encoding を実測した証拠とはしない。
+Windows PowerShell 5.1 の text リダイレクト時の文字化けと 7.6.8 での正常表示はユーザー報告であり、
+Python の取得不良や NDL データ破損、全環境での解消保証には結び付けない。
+
+| 保存済み text の集計範囲 | cache / hit / miss | network | snapshot | relation | scope |
+|---|---|---:|---:|---:|---:|
+| 全文の trace 表示 | 6 / 6 / 0 | 0 | 6 | 14 | 14 |
+| 主台帳 acquisition.traces 部分 | 3 / 3 / 0 | 0 | 3 | 7 | 7 |
+
+全文は同じ trace の重複表示を含む。6 件を独立した HTTP 6 要求とは解釈しない。
+network stage がないことも NDL / MADB の実 HTTP 0 件の証明ではない。
+text run は `b956146581e642adb9a6bce5e07cbed1`、JSON run は `50b8482dcfc34570bbcf6576d821dd13`。
+保存 JSON は別 run で、主台帳の network stage は 3 件。warm text の集計と混ぜない。
+ファイル別 hash と集計は `acceptance-results.json` に記録し、再読取時の一致を確認した。
+
+### 再現コマンド・ローカル証跡
+
+新規検証ディレクトリに作成した venv を使用する。既存の同名ディレクトリを使い回す例ではない。
+
+```powershell
+$run = '.research/r3-acceptance-20261026-2aed5ca7'
+.venv/Scripts/python.exe -X utf8 -m build --no-isolation
+.venv/Scripts/python.exe scripts/build_plugin.py dist/comictagger_jp_talker-0.3.0-py3-none-any.whl
+.venv/Scripts/python.exe -m venv "$run/venv"
+& "$run/venv/Scripts/python.exe" -m pip install --report "$run/pip-install.json" dist/comictagger_jp_talker-0.3.0-py3-none-any.whl
+& "$run/venv/Scripts/python.exe" -I -X utf8 "$run/acceptance.py" (Get-Location).Path
+.venv/Scripts/python.exe -X utf8 -m pytest -q -ra --tb=short -p no:cacheprovider --basetemp "$run/related" tests/test_imprint_diagnostics.py tests/test_imprint_report.py tests/test_packaging.py tests/test_imprint_candidates.py tests/test_linkage_evidence.py tests/test_madb_acquisition.py tests/test_metadata_supplement.py tests/test_series_supplement.py tests/test_imprint_delivery_contract.py tests/test_imprint_host_boundary.py
+.venv/Scripts/python.exe -X utf8 -m pytest -q -ra --tb=short -p no:cacheprovider --basetemp "$run/full"
+.venv/Scripts/python.exe -m ruff check .
+.venv/Scripts/python.exe -m ruff format --check .
+git diff --check
+```
+
+`build.log / related.log / full.log`、`acceptance.py / acceptance-results.json / outputs/`、
+`audit.py / artifact-manifest.json` を検証ディレクトリに保存した。
+導入・バックアップ時の sandbox の dist 読取は PermissionError となったため、同じ操作を権限付きで実行した。
+build / ZIP / 配布物を読む pytest / 監査も確認済みの制約に基づき権限付きで実施した。
+検証スクリプトは初回に保存 JSON の UTF-16 BOM、監査は生成 metadata の CRLF を考慮しておらず停止した。
+読取側のみを修正して成功し、製品・証拠ファイルの改変で回避していない。
+
+### 変更と Git の扱い
+
+README に入口、新規 R3 ガイドに導入・実行・更新・アンインストール・文字コード・cache・
+トラブルシューティング・手動受入、integration design §20 に配布方式と暫定判定、本文に検証記録を追加した。
+R1 / R2 の歴史的な結果や契約を書き換えていない。production、既存テスト、version、build metadata、workflow は不変。
+README の追記重複は差分レビューで除去し、その文書を含む配布物を更新する。
+最終 hash は以下に追記するため、sdist 内の validation.md は hash 追記前の検証記録となる。
+これは hash の自己参照を避けた記録時点の区別であり、production bytes の差分ではない。
+
+すべての変更は未ステージ。HEAD / branch / SSH 署名設定を維持し、cached diff は空。
+git add / commit / push / merge / rebase / reset / stash / clean / branch 切替、tag / Release 作成、
+Actions 手動実行は行っていない。人間のレビュー後の承認まで正式確定・公開へ進まない。
+
+### 最終配布物の SHA-256 と追確認
+
+上記の文書整理後に配布物を更新し、最終 Wheel の独立 venv 検証 **29 subprocess** と
+packaging 12 件 + 文書表記 2 件の **14 passed（21.62 秒）**を確認した。
+以下の hash は各成果物を二度読み取って一致した値。異なる build 間の byte-identical 性は保証しない。
+ZIP は正式な build_plugin.py が Wheel を複製する仕様のため、両者の hash は同一。
+各 production file の bytes、member 一覧、最終 installed Wheel の direct_url hash も照合済み。
+
+| 成果物（dist 内） | SHA-256 |
+|---|---|
+| `comictagger_jp_talker-0.3.0.tar.gz` | `726df5a7ae067d1d9807f15388c5259f06ba5f5d872cbae0c7ecfb681bd2f151` |
+| `comictagger_jp_talker-0.3.0-py3-none-any.whl` | `a024a6e83fd64e6ad6e78c134a5bd24c0e8bebdde5173d2d1dac9a660c07ba95` |
+| `jpbooks_talker-plugin-0.3.0.zip` | `a024a6e83fd64e6ad6e78c134a5bd24c0e8bebdde5173d2d1dac9a660c07ba95` |
+
+raw evidence `docs/research/madb/imprint_evidence.json` は変更なし。
+SHA-256 は `780581e27e6041950e12dd93df6e90513d3b8023e7fa4efece411f5a58a43d12`。
+最終 doc 差分と新規ガイドの全文をレビューし、UTF-8 / BOM なし / LF、git diff check、cached diff が空であることを確認した。
+
+## Phase 2C-2C-4R3：レビュー後の文書改善・CLI 英語化（2026-10-26）
+
+### 開始状態とメッセージの棚卸し
+
+branch は `feat/madb-imprint-integration`、HEAD は `450ee5d78eaecb5034f95db39c7ee95915489be6`。
+version 0.3.0、署名設定 `commit.gpgsign=true / gpg.format=ssh` を維持した。
+開始時は README / integration design / validation の 3 ファイルが変更済み、R3 配布ガイドが未追跡。
+これは前回 R3 の意図された変更であり、すべて保持して今回の改善を加えた。cached diff は空。
+今回の証跡は `.research/r3-english-review-20261026-8c4f21/` に分離する。
+
+編集前に CLI の全固定文字列・関連例外・R1 report・既存テストを確認し、表示も保存した。
+**CLI 自身の固定案内文は既に英語で統一されており、production code の変更は不要**と判断した。
+外部例外の詳細、書誌原文、機械判定用の値を英訳するものではない。
+
+| 出力箇所 | 現在の表示・言語 | 変更要否と理由 |
+|---|---|---|
+| help 説明 | `Read-only Imprint diagnostics for one NDL record. No archive or save operation.` | No。既に英語 |
+| 引数説明 | `One NDL bibliographic ID (not a URL)` / `Permit NDL/MADB requests and source cache I/O` | No。既に英語 |
+| format / version | format は choices の表示、version は `0.3.0` | No。表示形式を維持 |
+| 必須 ID 不足 | `the following arguments are required: --ndl-id` | No。標準 argparse の英語表示 |
+| 通信許可不足 | `--allow-network is required (including permission for source cache I/O)` | No。既に英語 |
+| ID 不正 | `Invalid NDL ID; expected [A-Za-z0-9_-]+` | No。既に英語 |
+| format 不正・未知引数 | `invalid choice:` / `unrecognized arguments:` | No。標準 argparse の英語表示 |
+| ID 重複 | `Specify --ndl-id exactly once` | No。既に英語 |
+| 外部取得・内部・出力・close エラー | `Imprint diagnostics error: ` と安全に引用した例外 chain | No。CLI 接頭辞は英語。外部詳細は原文を保持 |
+| 中断 | `Imprint diagnostics error: ["KeyboardInterrupt: "]` | No。exit 130 と既存の詳細を維持 |
+| 不完全取得 | report 内の acquisition state / reasons と exit 3。専用の stderr 文はない | No。新たなメッセージを追加せず、既存表現を維持 |
+| text 見出し・状態 | `Read-only Imprint diagnostics` / `Authority: not supplied` / `Apply allowed: no` など | No。既に英語 |
+| text 補足 | `Origin timestamp: unknown wherever origin_fetched_at is null; cache is not an origin clock.` など | No。既に英語 |
+| JSON field / schema / enum | 既存の英語識別子 | No。機械向け契約 |
+| NDL / MADB 原文 | タイトル・出版社・brand・RDF term・provenance | No。翻訳・正規化しない |
+| 通常 Talker | 日本語 UI / 設定 / エラー / Notes | No。CLI 固有表示の対象外 |
+
+標準ライブラリの locale / gettext、logging 抑止、取得・評価・保存、cache、依存要件、version は変更しない。
+あらゆる OS / locale で外部ライブラリの文章も英語になるという保証はしない。
+
+### 文書とテストの改善
+
+R3 ガイドは構成を保ち、JSON 読込を exit 0 / 3、LiteralPath の Leaf、非空サイズの短絡評価へ変更した。
+UTF-8 と `-ErrorAction Stop` を指定し、欠損・ディレクトリ・空ファイルは読まず、不正 JSON は処理を停止する。
+stderr の存在確認も追加した。exit 4 / 130 の部分出力を完全な report として利用しない。
+pip check / help / version は直後に終了コードを確認し、更新例にも適用した。
+PowerShell 7 / `-X utf8 / --format text`、GUID による新規出力先、stdout / stderr 分離、
+終了コード保持、UTF-8 読込の text 保存例を追加した。各例で共有する `$python` の前提も明記した。
+README と integration design に英語案内と原文保持を短く追記。R2 の仕様・歴史的結果は変更していない。
+
+`tests/test_imprint_diagnostics.py` の既存入力境界・例外テストへ具体的な英語表示の確認を追加した。
+不完全取得は text / JSON の両方を通し、日本語書誌原文と外部例外詳細の保持も確認する。
+新規テストファイル・共通基盤・production 分岐は追加していない。focused は **416 passed（22.00 秒）**。
+全回帰・最終配布物・PowerShell 実行結果は build 後の追記に記録する。
+前回の R3 結果と hash は履歴として保持し、新しい値で置換しない。
+
+### 比較・PowerShell・独立実行の結果（2026-10-27）
+
+`compare_cli.py` で編集前後の stdout / stderr / exit を 14 ケース比較し、**すべて同一**だった。
+対象は help、version、引数なし、許可なし、ID 不正、format 不正、未知オプション、
+正常 text / JSON、HOLD、REJECT、部分取得、取得失敗、中断。
+synthetic evidence の run ID と時計だけを固定し、JSON 全文の構造・順序・値・Unicode escaping を含めて比較した。
+一部フィールドを無視して一致とする比較ではない。
+代表表示は変更前後とも次のとおり。外部取得失敗例は mock によるもの。
+
+```text
+Read-only Imprint diagnostics for one NDL record. No archive or save
+operation.
+imprint_diagnostics.py: error: "--allow-network is required (including permission for source cache I/O)"
+Imprint diagnostics error: ["AcquisitionError: NDL timeout"]
+Imprint diagnostics error: ["KeyboardInterrupt: "]
+Read-only Imprint diagnostics
+```
+
+`verify_guide.ps1` はガイドの PowerShell block を抽出して実行した。PowerShell は **7.6.9**。
+導入後の pip check / help / version は新規 venv の実コマンドで成功し、それぞれに非ゼロ終了を注入すると
+直後の throw で停止することも確認した。
+保存例は native Python の起動部分だけを HTTP mock wrapper に置き換え、出力先を新規 temp にした。
+wrapper は最終的に installed CLI を runpy で実行し、実 source / parser に fixture 応答を返す。
+通常の requests.Session.request は禁止し、live NDL / MADB は使わない。
+保存・終了コード保持・ファイル条件分岐・読込・parse はガイドそのものの処理を実行した。
+
+| PowerShell 確認 | ケース数 | 結果 |
+|---|---:|---|
+| 実 pip check / help / version 一式 | 1 | 全コマンド exit 0 |
+| 各確認コマンドの非ゼロ終了注入 | 3 | 指定の日本語 throw で停止 |
+| JSON / text 保存 × 完全 / 不完全 HTTP mock | 4 | exit 0 / 3 を保持、UTF-8 読込成功、stderr 空 |
+| JSON 欠損・空・ディレクトリ | 3 | Get-Item / parse の不要なエラーなし、読込なし |
+| 不正 JSON | 1 | parse 失敗で停止 |
+| 正常 JSON、exit 3 JSON | 2 | 日本語を保持して parse |
+| exit 4 / 130 の不正な部分 JSON | 2 | parse 対象にしない |
+| 角括弧を含む LiteralPath | 1 | wildcard と解釈せず読込 |
+| **合計** | **17** | **全件成功** |
+
+文書全 block の構文も解析した。更新・アンインストールの例は構文確認のみで、
+架空の次版への更新やアンインストールを実行済みとはしない。
+ガイドの実 ID に対するライブ診断、実 ComicTagger.exe GUI、全 locale の表示確認は **NOT RUN**。
+前回のユーザー実測は履歴のまま保持し、今回の mock 試験を実 endpoint の結果と表現しない。
+
+新規 venv は `.research/r3-english-review-20261026-8c4f21/venv`。
+Python 3.12.14、comictagger 1.6.0b11.dev0、requests 2.34.2、plugin 0.3.0。
+通常の pip 依存解決は成功し、package は cache 利用と表示された。package index へのアクセスを含む通常導入であり、
+外部通信 0 の証明とはしない。NDL / MADB への追加ライブ通信は行っていない。
+開発 site-packages のコピーや editable install は使っていない。
+実 import 元は
+`C:\Work\VSCode\comictagger-jp-talker\.research\r3-english-review-20261026-8c4f21\venv\Lib\site-packages\comictagger_jp_talker\imprint_diagnostics.py`。
+リポジトリ外の temp を cwd とし、通常 / `-I` の実 `python -m` と HTTP mock を含む
+**29 subprocess 確認**に成功した。source / cache / session の許可前未生成も維持している。
+
+### 回帰結果と再現コマンド
+
+| 検証 | 結果 |
+|---|---|
+| focused（CLI / R1 / wording） | **416 passed**、22.00 秒 |
+| 関連 7 ファイル | **1,261 passed**、59.85 秒 |
+| 全体 pytest | **3,039 passed / 13 skipped / 1 xfailed / 0 failed**、89.98 秒 |
+| Ruff check | All checks passed |
+| Ruff format | 80 files already formatted |
+| build | sdist → Wheel → ZIP 成功。既存手順・version 0.3.0 |
+| production Python | 25 ファイル。HEAD / 作業ツリー / sdist / Wheel / ZIP / installed の bytes 一致 |
+| beta9 loader | ZIP ロード・path cleanup・NDL 検索 / 取得・Series default OFF / opt-in ON が成功 |
+| Series HTTP mock | exact / strong の cold 3 回、warm 追加 0 回。Agent / Holding 詳細なし |
+| CLI 出力・保存境界 | 全 evidence と安全な escape、JSON、exit 0 / 2 / 3 / 4 / 130、E0 / E1 を維持 |
+
+前回との差は不完全取得 text 12 ケース、日本語原文 text / JSON 2 ケース、外部例外詳細 1 ケースの計 15。
+既存の 13 skipped は opt-in 実通信試験、1 xfailed は既知の CIX Volume 0。無効化や分類変更はしていない。
+通常 Talker の production bytes と日本語 about 表示、既存 wording / GUI / 設定の回帰を確認した。
+JSON schema・enum・reason・原文・publisher 比較・authority・保存契約には変更がない。
+
+```powershell
+$run = '.research/r3-english-review-20261026-8c4f21'
+.venv/Scripts/python.exe -X utf8 -m pytest -q -ra --tb=short -p no:cacheprovider --basetemp "$run/focused" tests/test_imprint_diagnostics.py tests/test_imprint_report.py tests/test_wording.py
+.venv/Scripts/python.exe -X utf8 -m build --no-isolation
+.venv/Scripts/python.exe scripts/build_plugin.py dist/comictagger_jp_talker-0.3.0-py3-none-any.whl
+.venv/Scripts/python.exe -m venv "$run/venv"
+& "$run/venv/Scripts/python.exe" -m pip install --report "$run/pip-install.json" dist/comictagger_jp_talker-0.3.0-py3-none-any.whl
+& "$run/venv/Scripts/python.exe" -I -X utf8 "$run/acceptance.py" (Get-Location).Path
+& "$run/verify_guide.ps1" -Repository (Get-Location).Path
+.venv/Scripts/python.exe -X utf8 -m pytest -q -ra --tb=short -p no:cacheprovider --basetemp "$run/related" tests/test_imprint_diagnostics.py tests/test_imprint_report.py tests/test_packaging.py tests/test_imprint_candidates.py tests/test_imprint_delivery_contract.py tests/test_imprint_host_boundary.py tests/test_wording.py
+.venv/Scripts/python.exe -X utf8 -m pytest -q -ra --tb=short -p no:cacheprovider --basetemp "$run/full"
+.venv/Scripts/python.exe -m ruff check .
+.venv/Scripts/python.exe -m ruff format --check .
+git diff --check
+```
+
+上記は今回の実行記録であり、存在する venv / basetemp / 証跡を上書きして再実行する案内ではない。
+前回成果物は `artifacts-before/`、今回の stdout / stderr・比較・PowerShell 結果・試験ログは新規検証ディレクトリに保持した。
+README の重複追記を差分確認で除去した後、最終配布物と独立 venv を更新する。
+build 後の最終確認・hash は以下へ追記するため、sdist 内の validation.md はその追記前の記録である。
+本番 source は全工程で不変。**GO 候補・ユーザー レビュー待ち**であり、Imprint 自動補完は **NO-GO**。
+署名設定を維持し、git add / commit / push / merge / rebase / tag / Release / Actions 手動実行は行わない。
+
+### 今回の最終成果物・Git 確認
+
+文書整理後の最終 build を新規 venv に `--force-reinstall --no-deps` で反映した。
+最終 Wheel の **29 subprocess 確認**と packaging / wording の **14 passed（21.89 秒）**が成功した。
+production 25 ファイルの bytes、version、従来の Talker entry point を再確認し、console_scripts の追加や
+.research / venv / 実測 report / 資格情報 / cache DB の混入はなかった。
+以下は今回の最終成果物を二度読み取って一致した SHA-256。前回 hash の置換ではない。
+異なる build 間の byte-identical 性は保証せず、Wheel と ZIP の一致は既存の複製仕様による。
+
+| 成果物（dist 内） | SHA-256 |
+|---|---|
+| `comictagger_jp_talker-0.3.0.tar.gz` | `e4f49fd74bb1013125e771dbfc0b7c0d673c48c0135aece13668b6843441e27b` |
+| `comictagger_jp_talker-0.3.0-py3-none-any.whl` | `3a83f87cbb63ac5cf83fdc31f329b8ade8e0af7501e30f51c1c5c55ebd387053` |
+| `jpbooks_talker-plugin-0.3.0.zip` | `3a83f87cbb63ac5cf83fdc31f329b8ade8e0af7501e30f51c1c5c55ebd387053` |
+
+raw evidence の SHA-256 は `780581e27e6041950e12dd93df6e90513d3b8023e7fa4efece411f5a58a43d12` を維持。
+既存ユーザー実測ファイルも hash が一致し、移動・削除・上書きしていない。
+変更は文書 4 ファイルと既存 CLI テスト 1 ファイル。production、package version、build metadata、workflow は不変。
+git diff と未追跡ガイドを確認し、すべて未ステージで保持する。HEAD / branch / SSH 署名設定は開始時のまま。
+git add / commit / push / merge / rebase / reset / cherry-pick / stash / clean / branch 切替は未実施。
+tag / GitHub Release は未作成、Actions 手動実行も未実施。**GO 候補・ユーザー レビュー待ち**を維持する。

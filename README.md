@@ -41,6 +41,17 @@ MADB unavailable は warning を残し、通常の NDL metadata をそのまま�
 
 ## 対応環境
 
+### 独立した Imprint 診断 CLI
+
+ComicTagger 用プラグイン ZIP は通常の NDL 取得・Series 補完用です。
+Imprint 診断は、別の Python 仮想環境へ Wheel をインストールし、`python -m` で明示実行します。
+診断に ComicTagger.exe は不要で、通常の ComicTagger 利用に診断用 Wheel の導入も必須ではありません。
+これは読み取り専用の診断であり、Imprint 自動補完・保存機能ではありません。
+診断 CLI の固定案内文は英語で、書誌データの日本語原文は保持します。
+導入・更新・実行方法と配布受入の範囲は [R3 の利用・配布手順](docs/phase2c2c_imprint_distribution_r3.md) を参照してください。
+
+### Python と ComicTagger の対応範囲
+
 - ComicTagger **1.6.0-beta.9（Python 表記 1.6.0b9）以上、1.7 未満**。
   直接確認する対象は beta.9。以降の 1.6 系すべての動作保証ではありません。
 - Python 3.10 以上。開発検証は Windows / Python 3.12 / beta.9。

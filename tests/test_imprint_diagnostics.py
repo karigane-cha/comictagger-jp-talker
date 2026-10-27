@@ -52,29 +52,29 @@ def factories(tmp_path, monkeypatch):
 
 
 @pytest.mark.parametrize(
-    "args,code",
+    "args,code,message",
     [
-        ([], 2),
-        (["--allow-network"], 2),
-        (["--ndl-id", ID], 2),
-        (["--ndl-id", ID, "--format", "json"], 2),
-        (["--ndl-id", "https://ndlsearch.ndl.go.jp/books/" + ID, "--allow-network"], 2),
-        (["--ndl-id", 'x" OR title=*', "--allow-network"], 2),
-        (["--ndl-id", "日本語", "--allow-network"], 2),
-        (["--ndl-id", "", "--allow-network"], 2),
-        (["--ndl-id", "id\n", "--allow-network"], 2),
-        (ARGS + ["--ndl-id", ID], 2),
-        (ARGS + [ID], 2),
-        (ARGS + ["--format", "xml"], 2),
-        (ARGS + ["--archive", "a.cbz"], 2),
-        (ARGS + ["--refresh"], 2),
-        (ARGS + ["--endpoint", "https://example.org"], 2),
-        (["--ndl-id", ID, "--allow-net"], 2),
-        (["--help"], 0),
-        (["--version"], 0),
+        ([], 2, "the following arguments are required: --ndl-id"),
+        (["--allow-network"], 2, "the following arguments are required: --ndl-id"),
+        (["--ndl-id", ID], 2, "--allow-network is required"),
+        (["--ndl-id", ID, "--format", "json"], 2, "--allow-network is required"),
+        (["--ndl-id", "https://ndlsearch.ndl.go.jp/books/" + ID, "--allow-network"], 2, "Invalid NDL ID"),
+        (["--ndl-id", 'x" OR title=*', "--allow-network"], 2, "Invalid NDL ID"),
+        (["--ndl-id", "日本語", "--allow-network"], 2, "Invalid NDL ID"),
+        (["--ndl-id", "", "--allow-network"], 2, "Invalid NDL ID"),
+        (["--ndl-id", "id\n", "--allow-network"], 2, "Invalid NDL ID"),
+        (ARGS + ["--ndl-id", ID], 2, "Specify --ndl-id exactly once"),
+        (ARGS + [ID], 2, "unrecognized arguments:"),
+        (ARGS + ["--format", "xml"], 2, "invalid choice:"),
+        (ARGS + ["--archive", "a.cbz"], 2, "unrecognized arguments:"),
+        (ARGS + ["--refresh"], 2, "unrecognized arguments:"),
+        (ARGS + ["--endpoint", "https://example.org"], 2, "unrecognized arguments:"),
+        (["--ndl-id", ID, "--allow-net"], 2, "unrecognized arguments:"),
+        (["--help"], 0, "Read-only Imprint diagnostics for one NDL record."),
+        (["--version"], 0, "0.3.0"),
     ],
 )
-def test_input_boundary_has_no_source_session_cache_or_http(args, code, monkeypatch, capsys):
+def test_input_boundary_has_no_source_session_cache_or_http(args, code, message, monkeypatch, capsys):
     forbidden = Mock(side_effect=AssertionError("No I/O before permission"))
     for cls, name in (
         (requests.Session, "__init__"),
@@ -88,6 +88,14 @@ def test_input_boundary_has_no_source_session_cache_or_http(args, code, monkeypa
     forbidden.assert_not_called()
     out = capsys.readouterr()
     assert not out.out if code else out.out
+    assert message in (out.err if code else out.out)
+    if not code:
+        assert out.err == ""
+    if args == ["--help"]:
+        assert "One NDL bibliographic ID (not a URL)" in out.out
+        assert "Permit NDL/MADB requests and source cache I/O" in out.out
+    elif args == ["--version"]:
+        assert out.out == "0.3.0\n"
 
 
 def test_import_does_not_construct_sources(tmp_path):
@@ -208,7 +216,7 @@ def test_ndl_failures_never_start_madb(http_sources, failure, capsys):
         http_sources.body = b"<bad xml"
     assert cli.main(ARGS + ["--format", "json"], **http_sources.kwargs) == 3
     out = capsys.readouterr()
-    assert out.out == "" and out.err
+    assert out.out == "" and out.err.startswith("Imprint diagnostics error: ")
     if failure == "zero":
         assert "TalkerDataError" in out.err
     http_sources.kwargs["madb_factory"].assert_not_called()
@@ -229,14 +237,22 @@ def test_cached_ndl_id_mismatch_is_rejected(factories, capsys):
 @pytest.mark.parametrize(
     "transport", [429, 503, requests.Timeout("timeout"), requests.ConnectionError("offline")]
 )
-def test_http_failure_outputs_incomplete_report(http_sources, capsys, phase, uri, count, transport):
+@pytest.mark.parametrize("format", ["text", "json"])
+def test_http_failure_outputs_incomplete_report(http_sources, capsys, phase, uri, count, transport, format):
     http_sources.configure = lambda s: serve_linkage(s, fail_uri=uri, transport=transport)
-    assert cli.main(ARGS + ["--format", "json"], **http_sources.kwargs) == 3
+    assert cli.main(ARGS + ["--format", format], **http_sources.kwargs) == 3
     output = capsys.readouterr()
-    data = json.loads(output.out)
-    assert data["apply_allowed"] is data["writes_performed"] is False
-    events = [e for t in data["acquisition"]["traces"] for e in t["events"]]
-    assert any(e["error"] for e in events)
+    assert output.err == ""  # Incomplete evidence is reported in the report, not a new message.
+    if format == "json":
+        data = json.loads(output.out)
+        assert data["apply_allowed"] is data["writes_performed"] is False
+        events = [e for t in data["acquisition"]["traces"] for e in t["events"]]
+        assert any(e["error"] for e in events)
+    else:
+        assert output.out.startswith("Read-only Imprint diagnostics\n")
+        assert '"failed"' in output.out
+        assert "Apply allowed: no\nWrites performed: no" in output.out
+        assert "Complete report detail (no display truncation; indices preserve ledger order):" in output.out
     assert http_sources.madb[0].session.post.call_count == count
     http_sources.madb[0].close.assert_called_once()
 
@@ -346,6 +362,50 @@ def test_semantic_hold_reject_skip_are_success(labels, extra, state):
     assert report.books[0].evaluation.state.value == state
     assert cli.acquisition_exit_code(report) == 0
     assert f"eligibility={state}" in cli.render_text(report)
+
+
+@pytest.mark.parametrize("format", ["text", "json"])
+def test_english_cli_preserves_japanese_source_evidence(factories, monkeypatch, capsys, format, talker):
+    title = "ご注文はうさぎですか? volume 1"
+    publisher = "芳文社"
+    labels = ("Kirara menu", "Manga time KR comics", "Manga time KR comics　／　Kirara menu")
+    # Synthetic combination of raw strings; no live measurement or semantic attestation.
+    bundle = synthetic(labels, extra=((SCHEMA_NS + "publisher", literal("芳文社　∥　ホウブンシャ")),))
+    evidence = evidence_for(
+        bundle, replace(record(), title=title, publishers=[publisher]), book_series_scope=State.COMPLETE
+    )
+    monkeypatch.setattr(cli, "acquire_linked_record_evidence", Mock(return_value=evidence))
+    assert cli.main(ARGS + ["--format", format], **factories.kwargs) == 0
+    output = capsys.readouterr()
+    assert output.err == ""
+    expected = reports.report_to_json_data(reports.describe_imprint_evidence(evidence))
+    if format == "json":
+        assert json.loads(output.out) == expected
+        assert output.out.isascii()  # Japanese is preserved through the existing Unicode escaping.
+        assert "Read-only Imprint diagnostics" not in output.out
+    else:
+        assert output.out.startswith("Read-only Imprint diagnostics\n")
+        for raw in (title, publisher, "芳文社　∥　ホウブンシャ", *labels):
+            assert cli.terminal_string(raw) in output.out
+        assert "Authority: not supplied\nArchive: not supplied\nExisting Imprint: not assessed" in output.out
+        assert "Apply allowed: no\nWrites performed: no" in output.out
+    assert expected["acquisition"]["ndl_input"]["title"] == title
+    assert expected["books"][0]["evaluation"]["state"] == "reject"
+    assert expected["schema_version"] == "imprint-report-v1"
+    assert expected["apply_allowed"] is expected["writes_performed"] is False
+    assert "日本語書籍・漫画の書誌メタデータ" in talker.about
+
+
+def test_external_japanese_exception_detail_is_quoted_not_translated(factories, capsys):
+    detail = "外部取得失敗\n\x1b[31m"
+    factories.ndl.get.side_effect = OSError(detail)
+    assert cli.main(ARGS, **factories.kwargs) == 3
+    output = capsys.readouterr()
+    assert output.out == ""
+    prefix = "Imprint diagnostics error: "
+    assert output.err.startswith(prefix)
+    assert f"OSError: {detail}" in json.loads(output.err.removeprefix(prefix))
+    assert output.err.isascii() and "\x1b" not in output.err
 
 
 RAW_VALUES = [
@@ -463,7 +523,8 @@ def test_internal_failures_interrupts_and_cleanup(factories, monkeypatch, capsys
         monkeypatch.setattr(cli, target, Mock(side_effect=error))
     assert cli.main(ARGS + ["--format", "text" if stage == "text" else "json"], **factories.kwargs) == code
     out = capsys.readouterr()
-    assert not out.out and out.err
+    assert not out.out and out.err.startswith("Imprint diagnostics error: ")
+    assert type(error).__name__ in out.err
     factories.ndl.session.close.assert_called_once()
     factories.ndl.cache.close.assert_called_once()
     if stage not in ("ndl", "madb_init"):
@@ -542,7 +603,8 @@ def test_output_failures_are_internal_after_close(factories, monkeypatch, capsys
     assert cli.main(ARGS + ["--format", "json"], **factories.kwargs) == 4
     factories.ndl.cache.close.assert_called_once()
     factories.madb.__exit__.assert_called_once()
-    assert type(error).__name__ in capsys.readouterr().err
+    stderr = capsys.readouterr().err
+    assert stderr.startswith("Imprint diagnostics error: ") and type(error).__name__ in stderr
 
 
 @pytest.mark.parametrize("bad", [object(), float("nan"), float("inf"), b"unknown"])
