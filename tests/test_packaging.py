@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import json
 import os
 import subprocess
 import sys
 import tarfile
+import zipfile
 from importlib.metadata import entry_points
 from pathlib import Path
 
@@ -28,9 +30,32 @@ def test_sdist_contains_imprint_fixture_and_its_source():
         pytest.skip("Build the source distribution first")
     prefix = f"comictagger_jp_talker-{__version__}/"
     with tarfile.open(artifact) as archive:
+        production = tuple((root / "comictagger_jp_talker").rglob("*.py"))
+        assert {prefix + p.relative_to(root).as_posix() for p in production} == {
+            n
+            for n in archive.getnames()
+            if n.startswith(prefix + "comictagger_jp_talker/") and n.endswith(".py")
+        }
         for path in (
+            *(p.relative_to(root).as_posix() for p in production),
             "comictagger_jp_talker/imprint_candidates.py",
+            "comictagger_jp_talker/acquisition.py",
+            "comictagger_jp_talker/sources/madb_acquisition.py",
+            "comictagger_jp_talker/linked_acquisition.py",
+            "comictagger_jp_talker/linkage.py",
+            "comictagger_jp_talker/metadata_supplement.py",
+            "comictagger_jp_talker/series_supplement_policy.py",
+            "comictagger_jp_talker/series_supplement.py",
+            "comictagger_jp_talker/talker.py",
+            "tests/test_madb_acquisition.py",
+            "tests/test_linkage_evidence.py",
+            "tests/fixtures/linkage_evidence_baseline.json",
+            "tests/test_metadata_supplement.py",
+            "tests/fixtures/metadata_supplement_baseline.json",
             "tests/test_imprint_candidates.py",
+            "tests/test_imprint_report.py",
+            "tests/test_imprint_diagnostics.py",
+            "docs/phase2c2c_imprint_diagnostics.md",
             "tests/fixtures/madb/imprint_measured.json",
             "docs/research/madb/imprint_evidence.json",
         ):
@@ -39,11 +64,205 @@ def test_sdist_contains_imprint_fixture_and_its_source():
             assert member.read() == (root / path).read_bytes()
 
 
+def test_built_wheel_report_api_and_entry_points(tmp_path):
+    root = Path(__file__).resolve().parents[1]
+    artifact = root / "dist" / f"comictagger_jp_talker-{__version__}-py3-none-any.whl"
+    if not artifact.is_file():
+        pytest.skip("Build the wheel first")
+    with zipfile.ZipFile(artifact) as archive:
+        paths = tuple((root / "comictagger_jp_talker").rglob("*.py"))
+        assert {p.relative_to(root).as_posix() for p in paths} == {
+            n for n in archive.namelist() if n.startswith("comictagger_jp_talker/") and n.endswith(".py")
+        }
+        for path in paths:
+            assert archive.read(path.relative_to(root).as_posix()) == path.read_bytes()
+        entries = archive.read(next(n for n in archive.namelist() if n.endswith("/entry_points.txt")))
+        assert entries.decode().strip() == (
+            "[comictagger.talker]\njpbooks = comictagger_jp_talker.talker:JapaneseBooksTalker"
+        )
+    code = """
+import sys
+from unittest.mock import patch
+import requests
+sys.path.insert(0, sys.argv[1])
+with patch.object(requests.Session, "__init__", side_effect=AssertionError("No session")):
+    from comictagger_jp_talker.imprint_report import describe_imprint_evidence, report_to_json_data
+    from comictagger_jp_talker.linkage import acquire_linked_record_evidence
+    from comictagger_jp_talker.models import BookRecord
+    assert ".whl" in describe_imprint_evidence.__code__.co_filename
+    evidence = acquire_linked_record_evidence(BookRecord("test", "Title"), object())
+    data = report_to_json_data(describe_imprint_evidence(evidence))
+    assert data["schema_version"] == "imprint-report-v1"
+    assert data["apply_allowed"] is data["writes_performed"] is False
+"""
+    result = subprocess.run(
+        [sys.executable, "-X", "utf8", "-I", "-c", code, str(artifact)],
+        cwd=tmp_path,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        timeout=30,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+
+
+@pytest.mark.parametrize(
+    "mode", ["help", "version", "text", "json", "json_ascii", "text_ascii", "broken_pipe", "interrupt"]
+)
+def test_built_wheel_diagnostics_module_in_isolated_process(tmp_path, mode):
+    root = Path(__file__).resolve().parents[1]
+    artifact = root / "dist" / f"comictagger_jp_talker-{__version__}-py3-none-any.whl"
+    if not artifact.is_file():
+        pytest.skip("Build the wheel first")
+    code = r"""
+import contextlib
+import io
+import json
+import logging
+import os
+import runpy
+import sys
+from pathlib import Path
+from unittest.mock import patch
+import requests
+artifact, fixture_root, cache, mode = sys.argv[1:]
+sys.path.insert(0, artifact)
+import comictagger_jp_talker
+assert ".whl" in comictagger_jp_talker.__file__
+from comictagger_jp_talker.sources import ndl, madb
+assert ".whl" in ndl.NDLSource.get.__code__.co_filename
+assert ".whl" in madb.MADBSource.get_for_series_linkage.__code__.co_filename
+# The module's default cache remains outside host history, inside this test's sandbox.
+os.environ["LOCALAPPDATA"] = cache
+os.environ["XDG_CACHE_HOME"] = cache
+fixture_root = Path(fixture_root)
+ndl_body = (fixture_root / "ndl.xml").read_bytes().replace(b"4-88594-287-X", b"9784592880714")
+calls = {"ndl": 0, "madb": 0, "close": 0}
+def get(session, url, **kwargs):
+    assert url == ndl.ENDPOINT and kwargs["timeout"] == (5, 60)
+    calls["ndl"] += 1
+    response = requests.Response()
+    response.status_code = 200
+    response._content = ndl_body
+    return response
+def post(session, url, **kwargs):
+    assert url == madb.ENDPOINT and kwargs["timeout"] == (5, 30)
+    calls["madb"] += 1
+    if mode == "interrupt":
+        raise KeyboardInterrupt()
+    q = kwargs["data"]["query"]
+    if q.startswith("PREFIX"):
+        name = "single"
+    elif "/M1>" in q:
+        name = "book"
+    else:
+        assert "/C1>" in q, "Agent/Holding details must not be fetched"
+        name = "series"
+    body = (fixture_root / "madb" / (name + ".json")).read_bytes()
+    data = json.loads(body)
+    # Inject adversarial external raw Unicode into an actual source/parser path.
+    if name == "book":
+        data["results"]["bindings"].append({
+            "p": {"type": "uri", "value": "https://schema.org/brand"},
+            "o": {"type": "literal", "value": " 日本語𠮷📚\r\n\t\u001b[31m\u202e　 "},
+        })
+    response = requests.Response()
+    response.status_code = 200
+    response.headers["Content-Type"] = "application/sparql-results+json"
+    response.raw = io.BytesIO(json.dumps(data).encode())
+    logging.getLogger("comictagger_jp_talker.sources.madb").critical("must not reach stdout")
+    return response
+original_close = requests.Session.close
+def close(session):
+    calls["close"] += 1
+    original_close(session)
+logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
+if mode in ("json_ascii", "text_ascii"):
+    sys.stdout.reconfigure(encoding="ascii", errors="strict")
+if mode == "broken_pipe":
+    reader, writer = os.pipe()
+    os.close(reader)
+    # A buffered broken stream exercises both main's flush and final shutdown.
+    sys.stdout = io.TextIOWrapper(os.fdopen(writer, "wb"), encoding="utf-8")
+sys.argv = ["comictagger_jp_talker.imprint_diagnostics"]
+if mode in ("help", "version"):
+    sys.argv += ["--" + mode]
+else:
+    sys.argv += ["--ndl-id", "R100000002-Itest001", "--allow-network", "--format",
+                 "text" if mode.startswith("text") else "json"]
+with patch.object(requests.Session, "request", side_effect=AssertionError("No real HTTP")), \
+     patch.object(requests.Session, "get", get), \
+     patch.object(requests.Session, "post", post), \
+     patch.object(requests.Session, "close", close), \
+     patch.object(ndl._LIMITER, "ratelimit", lambda *a, **kw: contextlib.nullcontext()), \
+     patch.object(madb._LIMITER, "ratelimit", lambda *a, **kw: contextlib.nullcontext()):
+    try:
+        runpy.run_module("comictagger_jp_talker.imprint_diagnostics", run_name="__main__")
+    except SystemExit as exc:
+        expected = 4 if mode in ("text_ascii", "broken_pipe") else 130 if mode == "interrupt" else 0
+        assert exc.code == expected, exc.code
+        if mode in ("help", "version"):
+            assert calls == {"ndl": 0, "madb": 0, "close": 0}
+        else:
+            assert calls == {"ndl": 1, "madb": 1 if mode == "interrupt" else 3, "close": 2}, calls
+        raise
+"""
+    target = tmp_path / "stdout.txt"
+    with target.open("wb") as stdout:
+        result = subprocess.run(
+            [
+                sys.executable,
+                "-X",
+                "utf8",
+                "-I",
+                "-c",
+                code,
+                str(artifact),
+                str(root / "tests/fixtures"),
+                str(tmp_path / "cache"),
+                mode,
+            ],
+            cwd=tmp_path,
+            stdout=stdout,
+            stderr=subprocess.PIPE,
+            timeout=30,
+        )
+    expected_code = 4 if mode in ("text_ascii", "broken_pipe") else 130 if mode == "interrupt" else 0
+    assert result.returncode == expected_code, result.stderr.decode("utf-8")
+    output = target.read_text(encoding="utf-8")
+    if mode.startswith("json"):
+        data = json.loads(output)
+        assert data["schema_version"] == "imprint-report-v1"
+        assert data["apply_allowed"] is data["writes_performed"] is False
+        terms = data["books"][0]["evaluation"]["comparison"]["classification"]["terms"]
+        assert any(
+            t["candidate"]["evidence"]["raw_value"]["value"] == " 日本語𠮷📚\r\n\t\u001b[31m\u202e　 "
+            for t in terms
+        )
+        assert not result.stderr
+    elif mode == "text":
+        assert "日本語𠮷📚" in output and "Existing Imprint: not assessed" in output
+        assert "\x1b" not in output and "\u202e" not in output and not result.stderr
+    elif mode in ("help", "version"):
+        assert "--allow-network" in output if mode == "help" else output.strip() == "0.3.0"
+        assert not result.stderr
+    else:
+        assert result.stderr and "Imprint diagnostics error" in result.stderr.decode("utf-8")
+
+
 def test_built_zip_in_isolated_host(tmp_path):
     root = Path(__file__).resolve().parents[1]
     artifact = root / "dist" / f"jpbooks_talker-plugin-{__version__}.zip"
     if not artifact.is_file():
         pytest.skip("Build the wheel and local plugin ZIP first")
+    # Verify all production Python, not just the new imports or a stale ZIP name.
+    with zipfile.ZipFile(artifact) as archive:
+        paths = tuple((root / "comictagger_jp_talker").rglob("*.py"))
+        assert {p.relative_to(root).as_posix() for p in paths} == {
+            n for n in archive.namelist() if n.startswith("comictagger_jp_talker/") and n.endswith(".py")
+        }
+        for path in paths:
+            assert archive.read(path.relative_to(root).as_posix()) == path.read_bytes()
     # Separate process: evict an editable install, load actual ZIP, then let the host
     # remove its temporary sys.path entries. Exercise fetch AFTER loader cleanup.
     code = """
@@ -171,8 +390,9 @@ from dataclasses import asdict
 from unittest.mock import Mock
 adapter_globals = talker.fetch_comic_data.__wrapped__.__globals__
 mapper = adapter_globals["to_metadata"]
-supplement = adapter_globals["supplement_series"]
+supplement = adapter_globals["supplement_metadata"]
 assert ".zip" in supplement.__code__.co_filename
+assert ".zip" in supplement.__globals__["apply_series_supplement"].__code__.co_filename
 record_type = mapper.__globals__["BookRecord"]
 madb_type = supplement.__globals__["MADBSource"]
 assert ".zip" in madb_type.get_for_series_linkage.__code__.co_filename
@@ -245,6 +465,18 @@ for direct in (False, True):
         assert not any("/C2>" in q or "/C3>" in q or "/ref/S1>" in q for q in calls)
         assert talker.fetch_comic_data(issue_id=ndl.id) == output
         assert len(calls) == 3
+        core = supplement.__globals__["acquire_linked_record_evidence"]
+        assert ".zip" in core.__code__.co_filename
+        snapshot_type = core.__globals__["NDLInputSnapshot"]
+        assert ".zip" in snapshot_type.from_record.__func__.__code__.co_filename
+        with madb_type(talker.cache_folder) as shared_source:
+            shared = core(ndl, shared_source)
+        assert len(calls) == 3
+        assert shared.acquisition_context.discovery.state.value == "complete"
+        assert shared.acquisition_context.books[0].bundle is shared.bundles[0]
+        assert shared.acquisition_context.books[0].acquisition.value is shared.bundles[0]
+        assert len(shared.acquisition_context.traces) == 2
+        assert shared.acquisition_context.books[0].context.agents.value == "not_requested"
 print("ZIP: beta.9 load, default OFF, summary-free candidates, summary 429 fail-open, "
       "exact/strong lightweight supplement, Agent/Holding zero passed")
 """
@@ -263,12 +495,53 @@ with patch.object(requests.Session, "request", side_effect=AssertionError("No im
     )
     assert ".zip" in evaluate_imprint_eligibility.__code__.co_filename
     assert AcquisitionContext().discovery.value == "not_requested"
-    from comictagger_jp_talker.linkage import LinkageResult, LinkageStatus, RecordMatch, compare_candidates
+    from comictagger_jp_talker.acquisition import AcquisitionContext as NeutralContext
+    assert AcquisitionContext is NeutralContext
+    from comictagger_jp_talker.linkage import (
+        LinkageResult, LinkageStatus, RecordMatch, compare_candidates, acquire_linked_record_evidence,
+    )
+    from comictagger_jp_talker.linked_acquisition import NDLInputSnapshot
+    from comictagger_jp_talker.metadata_supplement import supplement_metadata
+    from comictagger_jp_talker.series_supplement import supplement_series, apply_series_supplement
+    from comictagger_jp_talker.series_supplement_policy import apply_series_supplement as policy
+    assert apply_series_supplement is policy
+    assert ".zip" in supplement_metadata.__code__.co_filename
+    assert supplement_series.__globals__["supplement_metadata"] is supplement_metadata
     from comictagger_jp_talker.provenance import FieldEvidence, SeriesComparison
     from comictagger_jp_talker.models import BookRecord
     assert ".zip" in compare_candidates.__code__.co_filename
     assert compare_candidates(BookRecord("test", "Title"), []).status == LinkageStatus.UNMATCHED
+    assert ".zip" in acquire_linked_record_evidence.__code__.co_filename
+    no_isbn = acquire_linked_record_evidence(BookRecord("test", "Title"), object())
+    assert no_isbn.bundles == () and no_isbn.acquisition_context.discovery.state.value == "not_requested"
+    from comictagger_jp_talker.imprint_report import describe_imprint_evidence, report_to_json_data
+    assert ".zip" in describe_imprint_evidence.__code__.co_filename
+    report = report_to_json_data(describe_imprint_evidence(no_isbn))
+    assert report["schema_version"] == "imprint-report-v1"
+    assert report["authority_state"] == report["archive_state"] == "not_supplied"
+    assert report["writes_performed"] is report["apply_allowed"] is False
 print("ZIP: optional linkage API imported and evaluated without network")
+import contextlib
+import io
+from pathlib import Path
+from comictagger_jp_talker.sources.madb import MADBSource, _LIMITER
+from comictagger_jp_talker.acquisition import AcquisitionReason
+body = (Path(sys.argv[3]).parent / "madb" / "book_without_series.json").read_bytes()
+reply = requests.Response()
+reply.status_code = 200
+reply.headers["Content-Type"] = "application/sparql-results+json"
+reply.raw = io.BytesIO(body)
+with MADBSource(Path(sys.argv[2]) / "trace") as source, \
+     patch.object(source.session, "post", return_value=reply) as post, \
+     patch.object(_LIMITER, "ratelimit", lambda *a, **kw: contextlib.nullcontext()):
+    result = source._get_with_trace("M1", series_only=True)
+    assert result.error is None and result.value.book.id == "M1"
+    assert result.context.relations.value == "not_related"
+    assert ".zip" in source._get_with_trace.__code__.co_filename
+    warm = source._get_with_trace("M1", series_only=True)
+    assert warm.value == result.value and post.call_count == 1
+    assert any(e.reason == AcquisitionReason.CACHE_HIT for e in warm.trace.events)
+print("ZIP: source trace, neutral type re-export and warm cache passed")
 """
     env = dict(os.environ, PYTHONUTF8="1")
     for snippet in (linkage_code, code):

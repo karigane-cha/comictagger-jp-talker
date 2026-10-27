@@ -1,0 +1,5144 @@
+{
+  "fixture_kind": "synthetic",
+  "baseline": "cbce602f07a3559b8299a8e55c2dfc9d13d29022 (before stage B core migration)",
+  "cases": {
+    "no_isbn": {
+      "full": {
+        "status": "unmatched",
+        "matches": [],
+        "candidates": [],
+        "warnings": [],
+        "error": null,
+        "truncated": false
+      },
+      "series_linkage": {
+        "status": "unmatched",
+        "matches": [],
+        "candidates": [],
+        "warnings": [],
+        "error": null,
+        "truncated": false
+      }
+    },
+    "empty": {
+      "full": {
+        "status": "unmatched",
+        "matches": [],
+        "candidates": [],
+        "warnings": [],
+        "error": null,
+        "truncated": false
+      },
+      "series_linkage": {
+        "status": "unmatched",
+        "matches": [],
+        "candidates": [],
+        "warnings": [],
+        "error": null,
+        "truncated": false
+      }
+    },
+    "exact": {
+      "full": {
+        "status": "matched",
+        "matches": [
+          {
+            "ndl_id": "R100000002-I025437130",
+            "madb_id": "M1",
+            "confidence": "exact",
+            "reasons": [
+              "direct_ndl_url",
+              "isbn_normalized",
+              "isbn_raw"
+            ],
+            "conflicts": [],
+            "evidence": [
+              {
+                "source": "ndl",
+                "field": "url",
+                "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "raw_value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.url",
+                "transform": "ndl.ndl_record_url",
+                "related_uri": null
+              },
+              {
+                "source": "madb",
+                "field": "url",
+                "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "raw_value": {
+                  "kind": "literal",
+                  "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                  "datatype": null,
+                  "language": null
+                },
+                "record_id": "M1",
+                "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                "predicate_or_path": "https://mediaarts-db.artmuseums.go.jp/data/property#dataUrl",
+                "transform": "ndl.ndl_record_url",
+                "related_uri": null
+              },
+              {
+                "source": "ndl",
+                "field": "isbn",
+                "value": "9784592880714",
+                "raw_value": "9784592880714",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.isbns",
+                "transform": "isbn.isbn13",
+                "related_uri": null
+              },
+              {
+                "source": "madb",
+                "field": "isbn",
+                "value": "9784592880714",
+                "raw_value": {
+                  "kind": "literal",
+                  "value": "9784592880714",
+                  "datatype": null,
+                  "language": null
+                },
+                "record_id": "M1",
+                "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                "predicate_or_path": "https://schema.org/isbn",
+                "transform": "isbn.isbn13",
+                "related_uri": null
+              }
+            ],
+            "candidate_count": 1,
+            "algorithm_version": "phase2b2-v1",
+            "series": {
+              "state": "madb_only",
+              "ndl": {
+                "source": "ndl",
+                "field": "series",
+                "value": null,
+                "raw_value": "",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.title",
+                "transform": "mapping.infer_volume",
+                "related_uri": null
+              },
+              "madb": [
+                {
+                  "source": "madb",
+                  "field": "series",
+                  "value": " Series ",
+                  "raw_value": {
+                    "kind": "literal",
+                    "value": " Series ",
+                    "datatype": null,
+                    "language": null
+                  },
+                  "record_id": "M1",
+                  "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                  "predicate_or_path": "https://schema.org/isPartOf / https://schema.org/name",
+                  "transform": null,
+                  "related_uri": "https://mediaarts-db.artmuseums.go.jp/id/C1"
+                }
+              ],
+              "normalized_ndl": null,
+              "normalized_madb": [
+                "Series"
+              ],
+              "relations": [
+                {
+                  "source": "madb",
+                  "field": "series_relation",
+                  "value": "https://mediaarts-db.artmuseums.go.jp/id/C1",
+                  "raw_value": {
+                    "kind": "uri",
+                    "value": "https://mediaarts-db.artmuseums.go.jp/id/C1",
+                    "datatype": null,
+                    "language": null
+                  },
+                  "record_id": "M1",
+                  "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                  "predicate_or_path": "https://schema.org/isPartOf",
+                  "transform": null,
+                  "related_uri": null
+                }
+              ],
+              "ndl_number": {
+                "value": null,
+                "explicit": null,
+                "inferred": null,
+                "conflict": false,
+                "requested": null,
+                "source": null
+              },
+              "warnings": [],
+              "name_classifications": [
+                {
+                  "series_uri": "https://mediaarts-db.artmuseums.go.jp/id/C1",
+                  "display_names": [
+                    {
+                      "source": "madb",
+                      "field": "series",
+                      "value": " Series ",
+                      "raw_value": {
+                        "kind": "literal",
+                        "value": " Series ",
+                        "datatype": null,
+                        "language": null
+                      },
+                      "record_id": "M1",
+                      "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                      "predicate_or_path": "https://schema.org/isPartOf / https://schema.org/name",
+                      "transform": null,
+                      "related_uri": "https://mediaarts-db.artmuseums.go.jp/id/C1"
+                    }
+                  ],
+                  "readings": [],
+                  "other_names": []
+                }
+              ]
+            }
+          }
+        ],
+        "candidates": [
+          {
+            "id": "M1",
+            "uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+            "completeness": "complete"
+          }
+        ],
+        "warnings": [],
+        "error": null,
+        "truncated": false
+      },
+      "series_linkage": {
+        "status": "matched",
+        "matches": [
+          {
+            "ndl_id": "R100000002-I025437130",
+            "madb_id": "M1",
+            "confidence": "exact",
+            "reasons": [
+              "direct_ndl_url",
+              "isbn_normalized",
+              "isbn_raw"
+            ],
+            "conflicts": [],
+            "evidence": [
+              {
+                "source": "ndl",
+                "field": "url",
+                "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "raw_value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.url",
+                "transform": "ndl.ndl_record_url",
+                "related_uri": null
+              },
+              {
+                "source": "madb",
+                "field": "url",
+                "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "raw_value": {
+                  "kind": "literal",
+                  "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                  "datatype": null,
+                  "language": null
+                },
+                "record_id": "M1",
+                "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                "predicate_or_path": "https://mediaarts-db.artmuseums.go.jp/data/property#dataUrl",
+                "transform": "ndl.ndl_record_url",
+                "related_uri": null
+              },
+              {
+                "source": "ndl",
+                "field": "isbn",
+                "value": "9784592880714",
+                "raw_value": "9784592880714",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.isbns",
+                "transform": "isbn.isbn13",
+                "related_uri": null
+              },
+              {
+                "source": "madb",
+                "field": "isbn",
+                "value": "9784592880714",
+                "raw_value": {
+                  "kind": "literal",
+                  "value": "9784592880714",
+                  "datatype": null,
+                  "language": null
+                },
+                "record_id": "M1",
+                "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                "predicate_or_path": "https://schema.org/isbn",
+                "transform": "isbn.isbn13",
+                "related_uri": null
+              }
+            ],
+            "candidate_count": 1,
+            "algorithm_version": "phase2b2-v1",
+            "series": {
+              "state": "madb_only",
+              "ndl": {
+                "source": "ndl",
+                "field": "series",
+                "value": null,
+                "raw_value": "",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.title",
+                "transform": "mapping.infer_volume",
+                "related_uri": null
+              },
+              "madb": [
+                {
+                  "source": "madb",
+                  "field": "series",
+                  "value": " Series ",
+                  "raw_value": {
+                    "kind": "literal",
+                    "value": " Series ",
+                    "datatype": null,
+                    "language": null
+                  },
+                  "record_id": "M1",
+                  "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                  "predicate_or_path": "https://schema.org/isPartOf / https://schema.org/name",
+                  "transform": null,
+                  "related_uri": "https://mediaarts-db.artmuseums.go.jp/id/C1"
+                }
+              ],
+              "normalized_ndl": null,
+              "normalized_madb": [
+                "Series"
+              ],
+              "relations": [
+                {
+                  "source": "madb",
+                  "field": "series_relation",
+                  "value": "https://mediaarts-db.artmuseums.go.jp/id/C1",
+                  "raw_value": {
+                    "kind": "uri",
+                    "value": "https://mediaarts-db.artmuseums.go.jp/id/C1",
+                    "datatype": null,
+                    "language": null
+                  },
+                  "record_id": "M1",
+                  "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                  "predicate_or_path": "https://schema.org/isPartOf",
+                  "transform": null,
+                  "related_uri": null
+                }
+              ],
+              "ndl_number": {
+                "value": null,
+                "explicit": null,
+                "inferred": null,
+                "conflict": false,
+                "requested": null,
+                "source": null
+              },
+              "warnings": [],
+              "name_classifications": [
+                {
+                  "series_uri": "https://mediaarts-db.artmuseums.go.jp/id/C1",
+                  "display_names": [
+                    {
+                      "source": "madb",
+                      "field": "series",
+                      "value": " Series ",
+                      "raw_value": {
+                        "kind": "literal",
+                        "value": " Series ",
+                        "datatype": null,
+                        "language": null
+                      },
+                      "record_id": "M1",
+                      "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                      "predicate_or_path": "https://schema.org/isPartOf / https://schema.org/name",
+                      "transform": null,
+                      "related_uri": "https://mediaarts-db.artmuseums.go.jp/id/C1"
+                    }
+                  ],
+                  "readings": [],
+                  "other_names": []
+                }
+              ]
+            }
+          }
+        ],
+        "candidates": [
+          {
+            "id": "M1",
+            "uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+            "completeness": "complete"
+          }
+        ],
+        "warnings": [],
+        "error": null,
+        "truncated": false
+      }
+    },
+    "strong": {
+      "full": {
+        "status": "matched",
+        "matches": [
+          {
+            "ndl_id": "R100000002-I025437130",
+            "madb_id": "M1",
+            "confidence": "strong",
+            "reasons": [
+              "isbn_normalized",
+              "isbn_raw"
+            ],
+            "conflicts": [],
+            "evidence": [
+              {
+                "source": "ndl",
+                "field": "url",
+                "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "raw_value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.url",
+                "transform": "ndl.ndl_record_url",
+                "related_uri": null
+              },
+              {
+                "source": "ndl",
+                "field": "isbn",
+                "value": "9784592880714",
+                "raw_value": "9784592880714",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.isbns",
+                "transform": "isbn.isbn13",
+                "related_uri": null
+              },
+              {
+                "source": "madb",
+                "field": "isbn",
+                "value": "9784592880714",
+                "raw_value": {
+                  "kind": "literal",
+                  "value": "9784592880714",
+                  "datatype": null,
+                  "language": null
+                },
+                "record_id": "M1",
+                "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                "predicate_or_path": "https://schema.org/isbn",
+                "transform": "isbn.isbn13",
+                "related_uri": null
+              }
+            ],
+            "candidate_count": 1,
+            "algorithm_version": "phase2b2-v1",
+            "series": {
+              "state": "madb_only",
+              "ndl": {
+                "source": "ndl",
+                "field": "series",
+                "value": null,
+                "raw_value": "",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.title",
+                "transform": "mapping.infer_volume",
+                "related_uri": null
+              },
+              "madb": [
+                {
+                  "source": "madb",
+                  "field": "series",
+                  "value": " Series ",
+                  "raw_value": {
+                    "kind": "literal",
+                    "value": " Series ",
+                    "datatype": null,
+                    "language": null
+                  },
+                  "record_id": "M1",
+                  "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                  "predicate_or_path": "https://schema.org/isPartOf / https://schema.org/name",
+                  "transform": null,
+                  "related_uri": "https://mediaarts-db.artmuseums.go.jp/id/C1"
+                }
+              ],
+              "normalized_ndl": null,
+              "normalized_madb": [
+                "Series"
+              ],
+              "relations": [
+                {
+                  "source": "madb",
+                  "field": "series_relation",
+                  "value": "https://mediaarts-db.artmuseums.go.jp/id/C1",
+                  "raw_value": {
+                    "kind": "uri",
+                    "value": "https://mediaarts-db.artmuseums.go.jp/id/C1",
+                    "datatype": null,
+                    "language": null
+                  },
+                  "record_id": "M1",
+                  "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                  "predicate_or_path": "https://schema.org/isPartOf",
+                  "transform": null,
+                  "related_uri": null
+                }
+              ],
+              "ndl_number": {
+                "value": null,
+                "explicit": null,
+                "inferred": null,
+                "conflict": false,
+                "requested": null,
+                "source": null
+              },
+              "warnings": [],
+              "name_classifications": [
+                {
+                  "series_uri": "https://mediaarts-db.artmuseums.go.jp/id/C1",
+                  "display_names": [
+                    {
+                      "source": "madb",
+                      "field": "series",
+                      "value": " Series ",
+                      "raw_value": {
+                        "kind": "literal",
+                        "value": " Series ",
+                        "datatype": null,
+                        "language": null
+                      },
+                      "record_id": "M1",
+                      "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                      "predicate_or_path": "https://schema.org/isPartOf / https://schema.org/name",
+                      "transform": null,
+                      "related_uri": "https://mediaarts-db.artmuseums.go.jp/id/C1"
+                    }
+                  ],
+                  "readings": [],
+                  "other_names": []
+                }
+              ]
+            }
+          }
+        ],
+        "candidates": [
+          {
+            "id": "M1",
+            "uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+            "completeness": "complete"
+          }
+        ],
+        "warnings": [],
+        "error": null,
+        "truncated": false
+      },
+      "series_linkage": {
+        "status": "matched",
+        "matches": [
+          {
+            "ndl_id": "R100000002-I025437130",
+            "madb_id": "M1",
+            "confidence": "strong",
+            "reasons": [
+              "isbn_normalized",
+              "isbn_raw"
+            ],
+            "conflicts": [],
+            "evidence": [
+              {
+                "source": "ndl",
+                "field": "url",
+                "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "raw_value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.url",
+                "transform": "ndl.ndl_record_url",
+                "related_uri": null
+              },
+              {
+                "source": "ndl",
+                "field": "isbn",
+                "value": "9784592880714",
+                "raw_value": "9784592880714",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.isbns",
+                "transform": "isbn.isbn13",
+                "related_uri": null
+              },
+              {
+                "source": "madb",
+                "field": "isbn",
+                "value": "9784592880714",
+                "raw_value": {
+                  "kind": "literal",
+                  "value": "9784592880714",
+                  "datatype": null,
+                  "language": null
+                },
+                "record_id": "M1",
+                "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                "predicate_or_path": "https://schema.org/isbn",
+                "transform": "isbn.isbn13",
+                "related_uri": null
+              }
+            ],
+            "candidate_count": 1,
+            "algorithm_version": "phase2b2-v1",
+            "series": {
+              "state": "madb_only",
+              "ndl": {
+                "source": "ndl",
+                "field": "series",
+                "value": null,
+                "raw_value": "",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.title",
+                "transform": "mapping.infer_volume",
+                "related_uri": null
+              },
+              "madb": [
+                {
+                  "source": "madb",
+                  "field": "series",
+                  "value": " Series ",
+                  "raw_value": {
+                    "kind": "literal",
+                    "value": " Series ",
+                    "datatype": null,
+                    "language": null
+                  },
+                  "record_id": "M1",
+                  "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                  "predicate_or_path": "https://schema.org/isPartOf / https://schema.org/name",
+                  "transform": null,
+                  "related_uri": "https://mediaarts-db.artmuseums.go.jp/id/C1"
+                }
+              ],
+              "normalized_ndl": null,
+              "normalized_madb": [
+                "Series"
+              ],
+              "relations": [
+                {
+                  "source": "madb",
+                  "field": "series_relation",
+                  "value": "https://mediaarts-db.artmuseums.go.jp/id/C1",
+                  "raw_value": {
+                    "kind": "uri",
+                    "value": "https://mediaarts-db.artmuseums.go.jp/id/C1",
+                    "datatype": null,
+                    "language": null
+                  },
+                  "record_id": "M1",
+                  "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                  "predicate_or_path": "https://schema.org/isPartOf",
+                  "transform": null,
+                  "related_uri": null
+                }
+              ],
+              "ndl_number": {
+                "value": null,
+                "explicit": null,
+                "inferred": null,
+                "conflict": false,
+                "requested": null,
+                "source": null
+              },
+              "warnings": [],
+              "name_classifications": [
+                {
+                  "series_uri": "https://mediaarts-db.artmuseums.go.jp/id/C1",
+                  "display_names": [
+                    {
+                      "source": "madb",
+                      "field": "series",
+                      "value": " Series ",
+                      "raw_value": {
+                        "kind": "literal",
+                        "value": " Series ",
+                        "datatype": null,
+                        "language": null
+                      },
+                      "record_id": "M1",
+                      "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                      "predicate_or_path": "https://schema.org/isPartOf / https://schema.org/name",
+                      "transform": null,
+                      "related_uri": "https://mediaarts-db.artmuseums.go.jp/id/C1"
+                    }
+                  ],
+                  "readings": [],
+                  "other_names": []
+                }
+              ]
+            }
+          }
+        ],
+        "candidates": [
+          {
+            "id": "M1",
+            "uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+            "completeness": "complete"
+          }
+        ],
+        "warnings": [],
+        "error": null,
+        "truncated": false
+      }
+    },
+    "ambiguous": {
+      "full": {
+        "status": "ambiguous",
+        "matches": [
+          {
+            "ndl_id": "R100000002-I025437130",
+            "madb_id": "M1",
+            "confidence": "ambiguous",
+            "reasons": [
+              "isbn_normalized",
+              "isbn_raw"
+            ],
+            "conflicts": [],
+            "evidence": [
+              {
+                "source": "ndl",
+                "field": "url",
+                "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "raw_value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.url",
+                "transform": "ndl.ndl_record_url",
+                "related_uri": null
+              },
+              {
+                "source": "ndl",
+                "field": "isbn",
+                "value": "9784592880714",
+                "raw_value": "9784592880714",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.isbns",
+                "transform": "isbn.isbn13",
+                "related_uri": null
+              },
+              {
+                "source": "madb",
+                "field": "isbn",
+                "value": "9784592880714",
+                "raw_value": {
+                  "kind": "literal",
+                  "value": "9784592880714",
+                  "datatype": null,
+                  "language": null
+                },
+                "record_id": "M1",
+                "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                "predicate_or_path": "https://schema.org/isbn",
+                "transform": "isbn.isbn13",
+                "related_uri": null
+              }
+            ],
+            "candidate_count": 2,
+            "algorithm_version": "phase2b2-v1",
+            "series": null
+          },
+          {
+            "ndl_id": "R100000002-I025437130",
+            "madb_id": "M2",
+            "confidence": "ambiguous",
+            "reasons": [
+              "isbn_normalized",
+              "isbn_raw"
+            ],
+            "conflicts": [],
+            "evidence": [
+              {
+                "source": "ndl",
+                "field": "url",
+                "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "raw_value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.url",
+                "transform": "ndl.ndl_record_url",
+                "related_uri": null
+              },
+              {
+                "source": "ndl",
+                "field": "isbn",
+                "value": "9784592880714",
+                "raw_value": "9784592880714",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.isbns",
+                "transform": "isbn.isbn13",
+                "related_uri": null
+              },
+              {
+                "source": "madb",
+                "field": "isbn",
+                "value": "9784592880714",
+                "raw_value": {
+                  "kind": "literal",
+                  "value": "9784592880714",
+                  "datatype": null,
+                  "language": null
+                },
+                "record_id": "M2",
+                "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M2",
+                "predicate_or_path": "https://schema.org/isbn",
+                "transform": "isbn.isbn13",
+                "related_uri": null
+              }
+            ],
+            "candidate_count": 2,
+            "algorithm_version": "phase2b2-v1",
+            "series": null
+          }
+        ],
+        "candidates": [
+          {
+            "id": "M1",
+            "uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+            "completeness": "complete"
+          },
+          {
+            "id": "M2",
+            "uri": "https://mediaarts-db.artmuseums.go.jp/id/M2",
+            "completeness": "complete"
+          }
+        ],
+        "warnings": [
+          "2 distinct MADB candidates retained; no first-result selection"
+        ],
+        "error": null,
+        "truncated": false
+      },
+      "series_linkage": {
+        "status": "ambiguous",
+        "matches": [
+          {
+            "ndl_id": "R100000002-I025437130",
+            "madb_id": "M1",
+            "confidence": "ambiguous",
+            "reasons": [
+              "isbn_normalized",
+              "isbn_raw"
+            ],
+            "conflicts": [],
+            "evidence": [
+              {
+                "source": "ndl",
+                "field": "url",
+                "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "raw_value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.url",
+                "transform": "ndl.ndl_record_url",
+                "related_uri": null
+              },
+              {
+                "source": "ndl",
+                "field": "isbn",
+                "value": "9784592880714",
+                "raw_value": "9784592880714",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.isbns",
+                "transform": "isbn.isbn13",
+                "related_uri": null
+              },
+              {
+                "source": "madb",
+                "field": "isbn",
+                "value": "9784592880714",
+                "raw_value": {
+                  "kind": "literal",
+                  "value": "9784592880714",
+                  "datatype": null,
+                  "language": null
+                },
+                "record_id": "M1",
+                "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                "predicate_or_path": "https://schema.org/isbn",
+                "transform": "isbn.isbn13",
+                "related_uri": null
+              }
+            ],
+            "candidate_count": 2,
+            "algorithm_version": "phase2b2-v1",
+            "series": null
+          },
+          {
+            "ndl_id": "R100000002-I025437130",
+            "madb_id": "M2",
+            "confidence": "ambiguous",
+            "reasons": [
+              "isbn_normalized",
+              "isbn_raw"
+            ],
+            "conflicts": [],
+            "evidence": [
+              {
+                "source": "ndl",
+                "field": "url",
+                "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "raw_value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.url",
+                "transform": "ndl.ndl_record_url",
+                "related_uri": null
+              },
+              {
+                "source": "ndl",
+                "field": "isbn",
+                "value": "9784592880714",
+                "raw_value": "9784592880714",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.isbns",
+                "transform": "isbn.isbn13",
+                "related_uri": null
+              },
+              {
+                "source": "madb",
+                "field": "isbn",
+                "value": "9784592880714",
+                "raw_value": {
+                  "kind": "literal",
+                  "value": "9784592880714",
+                  "datatype": null,
+                  "language": null
+                },
+                "record_id": "M2",
+                "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M2",
+                "predicate_or_path": "https://schema.org/isbn",
+                "transform": "isbn.isbn13",
+                "related_uri": null
+              }
+            ],
+            "candidate_count": 2,
+            "algorithm_version": "phase2b2-v1",
+            "series": null
+          }
+        ],
+        "candidates": [
+          {
+            "id": "M1",
+            "uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+            "completeness": "complete"
+          },
+          {
+            "id": "M2",
+            "uri": "https://mediaarts-db.artmuseums.go.jp/id/M2",
+            "completeness": "complete"
+          }
+        ],
+        "warnings": [
+          "2 distinct MADB candidates retained; no first-result selection"
+        ],
+        "error": null,
+        "truncated": false
+      }
+    },
+    "direct_winner": {
+      "full": {
+        "status": "matched",
+        "matches": [
+          {
+            "ndl_id": "R100000002-I025437130",
+            "madb_id": "M1",
+            "confidence": "exact",
+            "reasons": [
+              "direct_ndl_url",
+              "isbn_normalized",
+              "isbn_raw"
+            ],
+            "conflicts": [],
+            "evidence": [
+              {
+                "source": "ndl",
+                "field": "url",
+                "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "raw_value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.url",
+                "transform": "ndl.ndl_record_url",
+                "related_uri": null
+              },
+              {
+                "source": "madb",
+                "field": "url",
+                "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "raw_value": {
+                  "kind": "literal",
+                  "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                  "datatype": null,
+                  "language": null
+                },
+                "record_id": "M1",
+                "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                "predicate_or_path": "https://mediaarts-db.artmuseums.go.jp/data/property#dataUrl",
+                "transform": "ndl.ndl_record_url",
+                "related_uri": null
+              },
+              {
+                "source": "ndl",
+                "field": "isbn",
+                "value": "9784592880714",
+                "raw_value": "9784592880714",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.isbns",
+                "transform": "isbn.isbn13",
+                "related_uri": null
+              },
+              {
+                "source": "madb",
+                "field": "isbn",
+                "value": "9784592880714",
+                "raw_value": {
+                  "kind": "literal",
+                  "value": "9784592880714",
+                  "datatype": null,
+                  "language": null
+                },
+                "record_id": "M1",
+                "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                "predicate_or_path": "https://schema.org/isbn",
+                "transform": "isbn.isbn13",
+                "related_uri": null
+              }
+            ],
+            "candidate_count": 2,
+            "algorithm_version": "phase2b2-v1",
+            "series": {
+              "state": "madb_only",
+              "ndl": {
+                "source": "ndl",
+                "field": "series",
+                "value": null,
+                "raw_value": "",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.title",
+                "transform": "mapping.infer_volume",
+                "related_uri": null
+              },
+              "madb": [
+                {
+                  "source": "madb",
+                  "field": "series",
+                  "value": " Series ",
+                  "raw_value": {
+                    "kind": "literal",
+                    "value": " Series ",
+                    "datatype": null,
+                    "language": null
+                  },
+                  "record_id": "M1",
+                  "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                  "predicate_or_path": "https://schema.org/isPartOf / https://schema.org/name",
+                  "transform": null,
+                  "related_uri": "https://mediaarts-db.artmuseums.go.jp/id/C1"
+                }
+              ],
+              "normalized_ndl": null,
+              "normalized_madb": [
+                "Series"
+              ],
+              "relations": [
+                {
+                  "source": "madb",
+                  "field": "series_relation",
+                  "value": "https://mediaarts-db.artmuseums.go.jp/id/C1",
+                  "raw_value": {
+                    "kind": "uri",
+                    "value": "https://mediaarts-db.artmuseums.go.jp/id/C1",
+                    "datatype": null,
+                    "language": null
+                  },
+                  "record_id": "M1",
+                  "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                  "predicate_or_path": "https://schema.org/isPartOf",
+                  "transform": null,
+                  "related_uri": null
+                }
+              ],
+              "ndl_number": {
+                "value": null,
+                "explicit": null,
+                "inferred": null,
+                "conflict": false,
+                "requested": null,
+                "source": null
+              },
+              "warnings": [],
+              "name_classifications": [
+                {
+                  "series_uri": "https://mediaarts-db.artmuseums.go.jp/id/C1",
+                  "display_names": [
+                    {
+                      "source": "madb",
+                      "field": "series",
+                      "value": " Series ",
+                      "raw_value": {
+                        "kind": "literal",
+                        "value": " Series ",
+                        "datatype": null,
+                        "language": null
+                      },
+                      "record_id": "M1",
+                      "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                      "predicate_or_path": "https://schema.org/isPartOf / https://schema.org/name",
+                      "transform": null,
+                      "related_uri": "https://mediaarts-db.artmuseums.go.jp/id/C1"
+                    }
+                  ],
+                  "readings": [],
+                  "other_names": []
+                }
+              ]
+            }
+          },
+          {
+            "ndl_id": "R100000002-I025437130",
+            "madb_id": "M2",
+            "confidence": "ambiguous",
+            "reasons": [
+              "isbn_normalized",
+              "isbn_raw"
+            ],
+            "conflicts": [],
+            "evidence": [
+              {
+                "source": "ndl",
+                "field": "url",
+                "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "raw_value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.url",
+                "transform": "ndl.ndl_record_url",
+                "related_uri": null
+              },
+              {
+                "source": "ndl",
+                "field": "isbn",
+                "value": "9784592880714",
+                "raw_value": "9784592880714",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.isbns",
+                "transform": "isbn.isbn13",
+                "related_uri": null
+              },
+              {
+                "source": "madb",
+                "field": "isbn",
+                "value": "9784592880714",
+                "raw_value": {
+                  "kind": "literal",
+                  "value": "9784592880714",
+                  "datatype": null,
+                  "language": null
+                },
+                "record_id": "M2",
+                "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M2",
+                "predicate_or_path": "https://schema.org/isbn",
+                "transform": "isbn.isbn13",
+                "related_uri": null
+              }
+            ],
+            "candidate_count": 2,
+            "algorithm_version": "phase2b2-v1",
+            "series": null
+          }
+        ],
+        "candidates": [
+          {
+            "id": "M1",
+            "uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+            "completeness": "complete"
+          },
+          {
+            "id": "M2",
+            "uri": "https://mediaarts-db.artmuseums.go.jp/id/M2",
+            "completeness": "complete"
+          }
+        ],
+        "warnings": [
+          "2 distinct MADB candidates retained; no first-result selection"
+        ],
+        "error": null,
+        "truncated": false
+      },
+      "series_linkage": {
+        "status": "matched",
+        "matches": [
+          {
+            "ndl_id": "R100000002-I025437130",
+            "madb_id": "M1",
+            "confidence": "exact",
+            "reasons": [
+              "direct_ndl_url",
+              "isbn_normalized",
+              "isbn_raw"
+            ],
+            "conflicts": [],
+            "evidence": [
+              {
+                "source": "ndl",
+                "field": "url",
+                "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "raw_value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.url",
+                "transform": "ndl.ndl_record_url",
+                "related_uri": null
+              },
+              {
+                "source": "madb",
+                "field": "url",
+                "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "raw_value": {
+                  "kind": "literal",
+                  "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                  "datatype": null,
+                  "language": null
+                },
+                "record_id": "M1",
+                "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                "predicate_or_path": "https://mediaarts-db.artmuseums.go.jp/data/property#dataUrl",
+                "transform": "ndl.ndl_record_url",
+                "related_uri": null
+              },
+              {
+                "source": "ndl",
+                "field": "isbn",
+                "value": "9784592880714",
+                "raw_value": "9784592880714",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.isbns",
+                "transform": "isbn.isbn13",
+                "related_uri": null
+              },
+              {
+                "source": "madb",
+                "field": "isbn",
+                "value": "9784592880714",
+                "raw_value": {
+                  "kind": "literal",
+                  "value": "9784592880714",
+                  "datatype": null,
+                  "language": null
+                },
+                "record_id": "M1",
+                "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                "predicate_or_path": "https://schema.org/isbn",
+                "transform": "isbn.isbn13",
+                "related_uri": null
+              }
+            ],
+            "candidate_count": 2,
+            "algorithm_version": "phase2b2-v1",
+            "series": {
+              "state": "madb_only",
+              "ndl": {
+                "source": "ndl",
+                "field": "series",
+                "value": null,
+                "raw_value": "",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.title",
+                "transform": "mapping.infer_volume",
+                "related_uri": null
+              },
+              "madb": [
+                {
+                  "source": "madb",
+                  "field": "series",
+                  "value": " Series ",
+                  "raw_value": {
+                    "kind": "literal",
+                    "value": " Series ",
+                    "datatype": null,
+                    "language": null
+                  },
+                  "record_id": "M1",
+                  "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                  "predicate_or_path": "https://schema.org/isPartOf / https://schema.org/name",
+                  "transform": null,
+                  "related_uri": "https://mediaarts-db.artmuseums.go.jp/id/C1"
+                }
+              ],
+              "normalized_ndl": null,
+              "normalized_madb": [
+                "Series"
+              ],
+              "relations": [
+                {
+                  "source": "madb",
+                  "field": "series_relation",
+                  "value": "https://mediaarts-db.artmuseums.go.jp/id/C1",
+                  "raw_value": {
+                    "kind": "uri",
+                    "value": "https://mediaarts-db.artmuseums.go.jp/id/C1",
+                    "datatype": null,
+                    "language": null
+                  },
+                  "record_id": "M1",
+                  "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                  "predicate_or_path": "https://schema.org/isPartOf",
+                  "transform": null,
+                  "related_uri": null
+                }
+              ],
+              "ndl_number": {
+                "value": null,
+                "explicit": null,
+                "inferred": null,
+                "conflict": false,
+                "requested": null,
+                "source": null
+              },
+              "warnings": [],
+              "name_classifications": [
+                {
+                  "series_uri": "https://mediaarts-db.artmuseums.go.jp/id/C1",
+                  "display_names": [
+                    {
+                      "source": "madb",
+                      "field": "series",
+                      "value": " Series ",
+                      "raw_value": {
+                        "kind": "literal",
+                        "value": " Series ",
+                        "datatype": null,
+                        "language": null
+                      },
+                      "record_id": "M1",
+                      "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                      "predicate_or_path": "https://schema.org/isPartOf / https://schema.org/name",
+                      "transform": null,
+                      "related_uri": "https://mediaarts-db.artmuseums.go.jp/id/C1"
+                    }
+                  ],
+                  "readings": [],
+                  "other_names": []
+                }
+              ]
+            }
+          },
+          {
+            "ndl_id": "R100000002-I025437130",
+            "madb_id": "M2",
+            "confidence": "ambiguous",
+            "reasons": [
+              "isbn_normalized",
+              "isbn_raw"
+            ],
+            "conflicts": [],
+            "evidence": [
+              {
+                "source": "ndl",
+                "field": "url",
+                "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "raw_value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.url",
+                "transform": "ndl.ndl_record_url",
+                "related_uri": null
+              },
+              {
+                "source": "ndl",
+                "field": "isbn",
+                "value": "9784592880714",
+                "raw_value": "9784592880714",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.isbns",
+                "transform": "isbn.isbn13",
+                "related_uri": null
+              },
+              {
+                "source": "madb",
+                "field": "isbn",
+                "value": "9784592880714",
+                "raw_value": {
+                  "kind": "literal",
+                  "value": "9784592880714",
+                  "datatype": null,
+                  "language": null
+                },
+                "record_id": "M2",
+                "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M2",
+                "predicate_or_path": "https://schema.org/isbn",
+                "transform": "isbn.isbn13",
+                "related_uri": null
+              }
+            ],
+            "candidate_count": 2,
+            "algorithm_version": "phase2b2-v1",
+            "series": null
+          }
+        ],
+        "candidates": [
+          {
+            "id": "M1",
+            "uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+            "completeness": "complete"
+          },
+          {
+            "id": "M2",
+            "uri": "https://mediaarts-db.artmuseums.go.jp/id/M2",
+            "completeness": "complete"
+          }
+        ],
+        "warnings": [
+          "2 distinct MADB candidates retained; no first-result selection"
+        ],
+        "error": null,
+        "truncated": false
+      }
+    },
+    "two_direct": {
+      "full": {
+        "status": "ambiguous",
+        "matches": [
+          {
+            "ndl_id": "R100000002-I025437130",
+            "madb_id": "M1",
+            "confidence": "ambiguous",
+            "reasons": [
+              "direct_ndl_url",
+              "isbn_normalized",
+              "isbn_raw"
+            ],
+            "conflicts": [],
+            "evidence": [
+              {
+                "source": "ndl",
+                "field": "url",
+                "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "raw_value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.url",
+                "transform": "ndl.ndl_record_url",
+                "related_uri": null
+              },
+              {
+                "source": "madb",
+                "field": "url",
+                "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "raw_value": {
+                  "kind": "literal",
+                  "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                  "datatype": null,
+                  "language": null
+                },
+                "record_id": "M1",
+                "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                "predicate_or_path": "https://mediaarts-db.artmuseums.go.jp/data/property#dataUrl",
+                "transform": "ndl.ndl_record_url",
+                "related_uri": null
+              },
+              {
+                "source": "ndl",
+                "field": "isbn",
+                "value": "9784592880714",
+                "raw_value": "9784592880714",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.isbns",
+                "transform": "isbn.isbn13",
+                "related_uri": null
+              },
+              {
+                "source": "madb",
+                "field": "isbn",
+                "value": "9784592880714",
+                "raw_value": {
+                  "kind": "literal",
+                  "value": "9784592880714",
+                  "datatype": null,
+                  "language": null
+                },
+                "record_id": "M1",
+                "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                "predicate_or_path": "https://schema.org/isbn",
+                "transform": "isbn.isbn13",
+                "related_uri": null
+              }
+            ],
+            "candidate_count": 2,
+            "algorithm_version": "phase2b2-v1",
+            "series": null
+          },
+          {
+            "ndl_id": "R100000002-I025437130",
+            "madb_id": "M2",
+            "confidence": "ambiguous",
+            "reasons": [
+              "direct_ndl_url",
+              "isbn_normalized",
+              "isbn_raw"
+            ],
+            "conflicts": [],
+            "evidence": [
+              {
+                "source": "ndl",
+                "field": "url",
+                "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "raw_value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.url",
+                "transform": "ndl.ndl_record_url",
+                "related_uri": null
+              },
+              {
+                "source": "madb",
+                "field": "url",
+                "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "raw_value": {
+                  "kind": "literal",
+                  "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                  "datatype": null,
+                  "language": null
+                },
+                "record_id": "M2",
+                "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M2",
+                "predicate_or_path": "https://mediaarts-db.artmuseums.go.jp/data/property#dataUrl",
+                "transform": "ndl.ndl_record_url",
+                "related_uri": null
+              },
+              {
+                "source": "ndl",
+                "field": "isbn",
+                "value": "9784592880714",
+                "raw_value": "9784592880714",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.isbns",
+                "transform": "isbn.isbn13",
+                "related_uri": null
+              },
+              {
+                "source": "madb",
+                "field": "isbn",
+                "value": "9784592880714",
+                "raw_value": {
+                  "kind": "literal",
+                  "value": "9784592880714",
+                  "datatype": null,
+                  "language": null
+                },
+                "record_id": "M2",
+                "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M2",
+                "predicate_or_path": "https://schema.org/isbn",
+                "transform": "isbn.isbn13",
+                "related_uri": null
+              }
+            ],
+            "candidate_count": 2,
+            "algorithm_version": "phase2b2-v1",
+            "series": null
+          }
+        ],
+        "candidates": [
+          {
+            "id": "M1",
+            "uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+            "completeness": "complete"
+          },
+          {
+            "id": "M2",
+            "uri": "https://mediaarts-db.artmuseums.go.jp/id/M2",
+            "completeness": "complete"
+          }
+        ],
+        "warnings": [
+          "2 distinct MADB candidates retained; no first-result selection",
+          "Multiple Books assert the same direct NDL identity"
+        ],
+        "error": null,
+        "truncated": false
+      },
+      "series_linkage": {
+        "status": "ambiguous",
+        "matches": [
+          {
+            "ndl_id": "R100000002-I025437130",
+            "madb_id": "M1",
+            "confidence": "ambiguous",
+            "reasons": [
+              "direct_ndl_url",
+              "isbn_normalized",
+              "isbn_raw"
+            ],
+            "conflicts": [],
+            "evidence": [
+              {
+                "source": "ndl",
+                "field": "url",
+                "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "raw_value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.url",
+                "transform": "ndl.ndl_record_url",
+                "related_uri": null
+              },
+              {
+                "source": "madb",
+                "field": "url",
+                "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "raw_value": {
+                  "kind": "literal",
+                  "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                  "datatype": null,
+                  "language": null
+                },
+                "record_id": "M1",
+                "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                "predicate_or_path": "https://mediaarts-db.artmuseums.go.jp/data/property#dataUrl",
+                "transform": "ndl.ndl_record_url",
+                "related_uri": null
+              },
+              {
+                "source": "ndl",
+                "field": "isbn",
+                "value": "9784592880714",
+                "raw_value": "9784592880714",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.isbns",
+                "transform": "isbn.isbn13",
+                "related_uri": null
+              },
+              {
+                "source": "madb",
+                "field": "isbn",
+                "value": "9784592880714",
+                "raw_value": {
+                  "kind": "literal",
+                  "value": "9784592880714",
+                  "datatype": null,
+                  "language": null
+                },
+                "record_id": "M1",
+                "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                "predicate_or_path": "https://schema.org/isbn",
+                "transform": "isbn.isbn13",
+                "related_uri": null
+              }
+            ],
+            "candidate_count": 2,
+            "algorithm_version": "phase2b2-v1",
+            "series": null
+          },
+          {
+            "ndl_id": "R100000002-I025437130",
+            "madb_id": "M2",
+            "confidence": "ambiguous",
+            "reasons": [
+              "direct_ndl_url",
+              "isbn_normalized",
+              "isbn_raw"
+            ],
+            "conflicts": [],
+            "evidence": [
+              {
+                "source": "ndl",
+                "field": "url",
+                "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "raw_value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.url",
+                "transform": "ndl.ndl_record_url",
+                "related_uri": null
+              },
+              {
+                "source": "madb",
+                "field": "url",
+                "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "raw_value": {
+                  "kind": "literal",
+                  "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                  "datatype": null,
+                  "language": null
+                },
+                "record_id": "M2",
+                "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M2",
+                "predicate_or_path": "https://mediaarts-db.artmuseums.go.jp/data/property#dataUrl",
+                "transform": "ndl.ndl_record_url",
+                "related_uri": null
+              },
+              {
+                "source": "ndl",
+                "field": "isbn",
+                "value": "9784592880714",
+                "raw_value": "9784592880714",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.isbns",
+                "transform": "isbn.isbn13",
+                "related_uri": null
+              },
+              {
+                "source": "madb",
+                "field": "isbn",
+                "value": "9784592880714",
+                "raw_value": {
+                  "kind": "literal",
+                  "value": "9784592880714",
+                  "datatype": null,
+                  "language": null
+                },
+                "record_id": "M2",
+                "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M2",
+                "predicate_or_path": "https://schema.org/isbn",
+                "transform": "isbn.isbn13",
+                "related_uri": null
+              }
+            ],
+            "candidate_count": 2,
+            "algorithm_version": "phase2b2-v1",
+            "series": null
+          }
+        ],
+        "candidates": [
+          {
+            "id": "M1",
+            "uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+            "completeness": "complete"
+          },
+          {
+            "id": "M2",
+            "uri": "https://mediaarts-db.artmuseums.go.jp/id/M2",
+            "completeness": "complete"
+          }
+        ],
+        "warnings": [
+          "2 distinct MADB candidates retained; no first-result selection",
+          "Multiple Books assert the same direct NDL identity"
+        ],
+        "error": null,
+        "truncated": false
+      }
+    },
+    "unsafe": {
+      "full": {
+        "status": "unsafe",
+        "matches": [
+          {
+            "ndl_id": "R100000002-I025437130",
+            "madb_id": "M1",
+            "confidence": "unsafe",
+            "reasons": [
+              "isbn_normalized",
+              "isbn_raw"
+            ],
+            "conflicts": [
+              "ndl_url_mismatch"
+            ],
+            "evidence": [
+              {
+                "source": "ndl",
+                "field": "url",
+                "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "raw_value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.url",
+                "transform": "ndl.ndl_record_url",
+                "related_uri": null
+              },
+              {
+                "source": "madb",
+                "field": "url",
+                "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I029306375",
+                "raw_value": {
+                  "kind": "literal",
+                  "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I029306375",
+                  "datatype": null,
+                  "language": null
+                },
+                "record_id": "M1",
+                "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                "predicate_or_path": "https://mediaarts-db.artmuseums.go.jp/data/property#dataUrl",
+                "transform": "ndl.ndl_record_url",
+                "related_uri": null
+              },
+              {
+                "source": "ndl",
+                "field": "isbn",
+                "value": "9784592880714",
+                "raw_value": "9784592880714",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.isbns",
+                "transform": "isbn.isbn13",
+                "related_uri": null
+              },
+              {
+                "source": "madb",
+                "field": "isbn",
+                "value": "9784592880714",
+                "raw_value": {
+                  "kind": "literal",
+                  "value": "9784592880714",
+                  "datatype": null,
+                  "language": null
+                },
+                "record_id": "M1",
+                "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                "predicate_or_path": "https://schema.org/isbn",
+                "transform": "isbn.isbn13",
+                "related_uri": null
+              }
+            ],
+            "candidate_count": 1,
+            "algorithm_version": "phase2b2-v1",
+            "series": null
+          }
+        ],
+        "candidates": [
+          {
+            "id": "M1",
+            "uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+            "completeness": "complete"
+          }
+        ],
+        "warnings": [],
+        "error": null,
+        "truncated": false
+      },
+      "series_linkage": {
+        "status": "unsafe",
+        "matches": [
+          {
+            "ndl_id": "R100000002-I025437130",
+            "madb_id": "M1",
+            "confidence": "unsafe",
+            "reasons": [
+              "isbn_normalized",
+              "isbn_raw"
+            ],
+            "conflicts": [
+              "ndl_url_mismatch"
+            ],
+            "evidence": [
+              {
+                "source": "ndl",
+                "field": "url",
+                "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "raw_value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.url",
+                "transform": "ndl.ndl_record_url",
+                "related_uri": null
+              },
+              {
+                "source": "madb",
+                "field": "url",
+                "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I029306375",
+                "raw_value": {
+                  "kind": "literal",
+                  "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I029306375",
+                  "datatype": null,
+                  "language": null
+                },
+                "record_id": "M1",
+                "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                "predicate_or_path": "https://mediaarts-db.artmuseums.go.jp/data/property#dataUrl",
+                "transform": "ndl.ndl_record_url",
+                "related_uri": null
+              },
+              {
+                "source": "ndl",
+                "field": "isbn",
+                "value": "9784592880714",
+                "raw_value": "9784592880714",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.isbns",
+                "transform": "isbn.isbn13",
+                "related_uri": null
+              },
+              {
+                "source": "madb",
+                "field": "isbn",
+                "value": "9784592880714",
+                "raw_value": {
+                  "kind": "literal",
+                  "value": "9784592880714",
+                  "datatype": null,
+                  "language": null
+                },
+                "record_id": "M1",
+                "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                "predicate_or_path": "https://schema.org/isbn",
+                "transform": "isbn.isbn13",
+                "related_uri": null
+              }
+            ],
+            "candidate_count": 1,
+            "algorithm_version": "phase2b2-v1",
+            "series": null
+          }
+        ],
+        "candidates": [
+          {
+            "id": "M1",
+            "uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+            "completeness": "complete"
+          }
+        ],
+        "warnings": [],
+        "error": null,
+        "truncated": false
+      }
+    },
+    "exact_isbn_conflict": {
+      "full": {
+        "status": "matched",
+        "matches": [
+          {
+            "ndl_id": "R100000002-I025437130",
+            "madb_id": "M1",
+            "confidence": "exact",
+            "reasons": [
+              "direct_ndl_url"
+            ],
+            "conflicts": [
+              "isbn_discrepancy"
+            ],
+            "evidence": [
+              {
+                "source": "ndl",
+                "field": "url",
+                "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "raw_value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.url",
+                "transform": "ndl.ndl_record_url",
+                "related_uri": null
+              },
+              {
+                "source": "madb",
+                "field": "url",
+                "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "raw_value": {
+                  "kind": "literal",
+                  "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                  "datatype": null,
+                  "language": null
+                },
+                "record_id": "M1",
+                "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                "predicate_or_path": "https://mediaarts-db.artmuseums.go.jp/data/property#dataUrl",
+                "transform": "ndl.ndl_record_url",
+                "related_uri": null
+              },
+              {
+                "source": "ndl",
+                "field": "isbn",
+                "value": "9784592880714",
+                "raw_value": "9784592880714",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.isbns",
+                "transform": "isbn.isbn13",
+                "related_uri": null
+              },
+              {
+                "source": "madb",
+                "field": "isbn",
+                "value": "9784832241190",
+                "raw_value": {
+                  "kind": "literal",
+                  "value": "9784832241190",
+                  "datatype": null,
+                  "language": null
+                },
+                "record_id": "M1",
+                "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                "predicate_or_path": "https://schema.org/isbn",
+                "transform": "isbn.isbn13",
+                "related_uri": null
+              }
+            ],
+            "candidate_count": 1,
+            "algorithm_version": "phase2b2-v1",
+            "series": {
+              "state": "madb_only",
+              "ndl": {
+                "source": "ndl",
+                "field": "series",
+                "value": null,
+                "raw_value": "",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.title",
+                "transform": "mapping.infer_volume",
+                "related_uri": null
+              },
+              "madb": [
+                {
+                  "source": "madb",
+                  "field": "series",
+                  "value": " Series ",
+                  "raw_value": {
+                    "kind": "literal",
+                    "value": " Series ",
+                    "datatype": null,
+                    "language": null
+                  },
+                  "record_id": "M1",
+                  "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                  "predicate_or_path": "https://schema.org/isPartOf / https://schema.org/name",
+                  "transform": null,
+                  "related_uri": "https://mediaarts-db.artmuseums.go.jp/id/C1"
+                }
+              ],
+              "normalized_ndl": null,
+              "normalized_madb": [
+                "Series"
+              ],
+              "relations": [
+                {
+                  "source": "madb",
+                  "field": "series_relation",
+                  "value": "https://mediaarts-db.artmuseums.go.jp/id/C1",
+                  "raw_value": {
+                    "kind": "uri",
+                    "value": "https://mediaarts-db.artmuseums.go.jp/id/C1",
+                    "datatype": null,
+                    "language": null
+                  },
+                  "record_id": "M1",
+                  "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                  "predicate_or_path": "https://schema.org/isPartOf",
+                  "transform": null,
+                  "related_uri": null
+                }
+              ],
+              "ndl_number": {
+                "value": null,
+                "explicit": null,
+                "inferred": null,
+                "conflict": false,
+                "requested": null,
+                "source": null
+              },
+              "warnings": [],
+              "name_classifications": [
+                {
+                  "series_uri": "https://mediaarts-db.artmuseums.go.jp/id/C1",
+                  "display_names": [
+                    {
+                      "source": "madb",
+                      "field": "series",
+                      "value": " Series ",
+                      "raw_value": {
+                        "kind": "literal",
+                        "value": " Series ",
+                        "datatype": null,
+                        "language": null
+                      },
+                      "record_id": "M1",
+                      "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                      "predicate_or_path": "https://schema.org/isPartOf / https://schema.org/name",
+                      "transform": null,
+                      "related_uri": "https://mediaarts-db.artmuseums.go.jp/id/C1"
+                    }
+                  ],
+                  "readings": [],
+                  "other_names": []
+                }
+              ]
+            }
+          }
+        ],
+        "candidates": [
+          {
+            "id": "M1",
+            "uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+            "completeness": "complete"
+          }
+        ],
+        "warnings": [],
+        "error": null,
+        "truncated": false
+      },
+      "series_linkage": {
+        "status": "matched",
+        "matches": [
+          {
+            "ndl_id": "R100000002-I025437130",
+            "madb_id": "M1",
+            "confidence": "exact",
+            "reasons": [
+              "direct_ndl_url"
+            ],
+            "conflicts": [
+              "isbn_discrepancy"
+            ],
+            "evidence": [
+              {
+                "source": "ndl",
+                "field": "url",
+                "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "raw_value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.url",
+                "transform": "ndl.ndl_record_url",
+                "related_uri": null
+              },
+              {
+                "source": "madb",
+                "field": "url",
+                "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "raw_value": {
+                  "kind": "literal",
+                  "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                  "datatype": null,
+                  "language": null
+                },
+                "record_id": "M1",
+                "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                "predicate_or_path": "https://mediaarts-db.artmuseums.go.jp/data/property#dataUrl",
+                "transform": "ndl.ndl_record_url",
+                "related_uri": null
+              },
+              {
+                "source": "ndl",
+                "field": "isbn",
+                "value": "9784592880714",
+                "raw_value": "9784592880714",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.isbns",
+                "transform": "isbn.isbn13",
+                "related_uri": null
+              },
+              {
+                "source": "madb",
+                "field": "isbn",
+                "value": "9784832241190",
+                "raw_value": {
+                  "kind": "literal",
+                  "value": "9784832241190",
+                  "datatype": null,
+                  "language": null
+                },
+                "record_id": "M1",
+                "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                "predicate_or_path": "https://schema.org/isbn",
+                "transform": "isbn.isbn13",
+                "related_uri": null
+              }
+            ],
+            "candidate_count": 1,
+            "algorithm_version": "phase2b2-v1",
+            "series": {
+              "state": "madb_only",
+              "ndl": {
+                "source": "ndl",
+                "field": "series",
+                "value": null,
+                "raw_value": "",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.title",
+                "transform": "mapping.infer_volume",
+                "related_uri": null
+              },
+              "madb": [
+                {
+                  "source": "madb",
+                  "field": "series",
+                  "value": " Series ",
+                  "raw_value": {
+                    "kind": "literal",
+                    "value": " Series ",
+                    "datatype": null,
+                    "language": null
+                  },
+                  "record_id": "M1",
+                  "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                  "predicate_or_path": "https://schema.org/isPartOf / https://schema.org/name",
+                  "transform": null,
+                  "related_uri": "https://mediaarts-db.artmuseums.go.jp/id/C1"
+                }
+              ],
+              "normalized_ndl": null,
+              "normalized_madb": [
+                "Series"
+              ],
+              "relations": [
+                {
+                  "source": "madb",
+                  "field": "series_relation",
+                  "value": "https://mediaarts-db.artmuseums.go.jp/id/C1",
+                  "raw_value": {
+                    "kind": "uri",
+                    "value": "https://mediaarts-db.artmuseums.go.jp/id/C1",
+                    "datatype": null,
+                    "language": null
+                  },
+                  "record_id": "M1",
+                  "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                  "predicate_or_path": "https://schema.org/isPartOf",
+                  "transform": null,
+                  "related_uri": null
+                }
+              ],
+              "ndl_number": {
+                "value": null,
+                "explicit": null,
+                "inferred": null,
+                "conflict": false,
+                "requested": null,
+                "source": null
+              },
+              "warnings": [],
+              "name_classifications": [
+                {
+                  "series_uri": "https://mediaarts-db.artmuseums.go.jp/id/C1",
+                  "display_names": [
+                    {
+                      "source": "madb",
+                      "field": "series",
+                      "value": " Series ",
+                      "raw_value": {
+                        "kind": "literal",
+                        "value": " Series ",
+                        "datatype": null,
+                        "language": null
+                      },
+                      "record_id": "M1",
+                      "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                      "predicate_or_path": "https://schema.org/isPartOf / https://schema.org/name",
+                      "transform": null,
+                      "related_uri": "https://mediaarts-db.artmuseums.go.jp/id/C1"
+                    }
+                  ],
+                  "readings": [],
+                  "other_names": []
+                }
+              ]
+            }
+          }
+        ],
+        "candidates": [
+          {
+            "id": "M1",
+            "uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+            "completeness": "complete"
+          }
+        ],
+        "warnings": [],
+        "error": null,
+        "truncated": false
+      }
+    },
+    "truncated": {
+      "full": {
+        "status": "ambiguous",
+        "matches": [
+          {
+            "ndl_id": "R100000002-I025437130",
+            "madb_id": "M1",
+            "confidence": "ambiguous",
+            "reasons": [
+              "isbn_normalized",
+              "isbn_raw"
+            ],
+            "conflicts": [],
+            "evidence": [
+              {
+                "source": "ndl",
+                "field": "url",
+                "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "raw_value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.url",
+                "transform": "ndl.ndl_record_url",
+                "related_uri": null
+              },
+              {
+                "source": "ndl",
+                "field": "isbn",
+                "value": "9784592880714",
+                "raw_value": "9784592880714",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.isbns",
+                "transform": "isbn.isbn13",
+                "related_uri": null
+              },
+              {
+                "source": "madb",
+                "field": "isbn",
+                "value": "9784592880714",
+                "raw_value": {
+                  "kind": "literal",
+                  "value": "9784592880714",
+                  "datatype": null,
+                  "language": null
+                },
+                "record_id": "M1",
+                "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                "predicate_or_path": "https://schema.org/isbn",
+                "transform": "isbn.isbn13",
+                "related_uri": null
+              }
+            ],
+            "candidate_count": 1,
+            "algorithm_version": "phase2b2-v1",
+            "series": null
+          }
+        ],
+        "candidates": [
+          {
+            "id": "M1",
+            "uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+            "completeness": "complete"
+          }
+        ],
+        "warnings": [
+          "MADB candidate discovery truncated; ISBN uniqueness is not established"
+        ],
+        "error": null,
+        "truncated": true
+      },
+      "series_linkage": {
+        "status": "ambiguous",
+        "matches": [
+          {
+            "ndl_id": "R100000002-I025437130",
+            "madb_id": "M1",
+            "confidence": "ambiguous",
+            "reasons": [
+              "isbn_normalized",
+              "isbn_raw"
+            ],
+            "conflicts": [],
+            "evidence": [
+              {
+                "source": "ndl",
+                "field": "url",
+                "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "raw_value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.url",
+                "transform": "ndl.ndl_record_url",
+                "related_uri": null
+              },
+              {
+                "source": "ndl",
+                "field": "isbn",
+                "value": "9784592880714",
+                "raw_value": "9784592880714",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.isbns",
+                "transform": "isbn.isbn13",
+                "related_uri": null
+              },
+              {
+                "source": "madb",
+                "field": "isbn",
+                "value": "9784592880714",
+                "raw_value": {
+                  "kind": "literal",
+                  "value": "9784592880714",
+                  "datatype": null,
+                  "language": null
+                },
+                "record_id": "M1",
+                "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                "predicate_or_path": "https://schema.org/isbn",
+                "transform": "isbn.isbn13",
+                "related_uri": null
+              }
+            ],
+            "candidate_count": 1,
+            "algorithm_version": "phase2b2-v1",
+            "series": null
+          }
+        ],
+        "candidates": [
+          {
+            "id": "M1",
+            "uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+            "completeness": "complete"
+          }
+        ],
+        "warnings": [
+          "MADB candidate discovery truncated; ISBN uniqueness is not established"
+        ],
+        "error": null,
+        "truncated": true
+      }
+    },
+    "truncated_exact": {
+      "full": {
+        "status": "matched",
+        "matches": [
+          {
+            "ndl_id": "R100000002-I025437130",
+            "madb_id": "M1",
+            "confidence": "exact",
+            "reasons": [
+              "direct_ndl_url",
+              "isbn_normalized",
+              "isbn_raw"
+            ],
+            "conflicts": [],
+            "evidence": [
+              {
+                "source": "ndl",
+                "field": "url",
+                "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "raw_value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.url",
+                "transform": "ndl.ndl_record_url",
+                "related_uri": null
+              },
+              {
+                "source": "madb",
+                "field": "url",
+                "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "raw_value": {
+                  "kind": "literal",
+                  "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                  "datatype": null,
+                  "language": null
+                },
+                "record_id": "M1",
+                "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                "predicate_or_path": "https://mediaarts-db.artmuseums.go.jp/data/property#dataUrl",
+                "transform": "ndl.ndl_record_url",
+                "related_uri": null
+              },
+              {
+                "source": "ndl",
+                "field": "isbn",
+                "value": "9784592880714",
+                "raw_value": "9784592880714",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.isbns",
+                "transform": "isbn.isbn13",
+                "related_uri": null
+              },
+              {
+                "source": "madb",
+                "field": "isbn",
+                "value": "9784592880714",
+                "raw_value": {
+                  "kind": "literal",
+                  "value": "9784592880714",
+                  "datatype": null,
+                  "language": null
+                },
+                "record_id": "M1",
+                "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                "predicate_or_path": "https://schema.org/isbn",
+                "transform": "isbn.isbn13",
+                "related_uri": null
+              }
+            ],
+            "candidate_count": 1,
+            "algorithm_version": "phase2b2-v1",
+            "series": {
+              "state": "madb_only",
+              "ndl": {
+                "source": "ndl",
+                "field": "series",
+                "value": null,
+                "raw_value": "",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.title",
+                "transform": "mapping.infer_volume",
+                "related_uri": null
+              },
+              "madb": [
+                {
+                  "source": "madb",
+                  "field": "series",
+                  "value": " Series ",
+                  "raw_value": {
+                    "kind": "literal",
+                    "value": " Series ",
+                    "datatype": null,
+                    "language": null
+                  },
+                  "record_id": "M1",
+                  "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                  "predicate_or_path": "https://schema.org/isPartOf / https://schema.org/name",
+                  "transform": null,
+                  "related_uri": "https://mediaarts-db.artmuseums.go.jp/id/C1"
+                }
+              ],
+              "normalized_ndl": null,
+              "normalized_madb": [
+                "Series"
+              ],
+              "relations": [
+                {
+                  "source": "madb",
+                  "field": "series_relation",
+                  "value": "https://mediaarts-db.artmuseums.go.jp/id/C1",
+                  "raw_value": {
+                    "kind": "uri",
+                    "value": "https://mediaarts-db.artmuseums.go.jp/id/C1",
+                    "datatype": null,
+                    "language": null
+                  },
+                  "record_id": "M1",
+                  "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                  "predicate_or_path": "https://schema.org/isPartOf",
+                  "transform": null,
+                  "related_uri": null
+                }
+              ],
+              "ndl_number": {
+                "value": null,
+                "explicit": null,
+                "inferred": null,
+                "conflict": false,
+                "requested": null,
+                "source": null
+              },
+              "warnings": [],
+              "name_classifications": [
+                {
+                  "series_uri": "https://mediaarts-db.artmuseums.go.jp/id/C1",
+                  "display_names": [
+                    {
+                      "source": "madb",
+                      "field": "series",
+                      "value": " Series ",
+                      "raw_value": {
+                        "kind": "literal",
+                        "value": " Series ",
+                        "datatype": null,
+                        "language": null
+                      },
+                      "record_id": "M1",
+                      "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                      "predicate_or_path": "https://schema.org/isPartOf / https://schema.org/name",
+                      "transform": null,
+                      "related_uri": "https://mediaarts-db.artmuseums.go.jp/id/C1"
+                    }
+                  ],
+                  "readings": [],
+                  "other_names": []
+                }
+              ]
+            }
+          }
+        ],
+        "candidates": [
+          {
+            "id": "M1",
+            "uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+            "completeness": "complete"
+          }
+        ],
+        "warnings": [
+          "MADB candidate discovery truncated; ISBN uniqueness is not established"
+        ],
+        "error": null,
+        "truncated": true
+      },
+      "series_linkage": {
+        "status": "matched",
+        "matches": [
+          {
+            "ndl_id": "R100000002-I025437130",
+            "madb_id": "M1",
+            "confidence": "exact",
+            "reasons": [
+              "direct_ndl_url",
+              "isbn_normalized",
+              "isbn_raw"
+            ],
+            "conflicts": [],
+            "evidence": [
+              {
+                "source": "ndl",
+                "field": "url",
+                "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "raw_value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.url",
+                "transform": "ndl.ndl_record_url",
+                "related_uri": null
+              },
+              {
+                "source": "madb",
+                "field": "url",
+                "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "raw_value": {
+                  "kind": "literal",
+                  "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                  "datatype": null,
+                  "language": null
+                },
+                "record_id": "M1",
+                "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                "predicate_or_path": "https://mediaarts-db.artmuseums.go.jp/data/property#dataUrl",
+                "transform": "ndl.ndl_record_url",
+                "related_uri": null
+              },
+              {
+                "source": "ndl",
+                "field": "isbn",
+                "value": "9784592880714",
+                "raw_value": "9784592880714",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.isbns",
+                "transform": "isbn.isbn13",
+                "related_uri": null
+              },
+              {
+                "source": "madb",
+                "field": "isbn",
+                "value": "9784592880714",
+                "raw_value": {
+                  "kind": "literal",
+                  "value": "9784592880714",
+                  "datatype": null,
+                  "language": null
+                },
+                "record_id": "M1",
+                "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                "predicate_or_path": "https://schema.org/isbn",
+                "transform": "isbn.isbn13",
+                "related_uri": null
+              }
+            ],
+            "candidate_count": 1,
+            "algorithm_version": "phase2b2-v1",
+            "series": {
+              "state": "madb_only",
+              "ndl": {
+                "source": "ndl",
+                "field": "series",
+                "value": null,
+                "raw_value": "",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.title",
+                "transform": "mapping.infer_volume",
+                "related_uri": null
+              },
+              "madb": [
+                {
+                  "source": "madb",
+                  "field": "series",
+                  "value": " Series ",
+                  "raw_value": {
+                    "kind": "literal",
+                    "value": " Series ",
+                    "datatype": null,
+                    "language": null
+                  },
+                  "record_id": "M1",
+                  "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                  "predicate_or_path": "https://schema.org/isPartOf / https://schema.org/name",
+                  "transform": null,
+                  "related_uri": "https://mediaarts-db.artmuseums.go.jp/id/C1"
+                }
+              ],
+              "normalized_ndl": null,
+              "normalized_madb": [
+                "Series"
+              ],
+              "relations": [
+                {
+                  "source": "madb",
+                  "field": "series_relation",
+                  "value": "https://mediaarts-db.artmuseums.go.jp/id/C1",
+                  "raw_value": {
+                    "kind": "uri",
+                    "value": "https://mediaarts-db.artmuseums.go.jp/id/C1",
+                    "datatype": null,
+                    "language": null
+                  },
+                  "record_id": "M1",
+                  "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                  "predicate_or_path": "https://schema.org/isPartOf",
+                  "transform": null,
+                  "related_uri": null
+                }
+              ],
+              "ndl_number": {
+                "value": null,
+                "explicit": null,
+                "inferred": null,
+                "conflict": false,
+                "requested": null,
+                "source": null
+              },
+              "warnings": [],
+              "name_classifications": [
+                {
+                  "series_uri": "https://mediaarts-db.artmuseums.go.jp/id/C1",
+                  "display_names": [
+                    {
+                      "source": "madb",
+                      "field": "series",
+                      "value": " Series ",
+                      "raw_value": {
+                        "kind": "literal",
+                        "value": " Series ",
+                        "datatype": null,
+                        "language": null
+                      },
+                      "record_id": "M1",
+                      "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                      "predicate_or_path": "https://schema.org/isPartOf / https://schema.org/name",
+                      "transform": null,
+                      "related_uri": "https://mediaarts-db.artmuseums.go.jp/id/C1"
+                    }
+                  ],
+                  "readings": [],
+                  "other_names": []
+                }
+              ]
+            }
+          }
+        ],
+        "candidates": [
+          {
+            "id": "M1",
+            "uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+            "completeness": "complete"
+          }
+        ],
+        "warnings": [
+          "MADB candidate discovery truncated; ISBN uniqueness is not established"
+        ],
+        "error": null,
+        "truncated": true
+      }
+    },
+    "book_truncated": {
+      "full": {
+        "status": "ambiguous",
+        "matches": [
+          {
+            "ndl_id": "R100000002-I025437130",
+            "madb_id": "M1",
+            "confidence": "ambiguous",
+            "reasons": [
+              "direct_ndl_url",
+              "isbn_normalized",
+              "isbn_raw"
+            ],
+            "conflicts": [],
+            "evidence": [
+              {
+                "source": "ndl",
+                "field": "url",
+                "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "raw_value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.url",
+                "transform": "ndl.ndl_record_url",
+                "related_uri": null
+              },
+              {
+                "source": "madb",
+                "field": "url",
+                "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "raw_value": {
+                  "kind": "literal",
+                  "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                  "datatype": null,
+                  "language": null
+                },
+                "record_id": "M1",
+                "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                "predicate_or_path": "https://mediaarts-db.artmuseums.go.jp/data/property#dataUrl",
+                "transform": "ndl.ndl_record_url",
+                "related_uri": null
+              },
+              {
+                "source": "ndl",
+                "field": "isbn",
+                "value": "9784592880714",
+                "raw_value": "9784592880714",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.isbns",
+                "transform": "isbn.isbn13",
+                "related_uri": null
+              },
+              {
+                "source": "madb",
+                "field": "isbn",
+                "value": "9784592880714",
+                "raw_value": {
+                  "kind": "literal",
+                  "value": "9784592880714",
+                  "datatype": null,
+                  "language": null
+                },
+                "record_id": "M1",
+                "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                "predicate_or_path": "https://schema.org/isbn",
+                "transform": "isbn.isbn13",
+                "related_uri": null
+              }
+            ],
+            "candidate_count": 1,
+            "algorithm_version": "phase2b2-v1",
+            "series": null
+          }
+        ],
+        "candidates": [
+          {
+            "id": "M1",
+            "uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+            "completeness": "truncated"
+          }
+        ],
+        "warnings": [
+          "M1: Book evidence incomplete"
+        ],
+        "error": null,
+        "truncated": false
+      },
+      "series_linkage": {
+        "status": "ambiguous",
+        "matches": [
+          {
+            "ndl_id": "R100000002-I025437130",
+            "madb_id": "M1",
+            "confidence": "ambiguous",
+            "reasons": [
+              "direct_ndl_url",
+              "isbn_normalized",
+              "isbn_raw"
+            ],
+            "conflicts": [],
+            "evidence": [
+              {
+                "source": "ndl",
+                "field": "url",
+                "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "raw_value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.url",
+                "transform": "ndl.ndl_record_url",
+                "related_uri": null
+              },
+              {
+                "source": "madb",
+                "field": "url",
+                "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "raw_value": {
+                  "kind": "literal",
+                  "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                  "datatype": null,
+                  "language": null
+                },
+                "record_id": "M1",
+                "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                "predicate_or_path": "https://mediaarts-db.artmuseums.go.jp/data/property#dataUrl",
+                "transform": "ndl.ndl_record_url",
+                "related_uri": null
+              },
+              {
+                "source": "ndl",
+                "field": "isbn",
+                "value": "9784592880714",
+                "raw_value": "9784592880714",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.isbns",
+                "transform": "isbn.isbn13",
+                "related_uri": null
+              },
+              {
+                "source": "madb",
+                "field": "isbn",
+                "value": "9784592880714",
+                "raw_value": {
+                  "kind": "literal",
+                  "value": "9784592880714",
+                  "datatype": null,
+                  "language": null
+                },
+                "record_id": "M1",
+                "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                "predicate_or_path": "https://schema.org/isbn",
+                "transform": "isbn.isbn13",
+                "related_uri": null
+              }
+            ],
+            "candidate_count": 1,
+            "algorithm_version": "phase2b2-v1",
+            "series": null
+          }
+        ],
+        "candidates": [
+          {
+            "id": "M1",
+            "uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+            "completeness": "truncated"
+          }
+        ],
+        "warnings": [
+          "M1: Book evidence incomplete"
+        ],
+        "error": null,
+        "truncated": false
+      }
+    },
+    "series_missing": {
+      "full": {
+        "status": "matched",
+        "matches": [
+          {
+            "ndl_id": "R100000002-I025437130",
+            "madb_id": "M1",
+            "confidence": "exact",
+            "reasons": [
+              "direct_ndl_url",
+              "isbn_normalized",
+              "isbn_raw"
+            ],
+            "conflicts": [],
+            "evidence": [
+              {
+                "source": "ndl",
+                "field": "url",
+                "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "raw_value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.url",
+                "transform": "ndl.ndl_record_url",
+                "related_uri": null
+              },
+              {
+                "source": "madb",
+                "field": "url",
+                "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "raw_value": {
+                  "kind": "literal",
+                  "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                  "datatype": null,
+                  "language": null
+                },
+                "record_id": "M1",
+                "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                "predicate_or_path": "https://mediaarts-db.artmuseums.go.jp/data/property#dataUrl",
+                "transform": "ndl.ndl_record_url",
+                "related_uri": null
+              },
+              {
+                "source": "ndl",
+                "field": "isbn",
+                "value": "9784592880714",
+                "raw_value": "9784592880714",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.isbns",
+                "transform": "isbn.isbn13",
+                "related_uri": null
+              },
+              {
+                "source": "madb",
+                "field": "isbn",
+                "value": "9784592880714",
+                "raw_value": {
+                  "kind": "literal",
+                  "value": "9784592880714",
+                  "datatype": null,
+                  "language": null
+                },
+                "record_id": "M1",
+                "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                "predicate_or_path": "https://schema.org/isbn",
+                "transform": "isbn.isbn13",
+                "related_uri": null
+              }
+            ],
+            "candidate_count": 1,
+            "algorithm_version": "phase2b2-v1",
+            "series": {
+              "state": "unavailable",
+              "ndl": {
+                "source": "ndl",
+                "field": "series",
+                "value": null,
+                "raw_value": "",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.title",
+                "transform": "mapping.infer_volume",
+                "related_uri": null
+              },
+              "madb": [],
+              "normalized_ndl": null,
+              "normalized_madb": [],
+              "relations": [
+                {
+                  "source": "madb",
+                  "field": "series_relation",
+                  "value": "https://mediaarts-db.artmuseums.go.jp/id/C1",
+                  "raw_value": {
+                    "kind": "uri",
+                    "value": "https://mediaarts-db.artmuseums.go.jp/id/C1",
+                    "datatype": null,
+                    "language": null
+                  },
+                  "record_id": "M1",
+                  "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                  "predicate_or_path": "https://schema.org/isPartOf",
+                  "transform": null,
+                  "related_uri": null
+                }
+              ],
+              "ndl_number": {
+                "value": null,
+                "explicit": null,
+                "inferred": null,
+                "conflict": false,
+                "requested": null,
+                "source": null
+              },
+              "warnings": [
+                "Synthetic missing Series",
+                "Series evidence is incomplete; missing values are not established absence"
+              ],
+              "name_classifications": []
+            }
+          }
+        ],
+        "candidates": [
+          {
+            "id": "M1",
+            "uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+            "completeness": "partial"
+          }
+        ],
+        "warnings": [
+          "Synthetic missing Series"
+        ],
+        "error": null,
+        "truncated": false
+      },
+      "series_linkage": {
+        "status": "matched",
+        "matches": [
+          {
+            "ndl_id": "R100000002-I025437130",
+            "madb_id": "M1",
+            "confidence": "exact",
+            "reasons": [
+              "direct_ndl_url",
+              "isbn_normalized",
+              "isbn_raw"
+            ],
+            "conflicts": [],
+            "evidence": [
+              {
+                "source": "ndl",
+                "field": "url",
+                "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "raw_value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.url",
+                "transform": "ndl.ndl_record_url",
+                "related_uri": null
+              },
+              {
+                "source": "madb",
+                "field": "url",
+                "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "raw_value": {
+                  "kind": "literal",
+                  "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                  "datatype": null,
+                  "language": null
+                },
+                "record_id": "M1",
+                "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                "predicate_or_path": "https://mediaarts-db.artmuseums.go.jp/data/property#dataUrl",
+                "transform": "ndl.ndl_record_url",
+                "related_uri": null
+              },
+              {
+                "source": "ndl",
+                "field": "isbn",
+                "value": "9784592880714",
+                "raw_value": "9784592880714",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.isbns",
+                "transform": "isbn.isbn13",
+                "related_uri": null
+              },
+              {
+                "source": "madb",
+                "field": "isbn",
+                "value": "9784592880714",
+                "raw_value": {
+                  "kind": "literal",
+                  "value": "9784592880714",
+                  "datatype": null,
+                  "language": null
+                },
+                "record_id": "M1",
+                "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                "predicate_or_path": "https://schema.org/isbn",
+                "transform": "isbn.isbn13",
+                "related_uri": null
+              }
+            ],
+            "candidate_count": 1,
+            "algorithm_version": "phase2b2-v1",
+            "series": {
+              "state": "unavailable",
+              "ndl": {
+                "source": "ndl",
+                "field": "series",
+                "value": null,
+                "raw_value": "",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.title",
+                "transform": "mapping.infer_volume",
+                "related_uri": null
+              },
+              "madb": [],
+              "normalized_ndl": null,
+              "normalized_madb": [],
+              "relations": [
+                {
+                  "source": "madb",
+                  "field": "series_relation",
+                  "value": "https://mediaarts-db.artmuseums.go.jp/id/C1",
+                  "raw_value": {
+                    "kind": "uri",
+                    "value": "https://mediaarts-db.artmuseums.go.jp/id/C1",
+                    "datatype": null,
+                    "language": null
+                  },
+                  "record_id": "M1",
+                  "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                  "predicate_or_path": "https://schema.org/isPartOf",
+                  "transform": null,
+                  "related_uri": null
+                }
+              ],
+              "ndl_number": {
+                "value": null,
+                "explicit": null,
+                "inferred": null,
+                "conflict": false,
+                "requested": null,
+                "source": null
+              },
+              "warnings": [
+                "Synthetic missing Series",
+                "Series evidence is incomplete; missing values are not established absence"
+              ],
+              "name_classifications": []
+            }
+          }
+        ],
+        "candidates": [
+          {
+            "id": "M1",
+            "uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+            "completeness": "partial"
+          }
+        ],
+        "warnings": [
+          "Synthetic missing Series"
+        ],
+        "error": null,
+        "truncated": false
+      }
+    },
+    "series_truncated": {
+      "full": {
+        "status": "matched",
+        "matches": [
+          {
+            "ndl_id": "R100000002-I025437130",
+            "madb_id": "M1",
+            "confidence": "exact",
+            "reasons": [
+              "direct_ndl_url",
+              "isbn_normalized",
+              "isbn_raw"
+            ],
+            "conflicts": [],
+            "evidence": [
+              {
+                "source": "ndl",
+                "field": "url",
+                "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "raw_value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.url",
+                "transform": "ndl.ndl_record_url",
+                "related_uri": null
+              },
+              {
+                "source": "madb",
+                "field": "url",
+                "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "raw_value": {
+                  "kind": "literal",
+                  "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                  "datatype": null,
+                  "language": null
+                },
+                "record_id": "M1",
+                "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                "predicate_or_path": "https://mediaarts-db.artmuseums.go.jp/data/property#dataUrl",
+                "transform": "ndl.ndl_record_url",
+                "related_uri": null
+              },
+              {
+                "source": "ndl",
+                "field": "isbn",
+                "value": "9784592880714",
+                "raw_value": "9784592880714",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.isbns",
+                "transform": "isbn.isbn13",
+                "related_uri": null
+              },
+              {
+                "source": "madb",
+                "field": "isbn",
+                "value": "9784592880714",
+                "raw_value": {
+                  "kind": "literal",
+                  "value": "9784592880714",
+                  "datatype": null,
+                  "language": null
+                },
+                "record_id": "M1",
+                "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                "predicate_or_path": "https://schema.org/isbn",
+                "transform": "isbn.isbn13",
+                "related_uri": null
+              }
+            ],
+            "candidate_count": 1,
+            "algorithm_version": "phase2b2-v1",
+            "series": {
+              "state": "unavailable",
+              "ndl": {
+                "source": "ndl",
+                "field": "series",
+                "value": null,
+                "raw_value": "",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.title",
+                "transform": "mapping.infer_volume",
+                "related_uri": null
+              },
+              "madb": [
+                {
+                  "source": "madb",
+                  "field": "series",
+                  "value": " Series ",
+                  "raw_value": {
+                    "kind": "literal",
+                    "value": " Series ",
+                    "datatype": null,
+                    "language": null
+                  },
+                  "record_id": "M1",
+                  "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                  "predicate_or_path": "https://schema.org/isPartOf / https://schema.org/name",
+                  "transform": null,
+                  "related_uri": "https://mediaarts-db.artmuseums.go.jp/id/C1"
+                }
+              ],
+              "normalized_ndl": null,
+              "normalized_madb": [
+                "Series"
+              ],
+              "relations": [
+                {
+                  "source": "madb",
+                  "field": "series_relation",
+                  "value": "https://mediaarts-db.artmuseums.go.jp/id/C1",
+                  "raw_value": {
+                    "kind": "uri",
+                    "value": "https://mediaarts-db.artmuseums.go.jp/id/C1",
+                    "datatype": null,
+                    "language": null
+                  },
+                  "record_id": "M1",
+                  "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                  "predicate_or_path": "https://schema.org/isPartOf",
+                  "transform": null,
+                  "related_uri": null
+                }
+              ],
+              "ndl_number": {
+                "value": null,
+                "explicit": null,
+                "inferred": null,
+                "conflict": false,
+                "requested": null,
+                "source": null
+              },
+              "warnings": [
+                "Series evidence is incomplete; missing values are not established absence"
+              ],
+              "name_classifications": [
+                {
+                  "series_uri": "https://mediaarts-db.artmuseums.go.jp/id/C1",
+                  "display_names": [
+                    {
+                      "source": "madb",
+                      "field": "series",
+                      "value": " Series ",
+                      "raw_value": {
+                        "kind": "literal",
+                        "value": " Series ",
+                        "datatype": null,
+                        "language": null
+                      },
+                      "record_id": "M1",
+                      "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                      "predicate_or_path": "https://schema.org/isPartOf / https://schema.org/name",
+                      "transform": null,
+                      "related_uri": "https://mediaarts-db.artmuseums.go.jp/id/C1"
+                    }
+                  ],
+                  "readings": [],
+                  "other_names": []
+                }
+              ]
+            }
+          }
+        ],
+        "candidates": [
+          {
+            "id": "M1",
+            "uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+            "completeness": "partial"
+          }
+        ],
+        "warnings": [],
+        "error": null,
+        "truncated": false
+      },
+      "series_linkage": {
+        "status": "matched",
+        "matches": [
+          {
+            "ndl_id": "R100000002-I025437130",
+            "madb_id": "M1",
+            "confidence": "exact",
+            "reasons": [
+              "direct_ndl_url",
+              "isbn_normalized",
+              "isbn_raw"
+            ],
+            "conflicts": [],
+            "evidence": [
+              {
+                "source": "ndl",
+                "field": "url",
+                "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "raw_value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.url",
+                "transform": "ndl.ndl_record_url",
+                "related_uri": null
+              },
+              {
+                "source": "madb",
+                "field": "url",
+                "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "raw_value": {
+                  "kind": "literal",
+                  "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                  "datatype": null,
+                  "language": null
+                },
+                "record_id": "M1",
+                "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                "predicate_or_path": "https://mediaarts-db.artmuseums.go.jp/data/property#dataUrl",
+                "transform": "ndl.ndl_record_url",
+                "related_uri": null
+              },
+              {
+                "source": "ndl",
+                "field": "isbn",
+                "value": "9784592880714",
+                "raw_value": "9784592880714",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.isbns",
+                "transform": "isbn.isbn13",
+                "related_uri": null
+              },
+              {
+                "source": "madb",
+                "field": "isbn",
+                "value": "9784592880714",
+                "raw_value": {
+                  "kind": "literal",
+                  "value": "9784592880714",
+                  "datatype": null,
+                  "language": null
+                },
+                "record_id": "M1",
+                "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                "predicate_or_path": "https://schema.org/isbn",
+                "transform": "isbn.isbn13",
+                "related_uri": null
+              }
+            ],
+            "candidate_count": 1,
+            "algorithm_version": "phase2b2-v1",
+            "series": {
+              "state": "unavailable",
+              "ndl": {
+                "source": "ndl",
+                "field": "series",
+                "value": null,
+                "raw_value": "",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.title",
+                "transform": "mapping.infer_volume",
+                "related_uri": null
+              },
+              "madb": [
+                {
+                  "source": "madb",
+                  "field": "series",
+                  "value": " Series ",
+                  "raw_value": {
+                    "kind": "literal",
+                    "value": " Series ",
+                    "datatype": null,
+                    "language": null
+                  },
+                  "record_id": "M1",
+                  "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                  "predicate_or_path": "https://schema.org/isPartOf / https://schema.org/name",
+                  "transform": null,
+                  "related_uri": "https://mediaarts-db.artmuseums.go.jp/id/C1"
+                }
+              ],
+              "normalized_ndl": null,
+              "normalized_madb": [
+                "Series"
+              ],
+              "relations": [
+                {
+                  "source": "madb",
+                  "field": "series_relation",
+                  "value": "https://mediaarts-db.artmuseums.go.jp/id/C1",
+                  "raw_value": {
+                    "kind": "uri",
+                    "value": "https://mediaarts-db.artmuseums.go.jp/id/C1",
+                    "datatype": null,
+                    "language": null
+                  },
+                  "record_id": "M1",
+                  "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                  "predicate_or_path": "https://schema.org/isPartOf",
+                  "transform": null,
+                  "related_uri": null
+                }
+              ],
+              "ndl_number": {
+                "value": null,
+                "explicit": null,
+                "inferred": null,
+                "conflict": false,
+                "requested": null,
+                "source": null
+              },
+              "warnings": [
+                "Series evidence is incomplete; missing values are not established absence"
+              ],
+              "name_classifications": [
+                {
+                  "series_uri": "https://mediaarts-db.artmuseums.go.jp/id/C1",
+                  "display_names": [
+                    {
+                      "source": "madb",
+                      "field": "series",
+                      "value": " Series ",
+                      "raw_value": {
+                        "kind": "literal",
+                        "value": " Series ",
+                        "datatype": null,
+                        "language": null
+                      },
+                      "record_id": "M1",
+                      "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                      "predicate_or_path": "https://schema.org/isPartOf / https://schema.org/name",
+                      "transform": null,
+                      "related_uri": "https://mediaarts-db.artmuseums.go.jp/id/C1"
+                    }
+                  ],
+                  "readings": [],
+                  "other_names": []
+                }
+              ]
+            }
+          }
+        ],
+        "candidates": [
+          {
+            "id": "M1",
+            "uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+            "completeness": "partial"
+          }
+        ],
+        "warnings": [],
+        "error": null,
+        "truncated": false
+      }
+    },
+    "first_discovery_failure": {
+      "full": {
+        "status": "unavailable",
+        "matches": [],
+        "candidates": [],
+        "warnings": [
+          "MADB acquisition failed; candidate evaluation and ISBN uniqueness are incomplete"
+        ],
+        "error": {
+          "kind": "rate_limited",
+          "message": "synthetic search",
+          "status": 429,
+          "retry_after": "17"
+        },
+        "truncated": false
+      },
+      "series_linkage": {
+        "status": "unavailable",
+        "matches": [],
+        "candidates": [],
+        "warnings": [
+          "MADB acquisition failed; candidate evaluation and ISBN uniqueness are incomplete"
+        ],
+        "error": {
+          "kind": "rate_limited",
+          "message": "synthetic search",
+          "status": 429,
+          "retry_after": "17"
+        },
+        "truncated": false
+      }
+    },
+    "second_discovery_failure": {
+      "full": {
+        "status": "unavailable",
+        "matches": [],
+        "candidates": [
+          {
+            "id": "M1",
+            "uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+            "completeness": null
+          }
+        ],
+        "warnings": [
+          "discovery observation",
+          "MADB acquisition failed; candidate evaluation and ISBN uniqueness are incomplete"
+        ],
+        "error": {
+          "kind": "timeout",
+          "message": "synthetic later search",
+          "status": null,
+          "retry_after": null
+        },
+        "truncated": false
+      },
+      "series_linkage": {
+        "status": "unavailable",
+        "matches": [],
+        "candidates": [
+          {
+            "id": "M1",
+            "uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+            "completeness": null
+          }
+        ],
+        "warnings": [
+          "discovery observation",
+          "MADB acquisition failed; candidate evaluation and ISBN uniqueness are incomplete"
+        ],
+        "error": {
+          "kind": "timeout",
+          "message": "synthetic later search",
+          "status": null,
+          "retry_after": null
+        },
+        "truncated": false
+      }
+    },
+    "truncated_then_failure": {
+      "full": {
+        "status": "unavailable",
+        "matches": [],
+        "candidates": [
+          {
+            "id": "M1",
+            "uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+            "completeness": null
+          }
+        ],
+        "warnings": [
+          "discovery observation",
+          "MADB candidate discovery truncated; ISBN uniqueness is not established",
+          "MADB acquisition failed; candidate evaluation and ISBN uniqueness are incomplete"
+        ],
+        "error": {
+          "kind": "timeout",
+          "message": "synthetic later search",
+          "status": null,
+          "retry_after": null
+        },
+        "truncated": true
+      },
+      "series_linkage": {
+        "status": "unavailable",
+        "matches": [],
+        "candidates": [
+          {
+            "id": "M1",
+            "uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+            "completeness": null
+          }
+        ],
+        "warnings": [
+          "discovery observation",
+          "MADB candidate discovery truncated; ISBN uniqueness is not established",
+          "MADB acquisition failed; candidate evaluation and ISBN uniqueness are incomplete"
+        ],
+        "error": {
+          "kind": "timeout",
+          "message": "synthetic later search",
+          "status": null,
+          "retry_after": null
+        },
+        "truncated": true
+      }
+    },
+    "first_book_failure": {
+      "full": {
+        "status": "unavailable",
+        "matches": [],
+        "candidates": [
+          {
+            "id": "M1",
+            "uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+            "completeness": null
+          }
+        ],
+        "warnings": [
+          "MADB acquisition failed; candidate evaluation and ISBN uniqueness are incomplete"
+        ],
+        "error": {
+          "kind": "http",
+          "message": "synthetic Book",
+          "status": 503,
+          "retry_after": "23"
+        },
+        "truncated": false
+      },
+      "series_linkage": {
+        "status": "unavailable",
+        "matches": [],
+        "candidates": [
+          {
+            "id": "M1",
+            "uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+            "completeness": null
+          }
+        ],
+        "warnings": [
+          "MADB acquisition failed; candidate evaluation and ISBN uniqueness are incomplete"
+        ],
+        "error": {
+          "kind": "http",
+          "message": "synthetic Book",
+          "status": 503,
+          "retry_after": "23"
+        },
+        "truncated": false
+      }
+    },
+    "second_book_failure": {
+      "full": {
+        "status": "unavailable",
+        "matches": [
+          {
+            "ndl_id": "R100000002-I025437130",
+            "madb_id": "M1",
+            "confidence": "exact",
+            "reasons": [
+              "direct_ndl_url",
+              "isbn_normalized",
+              "isbn_raw"
+            ],
+            "conflicts": [],
+            "evidence": [
+              {
+                "source": "ndl",
+                "field": "url",
+                "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "raw_value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.url",
+                "transform": "ndl.ndl_record_url",
+                "related_uri": null
+              },
+              {
+                "source": "madb",
+                "field": "url",
+                "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "raw_value": {
+                  "kind": "literal",
+                  "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                  "datatype": null,
+                  "language": null
+                },
+                "record_id": "M1",
+                "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                "predicate_or_path": "https://mediaarts-db.artmuseums.go.jp/data/property#dataUrl",
+                "transform": "ndl.ndl_record_url",
+                "related_uri": null
+              },
+              {
+                "source": "ndl",
+                "field": "isbn",
+                "value": "9784592880714",
+                "raw_value": "9784592880714",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.isbns",
+                "transform": "isbn.isbn13",
+                "related_uri": null
+              },
+              {
+                "source": "madb",
+                "field": "isbn",
+                "value": "9784592880714",
+                "raw_value": {
+                  "kind": "literal",
+                  "value": "9784592880714",
+                  "datatype": null,
+                  "language": null
+                },
+                "record_id": "M1",
+                "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                "predicate_or_path": "https://schema.org/isbn",
+                "transform": "isbn.isbn13",
+                "related_uri": null
+              }
+            ],
+            "candidate_count": 2,
+            "algorithm_version": "phase2b2-v1",
+            "series": null
+          }
+        ],
+        "candidates": [
+          {
+            "id": "M1",
+            "uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+            "completeness": "complete"
+          },
+          {
+            "id": "M2",
+            "uri": "https://mediaarts-db.artmuseums.go.jp/id/M2",
+            "completeness": null
+          }
+        ],
+        "warnings": [
+          "MADB acquisition failed; candidate evaluation and ISBN uniqueness are incomplete"
+        ],
+        "error": {
+          "kind": "not_found",
+          "message": "synthetic disappeared",
+          "status": null,
+          "retry_after": null
+        },
+        "truncated": false
+      },
+      "series_linkage": {
+        "status": "unavailable",
+        "matches": [
+          {
+            "ndl_id": "R100000002-I025437130",
+            "madb_id": "M1",
+            "confidence": "exact",
+            "reasons": [
+              "direct_ndl_url",
+              "isbn_normalized",
+              "isbn_raw"
+            ],
+            "conflicts": [],
+            "evidence": [
+              {
+                "source": "ndl",
+                "field": "url",
+                "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "raw_value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.url",
+                "transform": "ndl.ndl_record_url",
+                "related_uri": null
+              },
+              {
+                "source": "madb",
+                "field": "url",
+                "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "raw_value": {
+                  "kind": "literal",
+                  "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                  "datatype": null,
+                  "language": null
+                },
+                "record_id": "M1",
+                "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                "predicate_or_path": "https://mediaarts-db.artmuseums.go.jp/data/property#dataUrl",
+                "transform": "ndl.ndl_record_url",
+                "related_uri": null
+              },
+              {
+                "source": "ndl",
+                "field": "isbn",
+                "value": "9784592880714",
+                "raw_value": "9784592880714",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.isbns",
+                "transform": "isbn.isbn13",
+                "related_uri": null
+              },
+              {
+                "source": "madb",
+                "field": "isbn",
+                "value": "9784592880714",
+                "raw_value": {
+                  "kind": "literal",
+                  "value": "9784592880714",
+                  "datatype": null,
+                  "language": null
+                },
+                "record_id": "M1",
+                "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                "predicate_or_path": "https://schema.org/isbn",
+                "transform": "isbn.isbn13",
+                "related_uri": null
+              }
+            ],
+            "candidate_count": 2,
+            "algorithm_version": "phase2b2-v1",
+            "series": null
+          }
+        ],
+        "candidates": [
+          {
+            "id": "M1",
+            "uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+            "completeness": "complete"
+          },
+          {
+            "id": "M2",
+            "uri": "https://mediaarts-db.artmuseums.go.jp/id/M2",
+            "completeness": null
+          }
+        ],
+        "warnings": [
+          "MADB acquisition failed; candidate evaluation and ISBN uniqueness are incomplete"
+        ],
+        "error": {
+          "kind": "not_found",
+          "message": "synthetic disappeared",
+          "status": null,
+          "retry_after": null
+        },
+        "truncated": false
+      }
+    },
+    "two_exact_then_failure": {
+      "full": {
+        "status": "unavailable",
+        "matches": [
+          {
+            "ndl_id": "R100000002-I025437130",
+            "madb_id": "M1",
+            "confidence": "ambiguous",
+            "reasons": [
+              "direct_ndl_url",
+              "isbn_normalized",
+              "isbn_raw"
+            ],
+            "conflicts": [],
+            "evidence": [
+              {
+                "source": "ndl",
+                "field": "url",
+                "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "raw_value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.url",
+                "transform": "ndl.ndl_record_url",
+                "related_uri": null
+              },
+              {
+                "source": "madb",
+                "field": "url",
+                "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "raw_value": {
+                  "kind": "literal",
+                  "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                  "datatype": null,
+                  "language": null
+                },
+                "record_id": "M1",
+                "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                "predicate_or_path": "https://mediaarts-db.artmuseums.go.jp/data/property#dataUrl",
+                "transform": "ndl.ndl_record_url",
+                "related_uri": null
+              },
+              {
+                "source": "ndl",
+                "field": "isbn",
+                "value": "9784592880714",
+                "raw_value": "9784592880714",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.isbns",
+                "transform": "isbn.isbn13",
+                "related_uri": null
+              },
+              {
+                "source": "madb",
+                "field": "isbn",
+                "value": "9784592880714",
+                "raw_value": {
+                  "kind": "literal",
+                  "value": "9784592880714",
+                  "datatype": null,
+                  "language": null
+                },
+                "record_id": "M1",
+                "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                "predicate_or_path": "https://schema.org/isbn",
+                "transform": "isbn.isbn13",
+                "related_uri": null
+              }
+            ],
+            "candidate_count": 3,
+            "algorithm_version": "phase2b2-v1",
+            "series": null
+          },
+          {
+            "ndl_id": "R100000002-I025437130",
+            "madb_id": "M2",
+            "confidence": "ambiguous",
+            "reasons": [
+              "direct_ndl_url",
+              "isbn_normalized",
+              "isbn_raw"
+            ],
+            "conflicts": [],
+            "evidence": [
+              {
+                "source": "ndl",
+                "field": "url",
+                "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "raw_value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.url",
+                "transform": "ndl.ndl_record_url",
+                "related_uri": null
+              },
+              {
+                "source": "madb",
+                "field": "url",
+                "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "raw_value": {
+                  "kind": "literal",
+                  "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                  "datatype": null,
+                  "language": null
+                },
+                "record_id": "M2",
+                "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M2",
+                "predicate_or_path": "https://mediaarts-db.artmuseums.go.jp/data/property#dataUrl",
+                "transform": "ndl.ndl_record_url",
+                "related_uri": null
+              },
+              {
+                "source": "ndl",
+                "field": "isbn",
+                "value": "9784592880714",
+                "raw_value": "9784592880714",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.isbns",
+                "transform": "isbn.isbn13",
+                "related_uri": null
+              },
+              {
+                "source": "madb",
+                "field": "isbn",
+                "value": "9784592880714",
+                "raw_value": {
+                  "kind": "literal",
+                  "value": "9784592880714",
+                  "datatype": null,
+                  "language": null
+                },
+                "record_id": "M2",
+                "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M2",
+                "predicate_or_path": "https://schema.org/isbn",
+                "transform": "isbn.isbn13",
+                "related_uri": null
+              }
+            ],
+            "candidate_count": 3,
+            "algorithm_version": "phase2b2-v1",
+            "series": null
+          }
+        ],
+        "candidates": [
+          {
+            "id": "M1",
+            "uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+            "completeness": "complete"
+          },
+          {
+            "id": "M2",
+            "uri": "https://mediaarts-db.artmuseums.go.jp/id/M2",
+            "completeness": "complete"
+          },
+          {
+            "id": "M3",
+            "uri": "https://mediaarts-db.artmuseums.go.jp/id/M3",
+            "completeness": null
+          }
+        ],
+        "warnings": [
+          "MADB acquisition failed; candidate evaluation and ISBN uniqueness are incomplete"
+        ],
+        "error": {
+          "kind": "timeout",
+          "message": "synthetic third Book",
+          "status": null,
+          "retry_after": null
+        },
+        "truncated": false
+      },
+      "series_linkage": {
+        "status": "unavailable",
+        "matches": [
+          {
+            "ndl_id": "R100000002-I025437130",
+            "madb_id": "M1",
+            "confidence": "ambiguous",
+            "reasons": [
+              "direct_ndl_url",
+              "isbn_normalized",
+              "isbn_raw"
+            ],
+            "conflicts": [],
+            "evidence": [
+              {
+                "source": "ndl",
+                "field": "url",
+                "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "raw_value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.url",
+                "transform": "ndl.ndl_record_url",
+                "related_uri": null
+              },
+              {
+                "source": "madb",
+                "field": "url",
+                "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "raw_value": {
+                  "kind": "literal",
+                  "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                  "datatype": null,
+                  "language": null
+                },
+                "record_id": "M1",
+                "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                "predicate_or_path": "https://mediaarts-db.artmuseums.go.jp/data/property#dataUrl",
+                "transform": "ndl.ndl_record_url",
+                "related_uri": null
+              },
+              {
+                "source": "ndl",
+                "field": "isbn",
+                "value": "9784592880714",
+                "raw_value": "9784592880714",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.isbns",
+                "transform": "isbn.isbn13",
+                "related_uri": null
+              },
+              {
+                "source": "madb",
+                "field": "isbn",
+                "value": "9784592880714",
+                "raw_value": {
+                  "kind": "literal",
+                  "value": "9784592880714",
+                  "datatype": null,
+                  "language": null
+                },
+                "record_id": "M1",
+                "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                "predicate_or_path": "https://schema.org/isbn",
+                "transform": "isbn.isbn13",
+                "related_uri": null
+              }
+            ],
+            "candidate_count": 3,
+            "algorithm_version": "phase2b2-v1",
+            "series": null
+          },
+          {
+            "ndl_id": "R100000002-I025437130",
+            "madb_id": "M2",
+            "confidence": "ambiguous",
+            "reasons": [
+              "direct_ndl_url",
+              "isbn_normalized",
+              "isbn_raw"
+            ],
+            "conflicts": [],
+            "evidence": [
+              {
+                "source": "ndl",
+                "field": "url",
+                "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "raw_value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.url",
+                "transform": "ndl.ndl_record_url",
+                "related_uri": null
+              },
+              {
+                "source": "madb",
+                "field": "url",
+                "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "raw_value": {
+                  "kind": "literal",
+                  "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                  "datatype": null,
+                  "language": null
+                },
+                "record_id": "M2",
+                "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M2",
+                "predicate_or_path": "https://mediaarts-db.artmuseums.go.jp/data/property#dataUrl",
+                "transform": "ndl.ndl_record_url",
+                "related_uri": null
+              },
+              {
+                "source": "ndl",
+                "field": "isbn",
+                "value": "9784592880714",
+                "raw_value": "9784592880714",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.isbns",
+                "transform": "isbn.isbn13",
+                "related_uri": null
+              },
+              {
+                "source": "madb",
+                "field": "isbn",
+                "value": "9784592880714",
+                "raw_value": {
+                  "kind": "literal",
+                  "value": "9784592880714",
+                  "datatype": null,
+                  "language": null
+                },
+                "record_id": "M2",
+                "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M2",
+                "predicate_or_path": "https://schema.org/isbn",
+                "transform": "isbn.isbn13",
+                "related_uri": null
+              }
+            ],
+            "candidate_count": 3,
+            "algorithm_version": "phase2b2-v1",
+            "series": null
+          }
+        ],
+        "candidates": [
+          {
+            "id": "M1",
+            "uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+            "completeness": "complete"
+          },
+          {
+            "id": "M2",
+            "uri": "https://mediaarts-db.artmuseums.go.jp/id/M2",
+            "completeness": "complete"
+          },
+          {
+            "id": "M3",
+            "uri": "https://mediaarts-db.artmuseums.go.jp/id/M3",
+            "completeness": null
+          }
+        ],
+        "warnings": [
+          "MADB acquisition failed; candidate evaluation and ISBN uniqueness are incomplete"
+        ],
+        "error": {
+          "kind": "timeout",
+          "message": "synthetic third Book",
+          "status": null,
+          "retry_after": null
+        },
+        "truncated": false
+      }
+    },
+    "book_id_mismatch": {
+      "full": {
+        "status": "unavailable",
+        "matches": [],
+        "candidates": [
+          {
+            "id": "M1",
+            "uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+            "completeness": null
+          }
+        ],
+        "warnings": [
+          "MADB acquisition failed; candidate evaluation and ISBN uniqueness are incomplete"
+        ],
+        "error": {
+          "kind": "schema",
+          "message": "Retrieved Book differs from discovered candidate",
+          "status": null,
+          "retry_after": null
+        },
+        "truncated": false
+      },
+      "series_linkage": {
+        "status": "unavailable",
+        "matches": [],
+        "candidates": [
+          {
+            "id": "M1",
+            "uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+            "completeness": null
+          }
+        ],
+        "warnings": [
+          "MADB acquisition failed; candidate evaluation and ISBN uniqueness are incomplete"
+        ],
+        "error": {
+          "kind": "schema",
+          "message": "Retrieved Book differs from discovered candidate",
+          "status": null,
+          "retry_after": null
+        },
+        "truncated": false
+      }
+    },
+    "book_uri_mismatch": {
+      "full": {
+        "status": "unavailable",
+        "matches": [],
+        "candidates": [
+          {
+            "id": "M1",
+            "uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+            "completeness": null
+          }
+        ],
+        "warnings": [
+          "MADB acquisition failed; candidate evaluation and ISBN uniqueness are incomplete"
+        ],
+        "error": {
+          "kind": "schema",
+          "message": "Retrieved Book differs from discovered candidate",
+          "status": null,
+          "retry_after": null
+        },
+        "truncated": false
+      },
+      "series_linkage": {
+        "status": "unavailable",
+        "matches": [],
+        "candidates": [
+          {
+            "id": "M1",
+            "uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+            "completeness": null
+          }
+        ],
+        "warnings": [
+          "MADB acquisition failed; candidate evaluation and ISBN uniqueness are incomplete"
+        ],
+        "error": {
+          "kind": "schema",
+          "message": "Retrieved Book differs from discovered candidate",
+          "status": null,
+          "retry_after": null
+        },
+        "truncated": false
+      }
+    },
+    "duplicate_discovery": {
+      "full": {
+        "status": "matched",
+        "matches": [
+          {
+            "ndl_id": "R100000002-I025437130",
+            "madb_id": "M1",
+            "confidence": "exact",
+            "reasons": [
+              "direct_ndl_url",
+              "isbn_normalized",
+              "isbn_raw",
+              "isbn_10_13_equivalent"
+            ],
+            "conflicts": [],
+            "evidence": [
+              {
+                "source": "ndl",
+                "field": "url",
+                "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "raw_value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.url",
+                "transform": "ndl.ndl_record_url",
+                "related_uri": null
+              },
+              {
+                "source": "madb",
+                "field": "url",
+                "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "raw_value": {
+                  "kind": "literal",
+                  "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                  "datatype": null,
+                  "language": null
+                },
+                "record_id": "M1",
+                "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                "predicate_or_path": "https://mediaarts-db.artmuseums.go.jp/data/property#dataUrl",
+                "transform": "ndl.ndl_record_url",
+                "related_uri": null
+              },
+              {
+                "source": "ndl",
+                "field": "isbn",
+                "value": "9784832241190",
+                "raw_value": "9784832241190",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.isbns",
+                "transform": "isbn.isbn13",
+                "related_uri": null
+              },
+              {
+                "source": "ndl",
+                "field": "isbn",
+                "value": "9784592880714",
+                "raw_value": "9784592880714",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.isbns",
+                "transform": "isbn.isbn13",
+                "related_uri": null
+              },
+              {
+                "source": "ndl",
+                "field": "isbn",
+                "value": "9784592880714",
+                "raw_value": "4-592-88071-4",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.isbns",
+                "transform": "isbn.isbn13",
+                "related_uri": null
+              },
+              {
+                "source": "madb",
+                "field": "isbn",
+                "value": "9784592880714",
+                "raw_value": {
+                  "kind": "literal",
+                  "value": "9784592880714",
+                  "datatype": null,
+                  "language": null
+                },
+                "record_id": "M1",
+                "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                "predicate_or_path": "https://schema.org/isbn",
+                "transform": "isbn.isbn13",
+                "related_uri": null
+              }
+            ],
+            "candidate_count": 1,
+            "algorithm_version": "phase2b2-v1",
+            "series": {
+              "state": "madb_only",
+              "ndl": {
+                "source": "ndl",
+                "field": "series",
+                "value": null,
+                "raw_value": "",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.title",
+                "transform": "mapping.infer_volume",
+                "related_uri": null
+              },
+              "madb": [
+                {
+                  "source": "madb",
+                  "field": "series",
+                  "value": " Series ",
+                  "raw_value": {
+                    "kind": "literal",
+                    "value": " Series ",
+                    "datatype": null,
+                    "language": null
+                  },
+                  "record_id": "M1",
+                  "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                  "predicate_or_path": "https://schema.org/isPartOf / https://schema.org/name",
+                  "transform": null,
+                  "related_uri": "https://mediaarts-db.artmuseums.go.jp/id/C1"
+                }
+              ],
+              "normalized_ndl": null,
+              "normalized_madb": [
+                "Series"
+              ],
+              "relations": [
+                {
+                  "source": "madb",
+                  "field": "series_relation",
+                  "value": "https://mediaarts-db.artmuseums.go.jp/id/C1",
+                  "raw_value": {
+                    "kind": "uri",
+                    "value": "https://mediaarts-db.artmuseums.go.jp/id/C1",
+                    "datatype": null,
+                    "language": null
+                  },
+                  "record_id": "M1",
+                  "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                  "predicate_or_path": "https://schema.org/isPartOf",
+                  "transform": null,
+                  "related_uri": null
+                }
+              ],
+              "ndl_number": {
+                "value": null,
+                "explicit": null,
+                "inferred": null,
+                "conflict": false,
+                "requested": null,
+                "source": null
+              },
+              "warnings": [],
+              "name_classifications": [
+                {
+                  "series_uri": "https://mediaarts-db.artmuseums.go.jp/id/C1",
+                  "display_names": [
+                    {
+                      "source": "madb",
+                      "field": "series",
+                      "value": " Series ",
+                      "raw_value": {
+                        "kind": "literal",
+                        "value": " Series ",
+                        "datatype": null,
+                        "language": null
+                      },
+                      "record_id": "M1",
+                      "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                      "predicate_or_path": "https://schema.org/isPartOf / https://schema.org/name",
+                      "transform": null,
+                      "related_uri": "https://mediaarts-db.artmuseums.go.jp/id/C1"
+                    }
+                  ],
+                  "readings": [],
+                  "other_names": []
+                }
+              ]
+            }
+          }
+        ],
+        "candidates": [
+          {
+            "id": "M1",
+            "uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+            "completeness": "complete"
+          }
+        ],
+        "warnings": [],
+        "error": null,
+        "truncated": false
+      },
+      "series_linkage": {
+        "status": "matched",
+        "matches": [
+          {
+            "ndl_id": "R100000002-I025437130",
+            "madb_id": "M1",
+            "confidence": "exact",
+            "reasons": [
+              "direct_ndl_url",
+              "isbn_normalized",
+              "isbn_raw",
+              "isbn_10_13_equivalent"
+            ],
+            "conflicts": [],
+            "evidence": [
+              {
+                "source": "ndl",
+                "field": "url",
+                "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "raw_value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.url",
+                "transform": "ndl.ndl_record_url",
+                "related_uri": null
+              },
+              {
+                "source": "madb",
+                "field": "url",
+                "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "raw_value": {
+                  "kind": "literal",
+                  "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                  "datatype": null,
+                  "language": null
+                },
+                "record_id": "M1",
+                "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                "predicate_or_path": "https://mediaarts-db.artmuseums.go.jp/data/property#dataUrl",
+                "transform": "ndl.ndl_record_url",
+                "related_uri": null
+              },
+              {
+                "source": "ndl",
+                "field": "isbn",
+                "value": "9784832241190",
+                "raw_value": "9784832241190",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.isbns",
+                "transform": "isbn.isbn13",
+                "related_uri": null
+              },
+              {
+                "source": "ndl",
+                "field": "isbn",
+                "value": "9784592880714",
+                "raw_value": "9784592880714",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.isbns",
+                "transform": "isbn.isbn13",
+                "related_uri": null
+              },
+              {
+                "source": "ndl",
+                "field": "isbn",
+                "value": "9784592880714",
+                "raw_value": "4-592-88071-4",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.isbns",
+                "transform": "isbn.isbn13",
+                "related_uri": null
+              },
+              {
+                "source": "madb",
+                "field": "isbn",
+                "value": "9784592880714",
+                "raw_value": {
+                  "kind": "literal",
+                  "value": "9784592880714",
+                  "datatype": null,
+                  "language": null
+                },
+                "record_id": "M1",
+                "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                "predicate_or_path": "https://schema.org/isbn",
+                "transform": "isbn.isbn13",
+                "related_uri": null
+              }
+            ],
+            "candidate_count": 1,
+            "algorithm_version": "phase2b2-v1",
+            "series": {
+              "state": "madb_only",
+              "ndl": {
+                "source": "ndl",
+                "field": "series",
+                "value": null,
+                "raw_value": "",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.title",
+                "transform": "mapping.infer_volume",
+                "related_uri": null
+              },
+              "madb": [
+                {
+                  "source": "madb",
+                  "field": "series",
+                  "value": " Series ",
+                  "raw_value": {
+                    "kind": "literal",
+                    "value": " Series ",
+                    "datatype": null,
+                    "language": null
+                  },
+                  "record_id": "M1",
+                  "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                  "predicate_or_path": "https://schema.org/isPartOf / https://schema.org/name",
+                  "transform": null,
+                  "related_uri": "https://mediaarts-db.artmuseums.go.jp/id/C1"
+                }
+              ],
+              "normalized_ndl": null,
+              "normalized_madb": [
+                "Series"
+              ],
+              "relations": [
+                {
+                  "source": "madb",
+                  "field": "series_relation",
+                  "value": "https://mediaarts-db.artmuseums.go.jp/id/C1",
+                  "raw_value": {
+                    "kind": "uri",
+                    "value": "https://mediaarts-db.artmuseums.go.jp/id/C1",
+                    "datatype": null,
+                    "language": null
+                  },
+                  "record_id": "M1",
+                  "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                  "predicate_or_path": "https://schema.org/isPartOf",
+                  "transform": null,
+                  "related_uri": null
+                }
+              ],
+              "ndl_number": {
+                "value": null,
+                "explicit": null,
+                "inferred": null,
+                "conflict": false,
+                "requested": null,
+                "source": null
+              },
+              "warnings": [],
+              "name_classifications": [
+                {
+                  "series_uri": "https://mediaarts-db.artmuseums.go.jp/id/C1",
+                  "display_names": [
+                    {
+                      "source": "madb",
+                      "field": "series",
+                      "value": " Series ",
+                      "raw_value": {
+                        "kind": "literal",
+                        "value": " Series ",
+                        "datatype": null,
+                        "language": null
+                      },
+                      "record_id": "M1",
+                      "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                      "predicate_or_path": "https://schema.org/isPartOf / https://schema.org/name",
+                      "transform": null,
+                      "related_uri": "https://mediaarts-db.artmuseums.go.jp/id/C1"
+                    }
+                  ],
+                  "readings": [],
+                  "other_names": []
+                }
+              ]
+            }
+          }
+        ],
+        "candidates": [
+          {
+            "id": "M1",
+            "uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+            "completeness": "complete"
+          }
+        ],
+        "warnings": [],
+        "error": null,
+        "truncated": false
+      }
+    },
+    "conflicting_discovery_uri": {
+      "full": {
+        "status": "matched",
+        "matches": [
+          {
+            "ndl_id": "R100000002-I025437130",
+            "madb_id": "M1",
+            "confidence": "exact",
+            "reasons": [
+              "direct_ndl_url",
+              "isbn_normalized",
+              "isbn_raw",
+              "isbn_10_13_equivalent"
+            ],
+            "conflicts": [],
+            "evidence": [
+              {
+                "source": "ndl",
+                "field": "url",
+                "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "raw_value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.url",
+                "transform": "ndl.ndl_record_url",
+                "related_uri": null
+              },
+              {
+                "source": "madb",
+                "field": "url",
+                "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "raw_value": {
+                  "kind": "literal",
+                  "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                  "datatype": null,
+                  "language": null
+                },
+                "record_id": "M1",
+                "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                "predicate_or_path": "https://mediaarts-db.artmuseums.go.jp/data/property#dataUrl",
+                "transform": "ndl.ndl_record_url",
+                "related_uri": null
+              },
+              {
+                "source": "ndl",
+                "field": "isbn",
+                "value": "9784832241190",
+                "raw_value": "9784832241190",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.isbns",
+                "transform": "isbn.isbn13",
+                "related_uri": null
+              },
+              {
+                "source": "ndl",
+                "field": "isbn",
+                "value": "9784592880714",
+                "raw_value": "9784592880714",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.isbns",
+                "transform": "isbn.isbn13",
+                "related_uri": null
+              },
+              {
+                "source": "ndl",
+                "field": "isbn",
+                "value": "9784592880714",
+                "raw_value": "4-592-88071-4",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.isbns",
+                "transform": "isbn.isbn13",
+                "related_uri": null
+              },
+              {
+                "source": "madb",
+                "field": "isbn",
+                "value": "9784592880714",
+                "raw_value": {
+                  "kind": "literal",
+                  "value": "9784592880714",
+                  "datatype": null,
+                  "language": null
+                },
+                "record_id": "M1",
+                "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                "predicate_or_path": "https://schema.org/isbn",
+                "transform": "isbn.isbn13",
+                "related_uri": null
+              }
+            ],
+            "candidate_count": 1,
+            "algorithm_version": "phase2b2-v1",
+            "series": {
+              "state": "madb_only",
+              "ndl": {
+                "source": "ndl",
+                "field": "series",
+                "value": null,
+                "raw_value": "",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.title",
+                "transform": "mapping.infer_volume",
+                "related_uri": null
+              },
+              "madb": [
+                {
+                  "source": "madb",
+                  "field": "series",
+                  "value": " Series ",
+                  "raw_value": {
+                    "kind": "literal",
+                    "value": " Series ",
+                    "datatype": null,
+                    "language": null
+                  },
+                  "record_id": "M1",
+                  "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                  "predicate_or_path": "https://schema.org/isPartOf / https://schema.org/name",
+                  "transform": null,
+                  "related_uri": "https://mediaarts-db.artmuseums.go.jp/id/C1"
+                }
+              ],
+              "normalized_ndl": null,
+              "normalized_madb": [
+                "Series"
+              ],
+              "relations": [
+                {
+                  "source": "madb",
+                  "field": "series_relation",
+                  "value": "https://mediaarts-db.artmuseums.go.jp/id/C1",
+                  "raw_value": {
+                    "kind": "uri",
+                    "value": "https://mediaarts-db.artmuseums.go.jp/id/C1",
+                    "datatype": null,
+                    "language": null
+                  },
+                  "record_id": "M1",
+                  "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                  "predicate_or_path": "https://schema.org/isPartOf",
+                  "transform": null,
+                  "related_uri": null
+                }
+              ],
+              "ndl_number": {
+                "value": null,
+                "explicit": null,
+                "inferred": null,
+                "conflict": false,
+                "requested": null,
+                "source": null
+              },
+              "warnings": [],
+              "name_classifications": [
+                {
+                  "series_uri": "https://mediaarts-db.artmuseums.go.jp/id/C1",
+                  "display_names": [
+                    {
+                      "source": "madb",
+                      "field": "series",
+                      "value": " Series ",
+                      "raw_value": {
+                        "kind": "literal",
+                        "value": " Series ",
+                        "datatype": null,
+                        "language": null
+                      },
+                      "record_id": "M1",
+                      "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                      "predicate_or_path": "https://schema.org/isPartOf / https://schema.org/name",
+                      "transform": null,
+                      "related_uri": "https://mediaarts-db.artmuseums.go.jp/id/C1"
+                    }
+                  ],
+                  "readings": [],
+                  "other_names": []
+                }
+              ]
+            }
+          }
+        ],
+        "candidates": [
+          {
+            "id": "M1",
+            "uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+            "completeness": "complete"
+          }
+        ],
+        "warnings": [],
+        "error": null,
+        "truncated": false
+      },
+      "series_linkage": {
+        "status": "matched",
+        "matches": [
+          {
+            "ndl_id": "R100000002-I025437130",
+            "madb_id": "M1",
+            "confidence": "exact",
+            "reasons": [
+              "direct_ndl_url",
+              "isbn_normalized",
+              "isbn_raw",
+              "isbn_10_13_equivalent"
+            ],
+            "conflicts": [],
+            "evidence": [
+              {
+                "source": "ndl",
+                "field": "url",
+                "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "raw_value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.url",
+                "transform": "ndl.ndl_record_url",
+                "related_uri": null
+              },
+              {
+                "source": "madb",
+                "field": "url",
+                "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "raw_value": {
+                  "kind": "literal",
+                  "value": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                  "datatype": null,
+                  "language": null
+                },
+                "record_id": "M1",
+                "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                "predicate_or_path": "https://mediaarts-db.artmuseums.go.jp/data/property#dataUrl",
+                "transform": "ndl.ndl_record_url",
+                "related_uri": null
+              },
+              {
+                "source": "ndl",
+                "field": "isbn",
+                "value": "9784832241190",
+                "raw_value": "9784832241190",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.isbns",
+                "transform": "isbn.isbn13",
+                "related_uri": null
+              },
+              {
+                "source": "ndl",
+                "field": "isbn",
+                "value": "9784592880714",
+                "raw_value": "9784592880714",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.isbns",
+                "transform": "isbn.isbn13",
+                "related_uri": null
+              },
+              {
+                "source": "ndl",
+                "field": "isbn",
+                "value": "9784592880714",
+                "raw_value": "4-592-88071-4",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.isbns",
+                "transform": "isbn.isbn13",
+                "related_uri": null
+              },
+              {
+                "source": "madb",
+                "field": "isbn",
+                "value": "9784592880714",
+                "raw_value": {
+                  "kind": "literal",
+                  "value": "9784592880714",
+                  "datatype": null,
+                  "language": null
+                },
+                "record_id": "M1",
+                "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                "predicate_or_path": "https://schema.org/isbn",
+                "transform": "isbn.isbn13",
+                "related_uri": null
+              }
+            ],
+            "candidate_count": 1,
+            "algorithm_version": "phase2b2-v1",
+            "series": {
+              "state": "madb_only",
+              "ndl": {
+                "source": "ndl",
+                "field": "series",
+                "value": null,
+                "raw_value": "",
+                "record_id": "R100000002-I025437130",
+                "record_uri": "https://ndlsearch.ndl.go.jp/books/R100000002-I025437130",
+                "predicate_or_path": "BookRecord.title",
+                "transform": "mapping.infer_volume",
+                "related_uri": null
+              },
+              "madb": [
+                {
+                  "source": "madb",
+                  "field": "series",
+                  "value": " Series ",
+                  "raw_value": {
+                    "kind": "literal",
+                    "value": " Series ",
+                    "datatype": null,
+                    "language": null
+                  },
+                  "record_id": "M1",
+                  "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                  "predicate_or_path": "https://schema.org/isPartOf / https://schema.org/name",
+                  "transform": null,
+                  "related_uri": "https://mediaarts-db.artmuseums.go.jp/id/C1"
+                }
+              ],
+              "normalized_ndl": null,
+              "normalized_madb": [
+                "Series"
+              ],
+              "relations": [
+                {
+                  "source": "madb",
+                  "field": "series_relation",
+                  "value": "https://mediaarts-db.artmuseums.go.jp/id/C1",
+                  "raw_value": {
+                    "kind": "uri",
+                    "value": "https://mediaarts-db.artmuseums.go.jp/id/C1",
+                    "datatype": null,
+                    "language": null
+                  },
+                  "record_id": "M1",
+                  "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                  "predicate_or_path": "https://schema.org/isPartOf",
+                  "transform": null,
+                  "related_uri": null
+                }
+              ],
+              "ndl_number": {
+                "value": null,
+                "explicit": null,
+                "inferred": null,
+                "conflict": false,
+                "requested": null,
+                "source": null
+              },
+              "warnings": [],
+              "name_classifications": [
+                {
+                  "series_uri": "https://mediaarts-db.artmuseums.go.jp/id/C1",
+                  "display_names": [
+                    {
+                      "source": "madb",
+                      "field": "series",
+                      "value": " Series ",
+                      "raw_value": {
+                        "kind": "literal",
+                        "value": " Series ",
+                        "datatype": null,
+                        "language": null
+                      },
+                      "record_id": "M1",
+                      "record_uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+                      "predicate_or_path": "https://schema.org/isPartOf / https://schema.org/name",
+                      "transform": null,
+                      "related_uri": "https://mediaarts-db.artmuseums.go.jp/id/C1"
+                    }
+                  ],
+                  "readings": [],
+                  "other_names": []
+                }
+              ]
+            }
+          }
+        ],
+        "candidates": [
+          {
+            "id": "M1",
+            "uri": "https://mediaarts-db.artmuseums.go.jp/id/M1",
+            "completeness": "complete"
+          }
+        ],
+        "warnings": [],
+        "error": null,
+        "truncated": false
+      }
+    }
+  }
+}

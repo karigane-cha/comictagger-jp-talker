@@ -14,7 +14,7 @@ from comicapi.genericmetadata import GenericMetadata
 from comictaggerlib.ctsettings.plugin import register_talker_settings
 from test_linkage import ISBN, OTHER_URL, URL, bundle, literal, record, resource_bytes
 
-from comictagger_jp_talker import series_supplement
+from comictagger_jp_talker import metadata_supplement, series_supplement
 from comictagger_jp_talker.linkage import MatchConfidence, compare_candidates
 from comictagger_jp_talker.mapping import to_metadata
 from comictagger_jp_talker.models import SearchPage
@@ -142,7 +142,7 @@ def test_all_talker_paths_no_source_creation(talker, monkeypatch, enabled, title
     talker.source.get.return_value = ndl
     talker.madb_series_supplement = enabled
     forbidden = Mock(side_effect=AssertionError("No MADB source should be constructed"))
-    monkeypatch.setattr(series_supplement, "MADBSource", forbidden)
+    monkeypatch.setattr(metadata_supplement, "MADBSource", forbidden)
     assert talker.search_for_series("ISBN: " + ISBN)
     assert talker.search_metadata(GenericMetadata(series="作品名"))
     assert talker.fetch_series(ndl.id)
@@ -159,7 +159,7 @@ def test_opt_in_candidate_search_with_missing_series_is_ndl_only(talker, monkeyp
     talker.source.search.return_value = SearchPage([record(title="")], 1)
     talker.source.get.return_value = record(title="")
     forbidden = Mock(side_effect=AssertionError("Search must not construct MADBSource"))
-    monkeypatch.setattr(series_supplement, "MADBSource", forbidden)
+    monkeypatch.setattr(metadata_supplement, "MADBSource", forbidden)
     assert talker.search_for_series(ISBN)
     assert talker.fetch_series("selected")
     forbidden.assert_not_called()
@@ -348,7 +348,7 @@ def test_fail_open_through_transport(talker, monkeypatch, caplog, stage, kind):
 def test_source_constructor_fail_open(tmp_path, monkeypatch, caplog, failure):
     ndl = record(title="")
     metadata = to_metadata(ndl)
-    monkeypatch.setattr(series_supplement, "MADBSource", Mock(side_effect=failure))
+    monkeypatch.setattr(metadata_supplement, "MADBSource", Mock(side_effect=failure))
     assert series_supplement.supplement_series(metadata, ndl, tmp_path, enabled=True) is metadata
     assert "retaining NDL metadata" in caplog.text
 
@@ -362,7 +362,7 @@ def test_source_closed_on_success_and_failure(tmp_path, monkeypatch):
         sources.append(source)
         return source
 
-    monkeypatch.setattr(series_supplement, "MADBSource", factory)
+    monkeypatch.setattr(metadata_supplement, "MADBSource", factory)
     ndl = record(title="")
     assert (
         series_supplement.supplement_series(to_metadata(ndl), ndl, tmp_path, enabled=True).series == "作品名"

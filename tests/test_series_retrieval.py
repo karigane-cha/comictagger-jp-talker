@@ -141,7 +141,7 @@ def test_supplement_actual_source_has_no_agent_or_holding_requests(tmp_path, mon
         sources.append(value)
         return value
 
-    monkeypatch.setattr("comictagger_jp_talker.series_supplement.MADBSource", factory)
+    monkeypatch.setattr("comictagger_jp_talker.metadata_supplement.MADBSource", factory)
     ndl = BookRecord(
         "R100000002-Itest", "", "https://ndlsearch.ndl.go.jp/books/R100000002-Itest", isbns=["9784592880714"]
     )

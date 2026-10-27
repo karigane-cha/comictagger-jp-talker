@@ -18,8 +18,8 @@ from comictagger_jp_talker.errors import copyable_errors, report_error
 from comictagger_jp_talker.isbn import isbn_from_gtin, normalize_isbn
 from comictagger_jp_talker.mapping import infer_volume, resolve_record_number, to_metadata, to_series
 from comictagger_jp_talker.mapping import issue_number as normalize_issue
+from comictagger_jp_talker.metadata_supplement import supplement_metadata
 from comictagger_jp_talker.models import SearchPage, SearchQuery
-from comictagger_jp_talker.series_supplement import supplement_series
 from comictagger_jp_talker.sources.base import BookSource
 from comictagger_jp_talker.sources.ndl import ENDPOINT, NDLSource
 
@@ -316,7 +316,9 @@ class JapaneseBooksTalker(ComicTalker):
             volume_output=self.volume_output,
             date_source=self.date_source,
         )
-        return supplement_series(metadata, record, self.cache_folder, enabled=self.madb_series_supplement)
+        return supplement_metadata(
+            metadata, record, self.cache_folder, series_enabled=self.madb_series_supplement
+        )
 
     @copyable_errors
     def fetch_issues_by_series_issue_num_and_year(
