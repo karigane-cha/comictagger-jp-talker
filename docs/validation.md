@@ -8,7 +8,7 @@
 - **Imprint 診断は READ_ONLY**。R1 report、R2 CLI、R3 の独立 Wheel 方式を実装・検証している。診断完了や候補の一致は保存許可ではない。
 - **MADB Series 補完は opt-in / default OFF**。NDL 由来の既存 Series を無条件に上書きしない。
 - Python パッケージの要件は **3.12 以上**。CI は Ubuntu 24.04 / 3.12・3.13 と Windows / 3.14 のテストを設定し、build / Release は Windows / 3.14 を使う。
-- Windows / Python 3.14.10 のローカル実測は記録済み。**現在の構成での GitHub Actions 実ジョブは NOT RUN**。Ubuntu / 3.13.18 以上の実行と Windows 配布版 ComicTagger.exe の実画面操作も未確認。
+- Windows / Python 3.14.10 のローカル実測は記録済み。GitHub Actions では Ubuntu / 3.12・3.13 の pytest が失敗し、Windows / 3.14 の test は成功、build はスキップされた。**Qt ランタイム ライブラリ追加後の実ジョブは未確認**。Windows 配布版 ComicTagger.exe の実画面操作も未確認。
 
 根拠の種類は次のとおり。
 
@@ -23,12 +23,14 @@
 
 現在の [pyproject.toml](../pyproject.toml) は `requires-python = ">=3.12"`、Ruff の `target-version = "py312"`。Python 3.10 / 3.11 は本プロジェクトのサポート対象外であり、3.11 の除外はプロジェクト側の判断である。package metadata の下限だけでは、各系列の古いパッチ版を拒否できない。
 
-| 用途 | OS | Python 系列 | CI の最低セキュリティ版 | 実ジョブ |
+| 用途 | OS | Python 系列 | CI の最低セキュリティ版 | 実ジョブ（修正前） |
 |---|---|---|---|---|
-| test | Ubuntu 24.04 | 3.12 | 3.12.16 | NOT RUN |
-| test | Ubuntu 24.04 | 3.13 | 3.13.18 | NOT RUN |
-| test | Windows | 3.14 | 3.14.10 | NOT RUN |
-| build / Release | Windows | 3.14 | 3.14.10 | NOT RUN |
+| test | Ubuntu 24.04 | 3.12 | 3.12.16 | 失敗 |
+| test | Ubuntu 24.04 | 3.13 | 3.13.18 | 失敗 |
+| test | Windows | 3.14 | 3.14.10 | 成功 |
+| build / Release | Windows | 3.14 | 3.14.10 | build はスキップ、Release は未確認 |
+
+[GitHub Actions run 40836015773](https://github.com/karigane-cha/comictagger-jp-talker/actions/runs/40836015773) では、Ubuntu の両系列で Python runtime、pip / certifi のセキュリティ検証、`pip check`、Ruff は成功したが、PyQt6 の import 時に `libEGL.so.1` が見つからず pytest が失敗した。各結果は **3,036 passed / 16 failed / 3 errors / 12 skipped / 13 deselected / 1 xfailed**。修正として Linux ジョブに `libegl1` と `libgl1` の導入、および pytest 前の PyQt6 offscreen 初期化確認を追加した。修正後の各実ジョブの成否は未確認。
 
 [test workflow](../.github/workflows/test.yml) は明示的な matrix を使い、[Release workflow](../.github/workflows/release.yml) は Windows / 3.14 を使用する。両 workflow と build ジョブは、`setup-python` の後、pip bootstrap と依存導入の前に [runtime 検証](../.github/scripts/verify-python-runtime.py) を実行する。期待系列の不一致、最低版未達、安定版以外を拒否する。検証器は 3.15.2 以上も扱うが、3.15 の CI や互換性は未検証。
 
@@ -129,7 +131,7 @@ A / B / C の各全体試験には sdist 読取時の **PermissionError 1 件**�
 
 ## 既知の制約・未解決事項
 
-- Ubuntu / 3.12.16 以上・3.13.18 以上の実 runner で、PowerShell bootstrap、依存導入、PyICU / GUI、全体回帰は未確認。Windows / 3.14 の現在の Actions build / Release も未確認。
+- Qt ランタイム ライブラリ追加後の Ubuntu / 3.12・3.13 での GUI と全体回帰、および Windows / 3.14 の Actions build / Release は未確認。
 - Windows 配布版 ComicTagger.exe の同梱 Python の実パッチと更新状態、実画面での ZIP と独立診断の共存は未確認。独立 venv を更新しても host の Python は更新されない。
 - Imprint authority の真正性・独立性・対象範囲・失効と、host の既存値保護・条件付き保存・検証が未解決。自動補完の NO-GO は維持する。
 - 診断は全 evidence を出力するため、大量の候補でメモリと出力が増え得る。source constructor 内の部分初期化や close の制限は [R2 の制限](phase2c2c_imprint_diagnostics.md#6-resource-close-と中断) を参照。

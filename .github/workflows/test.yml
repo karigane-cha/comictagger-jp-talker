@@ -34,6 +34,12 @@ jobs:
       - name: Verify Python security baseline
         run: python .github/scripts/verify-python-runtime.py '${{ matrix.python-version }}'
 
+      - name: Install Qt runtime libraries
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends libegl1 libgl1
+
       - name: Bootstrap secure pip
         shell: pwsh
         run: ./.github/scripts/bootstrap-pip.ps1
@@ -45,6 +51,13 @@ jobs:
 
       - name: Check installed dependencies
         run: python -m pip check
+
+      - name: Verify PyQt6 offscreen runtime
+        if: runner.os == 'Linux'
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: |
+          python -c "from PyQt6 import QtCore, QtWidgets, uic; from comictaggerlib.autotagprogresswindow import AutoTagThread; app = QtWidgets.QApplication([]); print('PyQt6 offscreen OK')"
 
       - run: python -m ruff check .
 
