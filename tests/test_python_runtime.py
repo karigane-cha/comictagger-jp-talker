@@ -25,6 +25,10 @@ verify_runtime = RUNTIME["verify_runtime"]
         ((3, 12, 17, "final", 0), (3, 12), True),
         ((3, 13, 17, "final", 0), (3, 13), False),
         ((3, 13, 18, "final", 0), (3, 13), True),
+        ((3, 13, 19, "final", 0), (3, 13), True),
+        ((3, 12, 16, "final", 0), (3, 13), False),
+        ((3, 14, 10, "final", 0), (3, 13), False),
+        ((3, 13, 18, "candidate", 1), (3, 13), False),
         ((3, 14, 9, "final", 0), (3, 14), False),
         ((3, 14, 10, "final", 0), (3, 14), True),
         ((3, 14, 11, "final", 0), (3, 14), True),
@@ -57,6 +61,35 @@ def test_real_interpreter_rejected_for_another_series():
     assert result.returncode != 0
     assert str(sys.version_info.major) + "." + str(sys.version_info.minor) in result.stdout
     assert "is required" in result.stderr
+
+
+def test_ci_matrix_and_windows_build_series():
+    workflow = yaml.safe_load((ROOT / ".github/workflows/test.yml").read_text(encoding="utf-8"))
+    test_job = workflow["jobs"]["test"]
+    assert test_job["runs-on"] == "${{ matrix.os }}"
+    assert test_job["strategy"]["matrix"] == {
+        "include": [
+            {"os": "ubuntu-24.04", "python-version": "3.12"},
+            {"os": "ubuntu-24.04", "python-version": "3.13"},
+            {"os": "windows-latest", "python-version": "3.14"},
+        ]
+    }
+    setup = next(
+        step for step in test_job["steps"] if step.get("uses", "").startswith("actions/setup-python@")
+    )
+    verify = next(step for step in test_job["steps"] if step.get("name") == "Verify Python security baseline")
+    assert setup["with"]["python-version"] == "${{ matrix.python-version }}"
+    assert verify["run"] == "python .github/scripts/verify-python-runtime.py '${{ matrix.python-version }}'"
+
+    release = yaml.safe_load((ROOT / ".github/workflows/release.yml").read_text(encoding="utf-8"))
+    for job in (workflow["jobs"]["build"], release["jobs"]["release"]):
+        setup = next(
+            step for step in job["steps"] if step.get("uses", "").startswith("actions/setup-python@")
+        )
+        verify = next(step for step in job["steps"] if step.get("name") == "Verify Python security baseline")
+        assert job["runs-on"] == "windows-latest"
+        assert setup["with"]["python-version"] == "3.14"
+        assert verify["run"] == "python .github/scripts/verify-python-runtime.py 3.14"
 
 
 @pytest.mark.parametrize(
