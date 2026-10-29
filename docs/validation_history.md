@@ -2533,3 +2533,172 @@ git diff --check
 
 変更は引き続き未ステージ。git add / commit / push / tag、GitHub Release と Pull Request の作成、
 GitHub Actions の手動実行、既存変更を破棄する Git 操作は行っていない。
+
+## 文書統合時の補足検証と CI 失敗記録（2026-10-29 整理前）
+
+2026-10-28 の CI 追加と後続の文書統合時の検証記録。コミット `942691f` 時点の `validation.md` を基準とし、I1 / I2 とは別工程の結果として保持する。
+
+### Qt 修正前の CI 実ジョブ
+
+[GitHub Actions run 40836015773](https://github.com/karigane-cha/comictagger-jp-talker/actions/runs/40836015773) では、Ubuntu の両系列で Python runtime、pip / certifi のセキュリティ検証、`pip check`、Ruff は成功したが、PyQt6 の import 時に `libEGL.so.1` が見つからず pytest が失敗した。各結果は **3,036 passed / 16 failed / 3 errors / 12 skipped / 13 deselected / 1 xfailed**。修正として Linux ジョブに `libegl1` と `libgl1` の導入、および pytest 前の PyQt6 offscreen 初期化確認を追加した。修正後の各実ジョブの成否は未確認。
+
+### 文書統合前後のローカル結果
+
+以下は **2026-10-28 の Python 3.13 CI 追加時までに記録された結果**。表の先頭 3 行は手動検証の報告値であり、実行ログは未確認。後半のローカル検証記録や CI 実ジョブとは区別する。
+
+| 時点・環境 | 検証と結果 | 根拠・範囲 |
+|---|---|---|
+| 3.13 CI 追加前、Windows / Python 3.14.10 | 関連 pytest **241 passed** | runtime / packaging / diagnostics とされるが、対象内訳の裏付けは未確認 |
+| 同上 | 非 network 全体 **3,062 passed / 13 deselected / 1 xfailed**、Ruff check / format 成功 | 関連試験とは別の集計 |
+| 同上 | 隔離 build で sdist / Wheel を生成し、`scripts/build_plugin.py` で plugin ZIP を作成。Wheel の `Requires-Python >=3.12`、独立 venv への導入と CLI `--help` / `--version` 成功 | Wheel と ZIP の bytes / SHA-256 は一致 |
+| 3.13 CI 追加後、Windows / Python 3.14.10 | runtime / matrix テスト **28 passed**、Ruff check / format と test workflow の actionlint 成功 | ローカル記録。全体 pytest と配布物は再実行していない |
+| 3.13 CI 追加後、Windows / Python 3.12.14 | 同じ runtime / matrix テスト **28 passed** と Ruff 成功 | 補助確認。3.12.16 未満のためセキュリティ受入ではない |
+| 3.13 CI 追加前、Windows / Python 3.12.14 | 非 network 全体 **3,062 passed / 13 deselected / 1 xfailed** | 別環境での旧記録。上記 3.14.10 の報告とは別の実測 |
+
+後続の文書統合時のローカル検証では、Windows / Python 3.14.10 の既存セキュリティ用 venv で runtime、pip **26.2.2**、pip 同梱 certifi **2026.10.19**、独立 certifi **2026.10.23** の検査と `pip check` が成功した。先行する `pip check` 成功の報告については、実行ログ未確認。
+
+同じローカル検証で、既存の独立診断用 venv をリポジトリ外から `-I` で起動し、Python 3.14.10 と `site-packages` からの import、CLI の `--help` および `--version` **0.3.0** を確認した。導入記録の Wheel ハッシュは下表の旧試験用 Wheel と一致する。新規 build の検証ではない。
+
+3.13.17 / 3.13.18 / 3.13.19 の境界値テストは version 判定の単体試験であり、Python 3.13.18 を実際に起動した証拠ではない。既知の `xfail` は ComicTagger 1.6.0b9 の CIX writer による整数 `Volume=0` の省略。`13 deselected` はネットワーク試験の除外であり、過去の `13 skipped` と混同しない。
+
+3.14.9 の旧環境が起動できなかったこと、当初の 3.14.10 未実施判定、および sandbox 内の権限問題は [履歴](#python-サポート方針2026-年-10-月セキュリティ更新) と [後続の確認](#ubuntu--python-313-の-ci-設定追加2026-10-28) に残している。
+
+### 旧試験用 0.3.0 配布物の確認
+
+2026-10-28 にローカルで生成された **試験用**成果物の SHA-256 は以下のとおり。公開 Release の成果物のハッシュではない。文書統合時に保存済みの 3 ファイルを読み取り、これらの値との一致を確認した。
+
+| 成果物 | SHA-256 |
+|---|---|
+| `comictagger_jp_talker-0.3.0.tar.gz` | `626d9c3701d765ea43619e1a086552f33b416f17c5b705ca4bc0bfe814d55579` |
+| `comictagger_jp_talker-0.3.0-py3-none-any.whl` | `49657a48922eb6b8fa95ca30015fcd6d3d2b05910fb60b28996525908bdf0cc6` |
+| `jpbooks_talker-plugin-0.3.0.zip` | `49657a48922eb6b8fa95ca30015fcd6d3d2b05910fb60b28996525908bdf0cc6` |
+
+Wheel / ZIP の生成契約と用途は [配布物の検証](validation.md#配布物の検証)、導入先ごとの手順は [配布ガイド](phase2c2c_imprint_distribution_r3.md) を参照する。
+
+[MANIFEST.in](../MANIFEST.in) の `recursive-include docs *.md` は source tree に存在する両方の検証文書を sdist に収録する設定である。保存済みの上記 sdist を調べたところ、旧 `validation.md` は含まれるが、`validation_history.md` と整理案は含まれない。今後の sdist に履歴を含めるには、その build の source tree に履歴ファイルが必要であり、GitHub Actions では checkout 対象になっている必要がある。
+
+同じ 0.3.0 でも build 時点によって内容は異なる。文書編集後に build した sdist や将来の公開成果物に、上表のハッシュを流用しない。2026-10-26 と 10-27 の異なる試験用ハッシュも [R3 履歴](#phase-2c-2c-4r3wheel--python--m-配布実環境利用の受入2026-10-26) と [レビュー後の履歴](#phase-2c-2c-4r3レビュー後の文書改善cli-英語化2026-10-26) に保持している。
+
+## I1：NDL HTTP 429 診断強化（2026-10-29）
+
+### 実装と署名付きコミット
+
+基準は v0.4.0 の `755b2c56190bf6772bd29de98ba676f253ec208f`。`feat/ndl-http-diagnostics-i1` で実装し、コミット `942691f7f31e3f37d167dcfe24446d1eb788b5d7`、メッセージ `feat: add opt-in NDL HTTP diagnostics` として確定した。署名方式は SSH / ED25519、`git verify-commit HEAD` は I1 コミット確定時に PASS。I2 記録時点で `main` には未マージである。
+
+再現コマンドは固定コミット ID を指定する。確定時の検証とは別の再実行結果は未記録。
+
+```powershell
+git verify-commit 942691f7f31e3f37d167dcfe24446d1eb788b5d7
+```
+
+対象は次の 6 ファイル。検証成果物・実機ログはコミットに含めていない。
+
+- `comictagger_jp_talker/http_diagnostics.py`：診断コンテキスト、ID、安全なヘッダー解析。
+- `comictagger_jp_talker/talker.py`：公開操作と条件緩和段階の識別。
+- `comictagger_jp_talker/sources/ndl.py`：HTTP、キャッシュ、limiter / lock 待機の診断。
+- `comictagger_jp_talker/errors.py`：HTTP 失敗報告のプライバシー保護。
+- `tests/test_http_diagnostics.py`：診断・並行実行・安全性のオフライン試験。
+- `docs/ndl_http_diagnostics_i1.md`：診断仕様と Windows 実測手順。
+
+`JPBOOKS_HTTP_DIAGNOSTICS=1` の場合だけ詳細診断を有効にし、環境変数は import 時に固定する。既定 OFF。Correlation ID / Request ID、API、cache、status、elapsed、limiter / lock 待機を記録する。Retry-After / Date だけを長さ制限付きで解析し、検索 URL、CQL、ISBN、Cookie、認証値、外部例外の自由文、不要な個人用パスを追加診断と HTTP 失敗報告へ出さない。root logger と他の logger、handler を変更せず、本体の標準ログを使う。
+
+観測専用であり、通信数・制御、`RequestRate(1, 2)`、SRU `(5, 60)` / Summary `(5, 15)` の timeout、Session の利用方法、キャッシュキー・期限・refresh、CQL・条件緩和順序、検索結果の並び順・`rank_records()`・書誌マッピングは変更していない。自動リトライと SRU クールダウンは追加していない。TalkerNetworkError の型・sub_code・元例外の `__cause__`、Series / Imprint の契約を維持する。
+
+### 実行済みのオフライン検証
+
+以下は I1 実装時の Windows / Python **3.14.10** による結果。コミット対象の 6 ファイルと検証済み隔離ソースの一致を確認している。
+
+| 対象 | 結果 |
+|---|---|
+| 新規 HTTP 診断 | **68 passed** |
+| 既存 NDL / error | **60 passed / 7 passed** |
+| その他の重点試験 | **113 passed**。重点全体は **248 passed** |
+| ビルド後の非 network 全体 | **3,135 passed / 0 skipped / 13 deselected / 1 xfailed** |
+| packaging | **12 passed**。I1 の隔離成果物を参照 |
+| Ruff check / format | **PASS** |
+| runtime / pip / certifi、`pip check` | **PASS** |
+| 差分・ステージ照合 | 指定 6 ファイルのみ、追加 1,297 行・削除 54 行。`git diff --check`、cached diff check は PASS |
+
+13 deselected は実通信試験の除外。1 xfailed は既知の ComicTagger 1.6.0b9 CIX writer の整数 Volume 0 省略であり、新規失敗ではない。保存済みの I1 JUnit XML で `tests=3136` / `failures=0` / `errors=0` / `skipped=1` を確認した。唯一の skipped は `test_zero_volume_is_written_as_zero_in_cix` の `type="pytest.xfail"` で、この既知 xfail に対応する。pytest の通常 skip は 0 件であり、JUnit の skipped と同じ分類ではない。
+
+429 → 次操作の 200、refresh の 429 → 次操作の HIT、条件緩和、例外チェーン、プライバシー、同時実行を mock / fake clock で検証した。HTTP 200 と `http_calls=0` を区別し、既存ログ・時計呼び出し回数の assertion は変更していない。ComicTagger 1.6.0b9 の既存ファイル handler へ DEBUG が到達することと、root WARNING・handler 非追加を確認した。これらは実 NDL 通信による 429 検証ではない。
+
+### 隔離配布物
+
+保存済みビルド依存を RECORD のハッシュで検証し、ネットワーク取得なしの隔離環境で sdist / Wheel を生成した。既存 `scripts/build_plugin.py` で Wheel から plugin ZIP を作成。正準バージョンは **0.4.0** のままだが、正式公開済み v0.4.0 とは異なる診断用ローカルビルドである。
+
+| I1 の成果物 | SHA-256 |
+|---|---|
+| `comictagger_jp_talker-0.4.0.tar.gz` | `48d453e7b4043adaf201030e62f447cd0b98f99f35440e7641592264d22edc84` |
+| `comictagger_jp_talker-0.4.0-py3-none-any.whl` | `c4f0edc08812011bc6fccae476d7d8c9431ac21fabbe2991307e432115cf0e6e` |
+| `jpbooks_talker-plugin-0.4.0.zip` | `c4f0edc08812011bc6fccae476d7d8c9431ac21fabbe2991307e432115cf0e6e` |
+
+Name、Version、`Requires-Python >=3.12`、entry point と production Python **26 ファイル**の集合・bytes を照合し、新規モジュールの収録、ZIP の正常性、tests / pyc の非収録を確認した。sdist にはビルド時点の両検証文書を含む。ビルド後に追記された I2 記録はその成果物に含まれない。
+
+本体ローダーによる ZIP 読み込みを診断 ON/OFF の両方で検証した。ローダーの path cleanup 後に保持された ZIP 内のクラスと診断モジュールを確認し、editable install の再 import と混同しないようにした。各モードの fake HTTP は 9 件で同数。既存の `dist/` は変更せず、正式公開 ZIP を置換・公開していない。詳細な使い方は [I1 診断ガイド](ndl_http_diagnostics_i1.md) を参照する。
+
+## I2：Windows GUI 実測（2026-10-29）
+
+### 環境・情報源・確認範囲
+
+Windows GUI で通常検索・書誌取得を手動検証した記録。対象は後に `942691f` として確定した I1 実装。保存済みの 3 ログ原本を読み取り専用で解析し、報告された集計・応答時間との一致を確認した。解析時の新規実通信は未実施。
+
+| 項目 | 値と根拠 |
+|---|---|
+| OS | Windows 11（環境情報の報告値。ログ上は Windows） |
+| ComicTagger | **1.6.0b9**。3 起動のログで確認 |
+| Python | **3.14 系**（環境情報の報告値。GUI ホストのパッチ版は未確認） |
+| Plugin | **I1 診断ビルド v0.4.0**。ZIP の読み込み記録を確認。正式公開済み v0.4.0 と区別する |
+| 診断設定 | `JPBOOKS_HTTP_DIAGNOSTICS=1`。3 起動に `NDL diagnostics enabled:` が各 1 件 |
+| API / 操作 | NDL Search SRU / Summary、通常の GUI 検索・書誌取得 |
+| 日時 | **2026-10-29 JST**、3 起動分 |
+| 配布方式の境界 | Python パッケージ版（全起動に **`PyInstaller: No`**）。Windows 配布版 exe の同梱 Python や保存境界の確認とは区別する |
+
+原本の同一性を照合できるよう、起動順の番号と SHA-256 を保持する。ログ原本・個人用パス・検索内容は公開対象に含めない。
+
+| 起動 | 原本の SHA-256 |
+|---|---|
+| 1 | `6e756ca28b0f688bc044fcd76abb0c4c0b969ef1f652a7a5cdc7f9a618f4f76e` |
+| 2 | `8d0d78cb592d0b12ab0a08ff26aed4aa0cde5cf58fff271cffcce91ffa2b5deb` |
+| 3 | `9400f8cc8f7605312c33b02a28ff91355b547ae7b3e4e1a348ebf936839b2869` |
+
+### 起動別の集計
+
+| 起動 | 公開操作 | SRU HTTP | Summary HTTP | HTTP 200 | HTTP 429 | `http_calls=0` の操作 | 成功操作 |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| 1 | 16 | 1 | 1 | 2 | 0 | 14 | 16 |
+| 2 | 7 | 1 | 2 | 3 | 0 | 4 | 7 |
+| 3 | 7 | 2 | 2 | 4 | 0 | 3 | 7 |
+| 合計 | **30** | **4** | **5** | **9** | **0** | **21** | **30** |
+
+公開操作の started / completed はそれぞれ 30 件、HTTP の started / completed はそれぞれ 9 件で、Request ID による対応と各操作の `http_calls` の合計も一致した。HTTP failed イベントはない。Correlation ID / Request ID、cache HIT、API、elapsed の記録を確認できた。
+
+`http_calls=0` の操作は HTTP 200 に含めず、cache HIT の確認イベント数も操作数とは区別する。
+
+<a id="sru-の実-http-応答時間"></a>
+<a id="summary-の実-http-応答時間"></a>
+
+### HTTP 応答時間
+
+全 9 件とも HTTP 200。elapsed は本文受信を含む実通信時間で、lock / limiter 待機を含めない。個別値は API ごとに通信開始順で並べ、小数点以下 6 桁にそろえた。
+
+| API | 件数 | elapsed（秒） |
+|---|---:|---|
+| SRU | 4 | 24.352612 / 7.450194 / 12.190236 / 5.928215 |
+| Summary | 5 | 3.319680 / 3.289700 / 1.640061 / 5.295898 / 2.954137 |
+
+応答時間にはばらつきがあるが、その差だけで NDL のアクセス制限や障害を断定しない。
+
+### 判定と未確認事項
+
+ZIP 読み込み、有効化マーカー、ID、実 HTTP と HIT の区別、通信時間、通常検索・書誌取得の成功を根拠に、**I2 の Windows GUI 正常系・キャッシュ系は GO**。
+
+**HTTP 429 は未再現。原因は未特定で、問題が解消したとは判断しない。SRU クールダウンと自動リトライの追加は HOLD**。
+
+- 429 の実機再現と、その応答の Retry-After / Date は未確認。
+- 429 直後の別操作で HTTP 200 か cache HIT かを比較する実測は未確認。I1 の mock 検証とは区別する。
+- NDL のアクセス制限条件、制限の共有範囲、クールダウンの必要性、自動リトライの採否は未確定。
+- Windows 配布版 exe、GUI ホストの正確な Python パッチ版、独立 Imprint 診断との共存・保存境界は確認範囲外。
+- `oldest` / `newest` の表示順、本体の画像取得エラー、QWebEngineView は I2 の修正・受入対象外。
+
+追加の接続確認、キャッシュ削除、意図的な連続アクセスで 429 を再現せず、必要な通常利用で継続観測する。429 が発生した場合に、その操作と次の明示操作の cache / status / 通信数 / ヘッダー / 待機 / elapsed / Session ID を比較する。

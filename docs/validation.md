@@ -2,20 +2,23 @@
 
 ## 現在の状態
 
-2026-10-29 時点の作業ツリーを基準とする。パッケージの版は **0.4.0**。この文書は、現在の実装・設定と、記録された過去の実測を区別してまとめる。工程ごとの実測、失敗、再現手順、当時の判断と成果物のハッシュは [検証履歴](validation_history.md) に原文のまま保持している。
+2026-10-29 時点。パッケージの版は **0.4.0**。I1 の実装コミットは `942691f7f31e3f37d167dcfe24446d1eb788b5d7`、対象ブランチは `feat/ndl-http-diagnostics-i1`。`main` には未マージである。この文書は現在の検証状況を要約し、工程ごとの実測、失敗、再現手順、判断と成果物のハッシュは [検証履歴](validation_history.md) に保持する。
 
+- **I1 HTTP 診断強化は完了**。既定 OFF の観測専用実装、オフライン試験、隔離ビルド、SSH 署名付きコミットを確認済み。
+- **I2 の Windows GUI 正常系・キャッシュ系は GO**。HTTP 429 は未発生で、**原因未特定・解消判断なし**。SRU クールダウンと自動リトライの追加は HOLD。
 - **Imprint 自動補完は NO-GO**。候補の診断は実装済みだが、信頼できる authority の供給・失効運用と、host の既存値保護・保存契約は未解決。
 - **Imprint 診断は READ_ONLY**。R1 report、R2 CLI、R3 の独立 Wheel 方式を実装・検証している。診断完了や候補の一致は保存許可ではない。
 - **MADB Series 補完は opt-in / default OFF**。NDL 由来の既存 Series を無条件に上書きしない。
 - Python パッケージの要件は **3.12 以上**。CI は Ubuntu 24.04 / 3.12・3.13 と Windows / 3.14 のテストを設定し、build / Release は Windows / 3.14 を使う。
-- Windows / Python 3.14.10 のローカル実測は記録済み。GitHub Actions では Ubuntu / 3.12・3.13 の pytest が失敗し、Windows / 3.14 の test は成功、build はスキップされた。**Qt ランタイム ライブラリ追加後の実ジョブは未確認**。Windows 配布版 ComicTagger.exe の実画面操作も未確認。
+- Windows / Python 3.14.10 の I1 ローカル検証と、Python 3.14 系の I2 GUI 実測を区別する。I2 ログは `PyInstaller: No` であり、Windows 配布版 ComicTagger.exe の確認ではない。**Qt ランタイム ライブラリ追加後の CI 実ジョブも未確認**。
 
 根拠の種類は次のとおり。
 
 | 種類 | この文書での扱い |
 |---|---|
 | 実装・設定から確認 | 現在のコード、package metadata、テストと workflow の内容。設定の存在は実行成功を意味しない |
-| ローカル実測・ユーザー報告 | 日時・環境・コード状態とともに記載する。ユーザー提供の実測はその旨を明記する |
+| 実行・解析で確認 | ローカル検証、GUI 手動検証、保存済みログの解析を区別し、日時・環境・対象コードを記載する |
+| 報告値 | 実行ログを直接確認できていない結果は、報告ベースであることと未確認の範囲を明記する |
 | 未確認 | 実 GitHub Actions、対象の実機、実 API など、証拠がない実行は NOT RUN または未確認とする |
 | 履歴 | 以前の工程・版・環境に限る結果。当時の失敗や旧判断を現在の成功に書き換えない |
 
@@ -30,7 +33,7 @@
 | test | Windows | 3.14 | 3.14.10 | 成功 |
 | build / Release | Windows | 3.14 | 3.14.10 | build はスキップ、Release は未確認 |
 
-[GitHub Actions run 40836015773](https://github.com/karigane-cha/comictagger-jp-talker/actions/runs/40836015773) では、Ubuntu の両系列で Python runtime、pip / certifi のセキュリティ検証、`pip check`、Ruff は成功したが、PyQt6 の import 時に `libEGL.so.1` が見つからず pytest が失敗した。各結果は **3,036 passed / 16 failed / 3 errors / 12 skipped / 13 deselected / 1 xfailed**。修正として Linux ジョブに `libegl1` と `libgl1` の導入、および pytest 前の PyQt6 offscreen 初期化確認を追加した。修正後の各実ジョブの成否は未確認。
+修正前の実ジョブでは Ubuntu 両系列の PyQt6 import が `libEGL.so.1` 不足で失敗した。Linux ジョブに `libegl1` / `libgl1` と offscreen 初期化確認を追加済みだが、修正後の成功は未確認。run と当時の件数は [CI 失敗記録](validation_history.md#文書統合時の補足検証と-ci-失敗記録2026-10-29-整理前) を参照する。
 
 [test workflow](../.github/workflows/test.yml) は明示的な matrix を使い、[Release workflow](../.github/workflows/release.yml) は Windows / 3.14 を使用する。両 workflow と build ジョブは、`setup-python` の後、pip bootstrap と依存導入の前に [runtime 検証](../.github/scripts/verify-python-runtime.py) を実行する。期待系列の不一致、最低版未達、安定版以外を拒否する。検証器は 3.15.2 以上も扱うが、3.15 の CI や互換性は未検証。
 
@@ -40,40 +43,35 @@
 
 ## 最新のローカル検証結果
 
-以下は **2026-10-28 の Python 3.13 CI 追加時までに記録された結果**であり、後続の文書統合作業で新たに全体試験を行ったという意味ではない。
+以下は **2026-10-29 の I1 実装時に実行済みの結果**。SSH / ED25519 の署名検証は I1 コミット確定時に PASS。[署名検証の記録と再検証手順](validation_history.md#実装と署名付きコミット) を参照する。
 
-| 時点・環境 | 検証と結果 | 根拠・範囲 |
-|---|---|---|
-| 3.13 CI 追加前、Windows / Python 3.14.10 | 関連 pytest **241 passed** | ユーザー報告。整理案では runtime / packaging / diagnostics とされるが、対象内訳の裏付けは未確認 |
-| 同上 | 非 network 全体 **3,062 passed / 13 deselected / 1 xfailed**、Ruff check / format 成功 | ユーザー報告。上記の関連試験とは別で、実ジョブではない |
-| 同上 | 隔離 build で sdist / Wheel を生成し、`scripts/build_plugin.py` で plugin ZIP を作成。Wheel の `Requires-Python >=3.12`、独立 venv への導入と CLI `--help` / `--version` 成功 | ユーザー報告。Wheel と ZIP の bytes / SHA-256 は一致 |
-| 3.13 CI 追加後、Windows / Python 3.14.10 | runtime / matrix テスト **28 passed**、Ruff check / format と test workflow の actionlint 成功 | ローカル記録。全体 pytest と配布物は再実行していない |
-| 3.13 CI 追加後、Windows / Python 3.12.14 | 同じ runtime / matrix テスト **28 passed** と Ruff 成功 | 補助確認。3.12.16 未満のためセキュリティ受入ではない |
-| 3.13 CI 追加前、Windows / Python 3.12.14 | 非 network 全体 **3,062 passed / 13 deselected / 1 xfailed** | 別環境での旧記録。上記 3.14.10 の報告とは別の実測 |
+| I1 の検証対象 | Windows / Python 3.14.10 での結果 |
+|---|---|
+| 重点試験 | **248 passed**。新規診断 68、既存 NDL 60、error 7、その他 113 |
+| ビルド後の非 network 全体 | **3,135 passed / 0 skipped / 13 deselected / 1 xfailed** |
+| packaging | **12 passed**。I1 の隔離成果物を使用 |
+| Ruff check / format、runtime / pip / certifi、`pip check` | **PASS** |
+| 隔離ビルド・ZIP 読み込み | sdist / Wheel / plugin ZIP を生成。診断 ON/OFF と本体 1.6.0b9 の既存ログへの DEBUG 到達をオフラインで確認 |
 
-2026-10-28 の後続の文書統合作業で、Windows / Python 3.14.10 の既存セキュリティ用 venv を再確認した。runtime の検証、pip **26.2.2**、pip 同梱 certifi **2026.10.19**、独立 certifi **2026.10.23** の検査と `pip check` は成功。整理案にも当時の `pip check` 成功という記述はあるが、その過去の実行ログは確認できていない。
+I1 の対象 6 ファイル、観測専用の契約、mock と実通信の区別は [I1 詳細](validation_history.md#i1ndl-http-429-診断強化2026-10-29)、有効化・バックアップ・復元は [診断ガイド](ndl_http_diagnostics_i1.md) を参照する。2026-10-28 までの 241 / 3,062 / 28 件の結果と独立 CLI 0.3.0 の確認は [旧記録](validation_history.md#文書統合時の補足検証と-ci-失敗記録2026-10-29-整理前) に移した。各時点の件数・環境は I1 の値で置き換えない。
 
-同じ文書統合作業で、既存の独立診断用 venv をリポジトリ外から `-I` で起動し、Python 3.14.10 と `site-packages` からの import、CLI の `--help` および `--version` **0.3.0** を確認した。導入記録の Wheel ハッシュは下表の旧試験用 Wheel と一致する。これは文書統合後に新規 build する Wheel の起動結果ではない。
+既知の `xfail` は ComicTagger 1.6.0b9 の CIX writer による整数 `Volume=0` の省略。`13 deselected` はネットワーク試験の除外であり、過去の `13 skipped` と混同しない。境界値の単体試験は、その Python パッチ版を起動した証拠ではない。
 
-3.13.17 / 3.13.18 / 3.13.19 の境界値テストは version 判定の単体試験であり、Python 3.13.18 を実際に起動した証拠ではない。既知の `xfail` は ComicTagger 1.6.0b9 の CIX writer による整数 `Volume=0` の省略。`13 deselected` はネットワーク試験の除外であり、過去の `13 skipped` と混同しない。
+### Windows GUI 実測（I2）
 
-3.14.9 の旧環境が起動できなかったこと、当初の 3.14.10 未実施判定、および sandbox 内の権限問題は [履歴](validation_history.md#python-サポート方針2026-年-10-月セキュリティ更新) と [後続の確認](validation_history.md#ubuntu--python-313-の-ci-設定追加2026-10-28) に残している。
+2026-10-29 の Windows GUI 通常検索・書誌取得では、**30 操作すべて成功、実 HTTP 9 件すべて 200、21 操作で `http_calls=0`**。保存済みの 3 起動分のログ原本を読み取り専用で解析した結果であり、解析時の新規実通信は未実施。
+
+診断有効化、ID、通信時間、cache HIT と実 HTTP の区別を確認した。HTTP 429 は 0 件で、Retry-After / Date と次操作の比較は未確認。環境、起動別集計、SRU / Summary の内訳、全応答時間と判定根拠は [I2 詳細](validation_history.md#i2windows-gui-実測2026-10-29) を正本とする。
 
 ## 配布物の検証
 
-2026-10-28 にローカルで生成された **試験用**成果物の SHA-256 は以下のとおり。公開 Release の成果物のハッシュではない。今回、保存済みの 3 ファイルを読み取り、これらの値と一致することを確認した。
-
-| 成果物 | SHA-256 |
-|---|---|
-| `comictagger_jp_talker-0.3.0.tar.gz` | `626d9c3701d765ea43619e1a086552f33b416f17c5b705ca4bc0bfe814d55579` |
-| `comictagger_jp_talker-0.3.0-py3-none-any.whl` | `49657a48922eb6b8fa95ca30015fcd6d3d2b05910fb60b28996525908bdf0cc6` |
-| `jpbooks_talker-plugin-0.3.0.zip` | `49657a48922eb6b8fa95ca30015fcd6d3d2b05910fb60b28996525908bdf0cc6` |
+I1 の成果物はバージョン表記を **0.4.0** のまま維持した診断用ローカルビルドであり、正式公開済み v0.4.0 とは別物。[I1 の配布物記録](validation_history.md#i1ndl-http-429-診断強化2026-10-29) に SHA-256 と検証範囲を記載する。
 
 [scripts/build_plugin.py](../scripts/build_plugin.py) は純粋 Python Wheel の metadata と entry point を検査して ZIP 名でコピーする。したがって、同じ実行で生成した Wheel と ZIP は同じ bytes となる。Wheel は独立診断用、ZIP は ComicTagger の plugin 用であり、導入先と動作環境を区別する。[導入手順](phase2c2c_imprint_distribution_r3.md) を参照。
 
-[MANIFEST.in](../MANIFEST.in) の `recursive-include docs *.md` は source tree に存在する両方の検証文書を sdist に収録する設定である。保存済みの上記 sdist を調べたところ、旧 `validation.md` は含まれるが、`validation_history.md` と整理案は含まれない。今後の sdist に履歴を含めるには、その build の source tree に履歴ファイルが必要であり、GitHub Actions では checkout 対象になっている必要がある。
+[MANIFEST.in](../MANIFEST.in) は source tree に存在する検証文書を sdist に収録する。旧試験用 0.3.0 のハッシュと履歴未収録の確認は [当時の配布物記録](validation_history.md#文書統合時の補足検証と-ci-失敗記録2026-10-29-整理前) に移した。I1 のビルド時点には両検証文書を含むが、後から追記する I2 記録の収録を意味しない。
 
-同じ 0.3.0 でも build 時点によって内容は異なる。文書編集後に build した sdist や将来の公開成果物に、上表のハッシュを流用しない。2026-10-26 と 10-27 の異なる試験用ハッシュも [R3 履歴](validation_history.md#phase-2c-2c-4r3wheel--python--m-配布実環境利用の受入2026-10-26) と [レビュー後の履歴](validation_history.md#phase-2c-2c-4r3レビュー後の文書改善cli-英語化2026-10-26) に保持している。
+同じバージョンでも build 時点によって内容とハッシュは異なる。旧成果物の値を新しいビルドや公開物に流用しない。過去のハッシュは [R3 履歴](validation_history.md#phase-2c-2c-4r3wheel--python--m-配布実環境利用の受入2026-10-26) と [レビュー後の履歴](validation_history.md#phase-2c-2c-4r3レビュー後の文書改善cli-英語化2026-10-26) にも保持する。
 
 ## Imprint 診断 CLI（R1～R3）
 
@@ -82,18 +80,11 @@
 - R1 は取得済み evidence から純粋な `imprint-report-v1` を構成する。`operation=READ_ONLY`、`apply_allowed=false`、`writes_performed=false`。authority と archive は未供給で、保存先の既存値は未評価。
 - R2 は `python -m comictagger_jp_talker.imprint_diagnostics` を明示実行する。`--ndl-id` に一件を指定し、`--allow-network` を渡す。許可前は source / session / cache を生成しない。許可後は NDL / MADB 通信と診断用 cache の読み書きを行い得るが、書誌・archive の保存は行わない。出力は text または JSON。
 - 終了コードは 0 が診断処理完了、2 が入力・許可不足、3 が取得失敗・不完全取得、4 が内部・出力等の失敗、130 が中断。HOLD / REJECT や exit 0 は候補の保存許可ではない。
-- R3 は Wheel を独立 venv に導入して起動する方式。2026-10-26 の記録は **GO 候補・ユーザー レビュー待ち**であり、正式受入や当時の成果物の公開を意味しない。
+- R3 は Wheel を独立 venv に導入して起動する方式。2026-10-26 の記録は **GO 候補・受入レビュー未完了**であり、正式受入や当時の成果物の公開を意味しない。
 
-| 当時の工程・環境 | 代表的な結果 |
-|---|---|
-| R1、2026-10-23 / Python 3.12.14 | 専用 **208 passed**、全体 **2,825 passed / 13 skipped / 1 xfailed**。純粋 report と保存不可の境界を検証し R1 は GO |
-| R2、2026-10-23 / Python 3.12.14 | R1 と合わせて **399 passed**、全体 **3,024 passed / 13 skipped / 1 xfailed**。Ruff、sdist / Wheel / ZIP build と packaging **12 passed**。R2 は GO |
-| R3、2026-10-26 / Python 3.12.14 | 独立 venv で **29 subprocess**、全体 **3,024 passed / 13 skipped / 1 xfailed**。開発環境の beta.9 loader と独立 venv の依存は別に確認 |
-| R3 のレビュー後、2026-10-27 | 全体 **3,039 passed / 13 skipped / 1 xfailed**。前後の CLI 出力比較と PowerShell 手順を検証 |
+2026-10-23～27 の詳細件数は履歴を正本とする。当時の Python 3.12.14 は現在のセキュリティ最低版を満たさない。[R1 履歴](validation_history.md#phase-2c-2c-4r1純粋-imprint-診断-report2026-10-23)、[R2 履歴](validation_history.md#phase-2c-2c-4r2明示実行の読み取り専用-imprint-診断-cli2026-10-23)、[R3 履歴](validation_history.md#phase-2c-2c-4r3wheel--python--m-配布実環境利用の受入2026-10-26)、[レビュー後の履歴](validation_history.md#phase-2c-2c-4r3レビュー後の文書改善cli-英語化2026-10-26) に初回失敗・PermissionError・権限付き再実行も保持し、後続の成功で置き換えない。
 
-これらの 3.12.14 実測は現在のセキュリティ最低版を満たさない。R1 / R2 の初回の試験失敗、sandbox の PermissionError と権限付き再実行は [R1 履歴](validation_history.md#phase-2c-2c-4r1純粋-imprint-診断-report2026-10-23) と [R2 履歴](validation_history.md#phase-2c-2c-4r2明示実行の読み取り専用-imprint-診断-cli2026-10-23) にあり、後続の成功によって消えたものではない。
-
-ユーザーが提供した実 endpoint の保存ログでは、NDL 書誌 `R100000002-I023440575` は `M381096` / `C334830` に strong match した一方、Imprint 評価は **REJECT** だった。保存済み JSON の検査による記録であり、この文書整理で実 API を再取得した結果ではない。publisher 表記差による conflict は、誤拒否と断定していない。trace の重複表示を独立した HTTP 要求数とみなさない。詳細は [R3 実測](validation_history.md#phase-2c-2c-4r3wheel--python--m-配布実環境利用の受入2026-10-26) を参照。
+2026-10-26 の実 endpoint の保存済み JSON を検査した記録では、NDL 書誌 `R100000002-I023440575` は `M381096` / `C334830` に strong match した一方、Imprint 評価は **REJECT** だった。publisher 表記差による conflict は、誤拒否と断定していない。trace の重複表示を独立した HTTP 要求数とみなさない。詳細は [R3 実測](validation_history.md#phase-2c-2c-4r3wheel--python--m-配布実環境利用の受入2026-10-26) を参照。
 
 ## MADB 取得・Series 補完の検証
 
@@ -101,12 +92,7 @@
 
 取得・照合の共有基盤は取得状態・trace・raw evidence を保持し、Series 用に Book / Series を取得する。Agent / Holding の詳細は通常の Series 用取得では要求しない。試験用 fixture の cold / warm 要求数を、すべての実 API 呼出の保証とみなさない。
 
-| 証拠と工程 | 記録された結果 |
-|---|---|
-| 実 API、Phase 2C-1 | `M381096` / `C334830` の Series 比較は BOTH_AGREE。2026-10-05 の network suite は **13 passed / 1,377 deselected** |
-| synthetic fixture / HTTP mock、Phase 2C-1 | NDL Series 欠損時の補完成功、fail-open、軽量取得の cold **6 → 3** / warm **0** を検証。安全な欠損条件を満たす実 API での end-to-end 補完成功例は未確認 |
-| 実測を縮約した fixture と synthetic 条件、Phase 2C-2B | Imprint 候補評価 **235 passed**。真正な独立 authority を合成した場合の ELIGIBLE と、証拠不足時の HOLD を区別 |
-| 取得共有 A / B / C、2026-10-20 | 専用 A **58 passed**、B の関連 **740 passed / 2 skipped**、C 専用 **163 passed**・関連 **871 passed / 2 skipped** |
+Phase 2C-1 では実 API の Series 比較と、synthetic fixture / HTTP mock による補完・fail-open・軽量取得の cold **6 → 3** / warm **0** を区別して検証した。安全な欠損条件を満たす実 API での end-to-end 補完成功例は未確認。[当時の記録](validation_history.md#v030-release-前の再検証) と [Imprint 候補評価の履歴](validation_history.md#phase-2c-2b-imprint-候補評価-api-の検証) に固有の結果を保持し、取得共有 A / B / C の詳細件数も下記の履歴へ集約する。
 
 A / B / C の各全体試験には sdist 読取時の **PermissionError 1 件**があり、権限のある環境で packaging を別途再実行した。全体試験が当初から成功したと扱わない。状態・通信数・経緯の詳細は [工程 A](validation_history.md#phase-2c-2c-2a-madb-取得状態モデルと構造化取得台帳)、[工程 B](validation_history.md#phase-2c-2c-2b共通-linkage-core-と取得済み-snapshot2026-10-20)、[工程 C](validation_history.md#phase-2c-2c-2c既存-series-補完の共通取得入口への移行2026-10-20) を参照。
 
@@ -131,19 +117,21 @@ A / B / C の各全体試験には sdist 読取時の **PermissionError 1 件**�
 
 ## 既知の制約・未解決事項
 
+- HTTP 429 の原因・アクセス制限条件は未特定。I2 で 429 がなかったことは解消の証拠ではない。429 応答の Retry-After / Date と、次の明示操作の HTTP 200 / cache HIT の比較は未確認。
 - Qt ランタイム ライブラリ追加後の Ubuntu / 3.12・3.13 での GUI と全体回帰、および Windows / 3.14 の Actions build / Release は未確認。
 - Windows 配布版 ComicTagger.exe の同梱 Python の実パッチと更新状態、実画面での ZIP と独立診断の共存は未確認。独立 venv を更新しても host の Python は更新されない。
 - Imprint authority の真正性・独立性・対象範囲・失効と、host の既存値保護・条件付き保存・検証が未解決。自動補完の NO-GO は維持する。
 - 診断は全 evidence を出力するため、大量の候補でメモリと出力が増え得る。source constructor 内の部分初期化や close の制限は [R2 の制限](phase2c2c_imprint_diagnostics.md#6-resource-close-と中断) を参照。
-- 実 API の応答、HTTP mock、synthetic fixture、ユーザー提供ログは異なる証拠であり、実行した範囲を超えて一般化しない。
+- 実 API の応答、HTTP mock、synthetic fixture、保存済みログの解析、実行ログ未確認の報告値は異なる証拠であり、確認範囲を超えて一般化しない。
 
 ## 次の受入条件
 
-1. 未追跡ファイルを含む変更をレビューし、履歴文書が配布対象の source tree に含まれる状態にする。
+1. I1 の実装と I2 の実測記録を独立したコミットとして管理し、両工程の検証結果を確認したうえで `main` への統合を判断する。
 2. GitHub Actions の実ジョブで表の全系列と Windows build / Release を確認する。未実行のまま PASS としない。
 3. 正式配布時は対象 version・内容・host を確認し、最終成果物のハッシュを build 後に外部で記録する。同一 version の過去の試験用ハッシュを流用しない。
 4. 実 ComicTagger.exe での共存と、必要に応じた実 API の確認を独立して記録する。Imprint 自動補完は authority と host 保存契約の別途受入まで NO-GO。
+5. 追加の接続確認・キャッシュ削除・意図的な 429 再現を行わず、必要な通常利用で継続観測する。429 が発生した場合だけ次の明示操作と比較し、クールダウン・自動リトライの採否を別工程で判断する。
 
 ## 詳細な検証履歴
 
-[validation_history.md](validation_history.md) は整理開始時の `validation.md` の全文を保持した原文アーカイブである。各版の pytest 件数、初回失敗、PermissionError、実 API・fixture の区別、再現コマンド、過去の SHA-256 と Git / Release 操作の当時の記録を参照できる。アーカイブ内の古い CI 構成や未実施判定は、その記録時点の事実として読む。
+[validation_history.md](validation_history.md) は既存の原文アーカイブに、文書統合時の補足記録と I1 / I2 の詳細を追記した履歴である。各版の pytest 件数、初回失敗、PermissionError、実 API・fixture の区別、再現コマンド、SHA-256 と検証対象コミットを保持する。古い CI 構成や未実施判定は、その記録時点の事実として読む。
