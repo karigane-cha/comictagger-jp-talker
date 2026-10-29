@@ -7,9 +7,54 @@ from comicapi.genericmetadata import Credit, GenericMetadata
 from comictalker.comictalker import TalkerDataError
 
 from comictagger_jp_talker.models import SearchPage, SearchQuery
-from comictagger_jp_talker.sources.ndl import build_cql
+from comictagger_jp_talker.sources.ndl import build_cql, parse_sru
 
 SERIES = "こちら葛飾区亀有公園前派出所"
+
+
+@pytest.mark.parametrize("order", ["oldest", "newest", "title"])
+@pytest.mark.parametrize("entry", ["series", "literal", "relaxed", "metadata"])
+def test_ndl_order_reaches_talker_results(talker, monkeypatch, ordered_search_xml, order, entry):
+    empty = (
+        b'<searchRetrieveResponse xmlns="http://www.loc.gov/zing/srw/">'
+        b"<numberOfRecords>0</numberOfRecords></searchRetrieveResponse>"
+    )
+
+    def request(cql, on_rate_limit):
+        return empty if 'title = "74"' in cql or 'creator = "' in cql else ordered_search_xml
+
+    fetch = Mock(side_effect=request)
+    monkeypatch.setattr(talker.source, "_request", fetch)
+    talker.search_order = order
+    if entry == "relaxed":
+        talker.creator = "作者"
+    expected = [parse_sru(ordered_search_xml).records[i] for i in (0, 1, 2, 3, 5)]
+    callback = Mock()
+    for refresh in (False, False, True):
+        if entry == "metadata":
+            page = talker.search_metadata(
+                GenericMetadata(series="漫画", issue="74", credits=[Credit("作者", "Writer")])
+            )
+            assert page.records == expected
+        else:
+            result = talker.search_for_series(
+                "漫画 74" if entry == "relaxed" else "漫画",
+                literal=entry == "literal",
+                refresh_cache=refresh,
+                callback=callback,
+            )
+            assert [r.id for r in result] == [r.id for r in expected]
+            assert [r.name for r in result] == [r.title for r in expected]
+            assert [r.start_year for r in result] == [int(r.issued[0]) for r in expected]
+            callback.assert_called_with(5, 6)
+        attempts = 4 if entry in ("relaxed", "metadata") else 1
+        assert fetch.call_count == attempts * (2 if refresh and entry != "metadata" else 1)
+    suffix = {
+        "oldest": " AND sortBy=issued_date/sort.ascending",
+        "newest": " AND sortBy=issued_date/sort.descending",
+        "title": 'mediatype = "books"',
+    }[order]
+    assert all(call.args[0].endswith(suffix) for call in fetch.call_args_list)
 
 
 @pytest.mark.parametrize(
