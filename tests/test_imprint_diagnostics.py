@@ -71,7 +71,7 @@ def factories(tmp_path, monkeypatch):
         (ARGS + ["--endpoint", "https://example.org"], 2, "unrecognized arguments:"),
         (["--ndl-id", ID, "--allow-net"], 2, "unrecognized arguments:"),
         (["--help"], 0, "Read-only Imprint diagnostics for one NDL record."),
-        (["--version"], 0, "0.3.0"),
+        (["--version"], 0, "0.4.0"),
     ],
 )
 def test_input_boundary_has_no_source_session_cache_or_http(args, code, message, monkeypatch, capsys):
@@ -95,7 +95,7 @@ def test_input_boundary_has_no_source_session_cache_or_http(args, code, message,
         assert "One NDL bibliographic ID (not a URL)" in out.out
         assert "Permit NDL/MADB requests and source cache I/O" in out.out
     elif args == ["--version"]:
-        assert out.out == "0.3.0\n"
+        assert out.out == "0.4.0\n"
 
 
 def test_import_does_not_construct_sources(tmp_path):

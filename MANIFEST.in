@@ -1,4 +1,7 @@
 include LICENSE README.md
+include .github/scripts/verify-python-runtime.py .github/scripts/verify-python-security.py
+include .github/scripts/bootstrap-pip.ps1
+include .github/workflows/test.yml .github/workflows/release.yml
 recursive-include docs *.md
 include docs/research/madb/imprint_evidence.json
 recursive-include scripts *.py

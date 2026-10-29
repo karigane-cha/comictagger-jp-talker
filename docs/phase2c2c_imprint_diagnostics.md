@@ -26,7 +26,7 @@ $LASTEXITCODE
 | `--allow-network` | 既定 False。NDL / MADB 通信と source cache I/O の明示許可 |
 | `--format` | `text` / `json`、既定 `text` |
 | `--help` | 使用方法、終了コード 0 |
-| `--version` | package version `0.3.0`、終了コード 0 |
+| `--version` | 現在の package version `0.4.0`、終了コード 0 |
 
 略記した option、未知引数、複数 ID、任意 URL、endpoint、archive path は受け付けない。
 `--refresh` は未実装。MADB は refresh を受け付けるが、NDL の `get()` は record cache を

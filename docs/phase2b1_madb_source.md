@@ -4,7 +4,7 @@ Phase 1 の正式リリース 0.1.12 を基準に、内部 source layer を追�
 Phase 2B-1 は v0.2.0 に含まれる内部 foundation。package version は 0.2.0。正準定義は `comictagger_jp_talker/__init__.py` の
 `__version__` で、setuptools の dynamic version と既存 plugin builder がこれを参照する。
 新しい production dependency、ユーザー設定は追加していない。
-この文書作成時点では Release 操作を対象外としていた。v0.2.0 の Release 検証は [検証記録](validation.md) を参照する。
+この文書作成時点では Release 操作を対象外としていた。v0.2.0 の Release 検証は [検証履歴](validation_history.md#020-の検証) を参照する。
 本書は Phase 2B-1 時点の履歴を保持する。v0.2.1 で追加した linkage layer と現在の統合境界は
 [Phase 2B-2 実装記録](phase2b2_linkage.md) を参照する。
 

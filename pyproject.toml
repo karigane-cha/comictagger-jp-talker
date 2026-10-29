@@ -7,7 +7,7 @@ name = "comictagger-jp-talker"
 dynamic = ["version"]
 description = "Japanese book metadata from NDL Search for ComicTagger 1.6"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.12"
 license = "MIT"
 license-files = ["LICENSE"]
 dependencies = ["requests>=2.28,<3", "comictagger>=1.6.0b9,<1.7"]
@@ -29,9 +29,12 @@ testpaths = ["tests"]
 markers = ["network: opt-in real source request", "gui: offscreen ComicTagger standard UI test"]
 
 [tool.ruff]
-target-version = "py310"
+target-version = "py312"
 line-length = 110
 extend-exclude = [".research", ".tools", "build", "dist"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]
+# Retain the existing Enum string behavior and datetime spelling during this
+# runtime-security change; changing the target enables these unrelated rewrites.
+ignore = ["UP017", "UP042"]

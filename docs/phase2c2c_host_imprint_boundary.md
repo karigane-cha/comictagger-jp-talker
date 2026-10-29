@@ -305,4 +305,4 @@ Windows 配布版 `ComicTagger.exe` の操作確認は未実施。利用者の�
 両方の NO-GO 解除レビュー → F → G。今回どの production 機能も追加していない。
 
 専用・関連・全回帰・Ruff・packaging・差分検証の実行結果と既知の権限問題は
-[validation.md の E0 記録](validation.md#phase-2c-2c-3e0comictagger-の-imprint-保存境界2026-10-20) を参照。
+[検証履歴の E0 記録](validation_history.md#phase-2c-2c-3e0comictagger-の-imprint-保存境界2026-10-20) を参照。

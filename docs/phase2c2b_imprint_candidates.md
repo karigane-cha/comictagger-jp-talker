@@ -253,7 +253,7 @@ NDL の保存済み 11 書誌の選択フィールドと、M1032568 / M1032569 �
 取得完全性、identity / snapshot / authority 条件、XML、入力不変、ネットワーク / ファイル I/O の禁止、
 GenericMetadata 不変、既存 Series 補完の出力維持を検証した。
 
-最終の実行結果と再現コマンドは [validation.md](validation.md) の Phase 2C-2B 記録に掲載する。
+最終の実行結果と再現コマンドは [検証履歴の Phase 2C-2B 記録](validation_history.md#phase-2c-2b-imprint-候補評価-api-の検証) に掲載する。
 最終結果は専用単体 **235 passed**、全回帰 **1,612 passed / 13 skipped / 1 xfailed**。
 新規の sdist 検証 1 件を含む packaging 3 件も通過し、Ruff check / format check、sdist → wheel → ZIP のビルドが成功した。
 ビルド後に既存 packaging テストを実行し、実際の ZIP から内部評価 API を import できることを追加確認する。

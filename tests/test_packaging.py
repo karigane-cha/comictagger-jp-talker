@@ -6,6 +6,7 @@ import subprocess
 import sys
 import tarfile
 import zipfile
+from email.parser import BytesParser
 from importlib.metadata import entry_points
 from pathlib import Path
 
@@ -70,6 +71,17 @@ def test_built_wheel_report_api_and_entry_points(tmp_path):
     if not artifact.is_file():
         pytest.skip("Build the wheel first")
     with zipfile.ZipFile(artifact) as archive:
+        metadata = BytesParser().parsebytes(
+            archive.read(next(n for n in archive.namelist() if n.endswith(".dist-info/METADATA")))
+        )
+        assert metadata["Name"] == "comictagger-jp-talker"
+        assert metadata["Version"] == __version__
+        assert metadata["Requires-Python"] == ">=3.12"
+        requirements = metadata.get_all("Requires-Dist")
+        assert any(req.startswith("requests") and "2.28" in req and "<3" in req for req in requirements)
+        assert any(
+            req.startswith("comictagger") and "1.6.0b9" in req and "<1.7" in req for req in requirements
+        )
         paths = tuple((root / "comictagger_jp_talker").rglob("*.py"))
         assert {p.relative_to(root).as_posix() for p in paths} == {
             n for n in archive.namelist() if n.startswith("comictagger_jp_talker/") and n.endswith(".py")
@@ -244,7 +256,7 @@ with patch.object(requests.Session, "request", side_effect=AssertionError("No re
         assert "日本語𠮷📚" in output and "Existing Imprint: not assessed" in output
         assert "\x1b" not in output and "\u202e" not in output and not result.stderr
     elif mode in ("help", "version"):
-        assert "--allow-network" in output if mode == "help" else output.strip() == "0.3.0"
+        assert "--allow-network" in output if mode == "help" else output.strip() == "0.4.0"
         assert not result.stderr
     else:
         assert result.stderr and "Imprint diagnostics error" in result.stderr.decode("utf-8")

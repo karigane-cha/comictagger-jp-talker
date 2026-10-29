@@ -18,7 +18,7 @@
 導入済み ComicTagger `1.6.0b9`、comicinfoxml `0.5.1`、Python `3.12.14` を優先した。
 根拠は [E0 報告](phase2c2c_host_imprint_boundary.md)、
 [統合設計 §5～§7・§15・§16](phase2c2c_integration_design.md)、
-[検証履歴](validation.md)、導入済みソースと実測テスト。
+[検証履歴](validation_history.md)、導入済みソースと実測テスト。
 
 次の条件は E1 で緩和しない。
 

@@ -10,11 +10,18 @@ permissions:
 
 jobs:
   test:
-    runs-on: windows-latest
+    runs-on: ${{ matrix.os }}
 
     strategy:
+      fail-fast: false
       matrix:
-        python-version: ['3.10', '3.12', '3.14']
+        include:
+          - os: ubuntu-24.04
+            python-version: '3.12'
+          - os: ubuntu-24.04
+            python-version: '3.13'
+          - os: windows-latest
+            python-version: '3.14'
 
     steps:
       - uses: actions/checkout@v7
@@ -24,22 +31,14 @@ jobs:
           python-version: ${{ matrix.python-version }}
           check-latest: true
 
-      - name: Verify Python 3.14 security baseline
-        if: matrix.python-version == '3.14'
-        shell: pwsh
+      - name: Verify Python security baseline
+        run: python .github/scripts/verify-python-runtime.py '${{ matrix.python-version }}'
+
+      - name: Install Qt runtime libraries
+        if: runner.os == 'Linux'
         run: |
-          $verify = @'
-          import sys
-          print(sys.version)
-          if (sys.version_info[:2] != (3, 14)
-                  or sys.version_info < (3, 14, 9)
-                  or sys.version_info.releaselevel != "final"):
-              raise SystemExit("A stable Python 3.14.9 or later 3.14 release is required")
-          '@
-          python -c $verify
-          if ($LASTEXITCODE -ne 0) {
-            throw "Python 3.14 security baseline verification failed"
-          }
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends libegl1 libgl1
 
       - name: Bootstrap secure pip
         shell: pwsh
@@ -53,7 +52,16 @@ jobs:
       - name: Check installed dependencies
         run: python -m pip check
 
+      - name: Verify PyQt6 offscreen runtime
+        if: runner.os == 'Linux'
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: |
+          python -c "from PyQt6 import QtCore, QtWidgets, uic; from comictaggerlib.autotagprogresswindow import AutoTagThread; app = QtWidgets.QApplication([]); print('PyQt6 offscreen OK')"
+
       - run: python -m ruff check .
+
+      - run: python -m ruff format --check .
 
       - run: python -m pytest -m "not network"
         env:
@@ -69,7 +77,11 @@ jobs:
 
       - uses: actions/setup-python@v7
         with:
-          python-version: '3.12'
+          python-version: '3.14'
+          check-latest: true
+
+      - name: Verify Python security baseline
+        run: python .github/scripts/verify-python-runtime.py 3.14
 
       - name: Bootstrap secure pip
         shell: pwsh
