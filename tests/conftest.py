@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import contextlib
 import os
+import xml.etree.ElementTree as ET
 from pathlib import Path
 from unittest.mock import Mock
 
@@ -32,6 +33,40 @@ def xml_bytes():
 @pytest.fixture
 def record(xml_bytes):
     return ndl.parse_sru(xml_bytes).records[0]
+
+
+@pytest.fixture
+def ordered_search_xml():
+    """SRU order deliberately disagrees with provider, completeness, ID and date ranks."""
+    root = ET.Element(f"{{{ndl.NS['sru']}}}searchRetrieveResponse")
+    ET.SubElement(root, f"{{{ndl.NS['sru']}}}numberOfRecords").text = "6"
+    records = ET.SubElement(root, f"{{{ndl.NS['sru']}}}records")
+    for record_id, national, rich, isbn, year in (
+        ("other-z", False, False, "9784885942877", "2000"),
+        ("ndl-z", True, False, "9784885942877", "1990"),
+        ("ndl-a", True, False, "9784885942877", "2010"),
+        ("ndl-rich", True, True, "9784885942877", "1980"),
+        ("other-z", False, True, "9784885942877", "2020"),
+        ("ndl-other", True, True, "9784101010137", "2005"),
+    ):
+        node = ET.SubElement(records, f"{{{ndl.NS['sru']}}}record")
+        data = ET.SubElement(node, f"{{{ndl.NS['sru']}}}recordData")
+        rdf = ET.SubElement(data, f"{{{ndl.NS['rdf']}}}RDF")
+        identity = {ndl.RDF_ABOUT: f"https://ndlsearch.ndl.go.jp/books/{record_id}"}
+        bib = ET.SubElement(rdf, f"{{{ndl.NS['dcndl']}}}BibResource", identity)
+        ET.SubElement(bib, f"{{{ndl.NS['dcterms']}}}title").text = "漫画"
+        ET.SubElement(bib, f"{{{ndl.NS['dcterms']}}}issued").text = year
+        ET.SubElement(
+            bib, f"{{{ndl.NS['dcterms']}}}identifier", {ndl.RDF_DATATYPE: ndl.NS["dcndl"] + "ISBN"}
+        ).text = isbn
+        if rich:
+            for field, value in (("creator", "作者"), ("publisher", "出版社"), ("language", "jpn")):
+                ET.SubElement(bib, f"{{{ndl.NS['dcterms']}}}{field}").text = value
+        admin = ET.SubElement(rdf, f"{{{ndl.NS['dcndl']}}}BibAdminResource", identity)
+        ET.SubElement(admin, f"{{{ndl.NS['dcndl']}}}bibRecordCategory").text = (
+            "R100000002" if national else "R100000136"
+        )
+    return ET.tostring(root, encoding="utf-8")
 
 
 @pytest.fixture

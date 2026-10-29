@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import contextlib
 import logging
+import xml.etree.ElementTree as ET
 from dataclasses import replace
 from types import SimpleNamespace
 from unittest.mock import Mock
@@ -382,6 +383,76 @@ def test_ranking_and_editions(record):
     assert ranked[0].id == record.id
     assert len(ranked) == 4  # Same ISBN and electronic records remain independently selectable.
     assert ranked[-1].id == "another-isbn"
+
+
+@pytest.mark.parametrize("sort_order", ["oldest", "newest", "title"])
+@pytest.mark.parametrize("total", [6, 40])
+def test_title_order_and_duplicates_through_cache(source, tmp_path, ordered_search_xml, sort_order, total):
+    content = ordered_search_xml.replace(b">6<", f">{total}<".encode())
+    source.session.get.return_value._content = content
+    source.maximum_records = 6
+    query = SearchQuery(title="漫画", sort_order=sort_order)
+    raw = parse_sru(content)
+    expected = [raw.records[i] for i in (0, 1, 2, 3, 5)]
+    assert [r.id for r in expected] == ["other-z", "ndl-z", "ndl-a", "ndl-rich", "ndl-other"]
+    assert rank_records(raw.records) != expected
+
+    for refresh, requests_count in ((False, 1), (False, 1), (True, 2), (False, 2)):
+        page = source.search(query, refresh=refresh)
+        assert page.records == expected  # Includes the first, less complete duplicate.
+        assert (page.total, page.truncated, page.warnings) == (total, total > 6, [])
+        assert source.session.get.call_count == requests_count
+    assert source.session.get.call_args.kwargs["params"]["maximumRecords"] == 6
+    assert source.session.get.call_args.kwargs["params"]["startRecord"] == 1
+
+    restarted = NDLSource(tmp_path, maximum_records=6)
+    try:
+        assert restarted.search(query).records == expected
+    finally:
+        restarted.cache.close()
+        restarted.session.close()
+
+
+def test_title_sort_modes_have_separate_cached_responses(source, ordered_search_xml):
+    root = ET.fromstring(ordered_search_xml)
+    records = root.find("sru:records", ndl.NS)
+    expected = {}
+    for index, order in enumerate(("oldest", "newest", "title"), 1):
+        records[:] = list(records)[1:] + list(records)[:1]
+        content = ET.tostring(root)
+        source.session.get.return_value._content = content
+        expected[order] = list(dict.fromkeys(r.id for r in parse_sru(content).records))
+        page = source.search(SearchQuery(title="漫画", sort_order=order))
+        assert [r.id for r in page.records] == expected[order]
+        assert source.session.get.call_count == index
+    for order, ids in expected.items():
+        assert [r.id for r in source.search(SearchQuery(title="漫画", sort_order=order)).records] == ids
+    assert source.session.get.call_count == 3
+
+
+@pytest.mark.parametrize("kind", ["isbn", "itemno"])
+def test_identifier_search_preserves_ranking(source, ordered_search_xml, kind):
+    source.session.get.return_value._content = ordered_search_xml
+    raw = parse_sru(ordered_search_xml).records
+    # Mixed fields must still take the identifier path, as in search_metadata().
+    query = SearchQuery(title="漫画", **{kind: "488594287X" if kind == "isbn" else "other-z"})
+    expected_ids = (
+        ["ndl-rich", "ndl-a", "ndl-z", "other-z", "ndl-other"]
+        if kind == "isbn"
+        else ["ndl-other", "ndl-rich", "ndl-a", "ndl-z", "other-z"]
+    )
+    for refresh, requests_count in ((False, 1), (False, 1), (True, 2)):
+        page = source.search(query, refresh=refresh)
+        assert [r.id for r in page.records] == expected_ids
+        assert page.records == rank_records(raw, query.isbn)
+        assert next(r for r in page.records if r.id == "other-z") == raw[4]
+        assert source.session.get.call_count == requests_count
+
+
+def test_get_selects_matching_ranked_duplicate(source, ordered_search_xml):
+    source.session.get.return_value._content = ordered_search_xml
+    assert source.get("other-z", summary_mode="none") == parse_sru(ordered_search_xml).records[4]
+    assert source.session.get.call_args.kwargs["params"]["query"] == 'itemno = "other-z"'
 
 
 def test_get_unknown_id_does_not_choose_first(source):

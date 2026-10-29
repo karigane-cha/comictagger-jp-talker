@@ -541,7 +541,14 @@ class NDLSource:
                     self.cache.add_series_info(
                         RECORD_CACHE, CachedSeries(record.id, record.raw_xml.encode("utf-8")), True
                     )
-            page.records = rank_records(page.records, query.isbn)
+            if query.isbn or query.itemno:
+                page.records = rank_records(page.records, query.isbn)
+            else:
+                # Preserve SRU order for title searches, keeping the first occurrence of each ID.
+                unique: dict[str, BookRecord] = {}
+                for record in page.records:
+                    unique.setdefault(record.id, record)
+                page.records = list(unique.values())
             if refresh:
                 self._refresh_summaries = {record.id for record in page.records}
             return page
