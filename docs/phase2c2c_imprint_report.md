@@ -146,7 +146,7 @@ GenericMetadata / ComicArchive を生成・更新せず、stdout / stderr に出
 JSON は `json.dumps(..., allow_nan=False)` / `json.loads()` と、独立した dataclass 展開との一致で確認する。
 
 全回帰・Ruff・最新 sdist / wheel / ZIP・ComicTagger loader・byte 比較の結果と
-権限エラーの経緯は [validation.md の R1 記録](validation.md#phase-2c-2c-4r1純粋-imprint-診断-report2026-10-23) に記録する。
+権限エラーの経緯は [検証履歴の R1 記録](validation_history.md#phase-2c-2c-4r1純粋-imprint-診断-report2026-10-23) に記録する。
 raw evidence の SHA-256 は
 `780581e27e6041950e12dd93df6e90513d3b8023e7fa4efece411f5a58a43d12` を維持する。
 

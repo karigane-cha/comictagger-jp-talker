@@ -58,7 +58,7 @@ BOTH_AGREE / BOTH_CONFLICT / NDL_ONLY / MADB_ONLY / NONE と exact Unicode 比�
 Phase 2A / v0.2.1 の M381096 → C334830 は表示 `ご注文はうさぎですか?`（タグなし）と
 読み `ゴチュウモン ワ ウサギ デスカ`（`ja-hrkt`）を持つ。
 v0.2.1 は両方を比較値に数えて MULTIPLE。新分類の effective display は前者 1 件で、
-NDL の推定 Series が前者なら BOTH_AGREE。最新 endpoint の実測は [検証記録](validation.md) を参照する。
+NDL の推定 Series が前者なら BOTH_AGREE。当時の endpoint の実測は [検証履歴](validation_history.md#v030-release-前の再検証) を参照する。
 ネットワーク テストは raw 値 / tag も検査し、実データの変化を無条件で受け入れない。
 
 ## 設定と network trigger
@@ -186,7 +186,7 @@ optional failure と SRU fatal の境界、Retry-After と bounded suppression �
 `tests/test_series_retrieval.py` は 3 要求、Agent / Holding 0、scope、cache 共用、full API と共通の照合規則を検証する。
 実 ZIP でも候補の概要要求 0、概要 429 fail-open、Agent / Holding reference が存在する軽量補完を確認する。
 通常 suite の外部 HTTP は autouse fixture で禁止し、実通信は `JPBOOKS_RUN_NETWORK_TESTS=1` のみ。
-最新の件数、format baseline、build / network 結果は [検証記録](validation.md) に記載する。
+当時の件数、format baseline、build / network 結果は [検証履歴](validation_history.md#v030-release-前の再検証) に記載する。
 
 今回未実装の将来候補は Imprint candidate policy、Credits comparison / supplement、Publisher comparison、
 Date comparison、broader provenance-aware merge policy、user-facing diagnostics / source visibility、

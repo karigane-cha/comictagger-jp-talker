@@ -647,7 +647,7 @@ bundle 全体の `acquired_at` は None とし、cache と network を混在さ�
 実測 evidence と hash は既存の Imprint 回帰試験で保持を確認する。
 公開経路と trace 経路の bundle、warning、例外情報、HTTP の引数・順序・件数、cache 書き込みを比較する。
 packaging では新規 module の収録、旧 import path の同一性、実 ZIP 内での取得台帳と warm cache も確認する。
-最終件数と権限問題を含む実行結果は [validation.md](validation.md) の Phase 2C-2C-2A に記録する。
+最終件数と権限問題を含む実行結果は [検証履歴の Phase 2C-2C-2A](validation_history.md#phase-2c-2c-2a-madb-取得状態モデルと構造化取得台帳) に記録する。
 
 工程 B は **CONDITIONAL GO**。この台帳を使い、全 discovery / 候補集合の状態を集約し、
 公開 LinkageResult と Series 出力の互換性を保持する条件で進められる。
@@ -776,7 +776,7 @@ timeout、limiter、cap、cache key / namespace / 期限 / 保存条件、refres
 この fixture と新規専用テストの HTTP 応答・fake trace はすべて synthetic。
 既存の実測 evidence は変更していない。新 wrapper と新 core の比較だけに依存しない。
 工程 A の 58 テスト、既存 Series / identity / NDL / Imprint / packaging の回帰も実行する。
-詳細な件数、build・権限問題・ZIP の結果は [validation.md](validation.md) の工程 B に追記する。
+詳細な件数、build・権限問題・ZIP の結果は [検証履歴の工程 B](validation_history.md#phase-2c-2c-2b共通-linkage-core-と取得済み-snapshot2026-10-20) に記録する。
 
 取得共有基盤は工程 C へ **CONDITIONAL GO**。次工程では以下を受入条件とする。
 
@@ -897,7 +897,7 @@ SRU / summary と補完を併せた試験では、正当な XML を既存 parser
 warning の名前・level・本文を固定した。新入口、互換入口、Talker の三経路で同じ固定値と比較する。
 既存の採用試験、工程 A の 58 件、工程 B の 165 件と公開 linkage の固定 fixture も維持する。
 新規専用試験は 163 件。関連試験は 871 passed / 2 skipped。
-全回帰・build・実 ZIP の結果と権限問題は [validation.md](validation.md) の工程 C に記録する。
+全回帰・build・実 ZIP の結果と権限問題は [検証履歴の工程 C](validation_history.md#phase-2c-2c-2c既存-series-補完の共通取得入口への移行2026-10-20) に記録する。
 
 配布検証は現在の source から sdist → wheel → 既存 `build_plugin.py` の ZIP を作る。
 全 production Python を実ファイル一覧で byte 比較し、ファイル数を工程 B の 21 に固定しない。
@@ -920,7 +920,7 @@ default OFF、NDL summary・巻処理、軽量 3 / 0 要求を確認する。
 2026-10-20、ComicTagger `1.6.0b9` / comicinfoxml `0.5.1` の導入済み実装、
 実 GenericMetadata / prepare_metadata / ComicArchive と synthetic CBZ を使用した。
 詳細は [保存境界の調査報告](phase2c2c_host_imprint_boundary.md)、
-実行結果は [validation.md](validation.md) の E0 記録を参照する。
+実行結果は [検証履歴の E0 記録](validation_history.md#phase-2c-2c-3e0comictagger-の-imprint-保存境界2026-10-20) を参照する。
 §13～§15 の確定契約と production code は変更していない。
 
 ### 確定した保存フローと §7 からの補足
@@ -1056,7 +1056,7 @@ authority はプレビュー時の成功を再利用せず、確認時・保存�
 追加の test-only 6 件で API 能力、evidence の無通信評価、metadata / CBZ 不変、
 プレビューの反復と引数不足、escaped raw の実ログ表示を確認した。
 保存 gate / transaction / 診断 command は未実装であり、それらの安全性をテストで証明したとはしない。
-詳細な試験結果は [validation.md](validation.md) の E1 記録を参照。
+詳細な試験結果は [検証履歴の E1 記録](validation_history.md#phase-2c-2c-3e1imprint-提供方式と-host-保存契約2026-10-20) を参照。
 
 推奨順序は純粋 report → 明示 command → 診断配布。
 並行して host raw 観測 / transaction の feasibility と D の実供給を別々に検証する。
@@ -1066,7 +1066,7 @@ authority はプレビュー時の成功を再利用せず、確認時・保存�
 ## 18. 工程 R1 の確定契約（Phase 2C-2C-4R1）
 
 2026-10-23。§17 までの設計・記録を保持し、純粋な診断 report のみを実装した。
-詳細は [R1 の契約](phase2c2c_imprint_report.md)、検証結果は [validation.md](validation.md) を参照。
+詳細は [R1 の契約](phase2c2c_imprint_report.md)、検証結果は [検証履歴の R1 記録](validation_history.md#phase-2c-2c-4r1純粋-imprint-診断-report2026-10-23) を参照。
 
 - `imprint_report.describe_imprint_evidence(LinkedRecordEvidence)` は frozen な
   `ImprintDiagnosticReport` を返す。`report_to_json_data(report)` は新しい JSON 互換 dict を返す。
@@ -1094,7 +1094,7 @@ R2 は明示通信許可・既存取得制限・close・安全な表示・通常
 
 2026-10-23。§18 の R1 契約を維持し、独立した
 `python -m comictagger_jp_talker.imprint_diagnostics` を追加した。
-詳細は [R2 の契約と実行方法](phase2c2c_imprint_diagnostics.md)、結果は [validation.md](validation.md) を参照。
+詳細は [R2 の契約と実行方法](phase2c2c_imprint_diagnostics.md)、結果は [検証履歴の R2 記録](validation_history.md#phase-2c-2c-4r2明示実行の読み取り専用-imprint-診断-cli2026-10-23) を参照。
 
 - NDL ID 一件と `--allow-network` を必須とする。既定出力は text、`--format json` で JSON。
   入力検証・許可確認より前に source / session / cache を生成しない。help / version も取得しない。
@@ -1136,7 +1136,7 @@ R3 は配布方式、実環境での可読性・日本語・終了コード・be
 
 利用者向けの導入・実行・更新・削除・手動受入手順は
 [R3 配布ガイド](phase2c2c_imprint_distribution_r3.md)、測定結果と検証範囲は
-[validation.md](validation.md) を参照する。
+[検証履歴の R3 記録](validation_history.md#phase-2c-2c-4r3wheel--python--m-配布実環境利用の受入2026-10-26) を参照する。
 独立インストール、実 module 起動、mock / fixture、beta9 loader、ユーザー報告による実測を区別する。
 実 ComicTagger.exe の GUI 操作は NOT RUN であり、独立 Wheel 実行の阻害条件とはしない。
 

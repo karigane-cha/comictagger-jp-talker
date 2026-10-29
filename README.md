@@ -54,7 +54,21 @@ Imprint 診断は、別の Python 仮想環境へ Wheel をインストールし
 
 - ComicTagger **1.6.0-beta.9（Python 表記 1.6.0b9）以上、1.7 未満**。
   直接確認する対象は beta.9。以降の 1.6 系すべての動作保証ではありません。
-- Python 3.10 以上。開発検証は Windows / Python 3.12 / beta.9。
+- Python パッケージと Talker が動作するホスト環境は **Python 3.12 以上**。
+  従来の Python 3.10 / 3.11 は本プロジェクトのサポート対象外となります。
+  Python 3.11 自体は公式のセキュリティ保守期間中ですが、対象を絞る本プロジェクトの判断です。
+- 開発・配布用には **Windows / Python 3.14.10 以上の 3.14 系**を推奨します。
+  3.12 系は **3.12.16 以上**、3.13 系は **3.13.18 以上**、3.15 系は **3.15.2 以上**の
+  安定版を使用してください。`Requires-Python >=3.12` はパッチ版の安全性を保証しません。
+- CI は Ubuntu 24.04 / Python 3.12・3.13 と Windows / Python 3.14 のテストを設定しています。
+  build / Release は Windows / Python 3.14 です。この CI 構成の GitHub Actions での実行結果は未確認です。
+- ComicTagger の配布版は Python を同梱する場合があります。ZIP の Talker はそのホストの Python で動作し、
+  独立診断 Wheel の仮想環境とは別です。ZIP の配置や別途 Python を更新する操作では、同梱 Python は更新されません。
+  ZIP ローダーが `Requires-Python` を拒否条件として検査するとは限らず、3.10 / 3.11 で読み込めてもサポート対象外です。
+  [beta.9 の公式配布設定](https://github.com/comictagger/comictagger/blob/1.6.0-beta.9/.github/workflows/package.yaml)
+  は Python 3.13 系を使用しており、2026 年 10 月の修正前に公開されています。
+  同梱版が安全なパッチを含むと仮定せず、修正版のホストを選択してください。
+  3.13 / 3.15 系の今回の全体検証は未実施です。
 
 ## NDL API・メタデータの利用条件
 

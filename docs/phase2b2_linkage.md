@@ -5,7 +5,7 @@
 既定 OFF の Series 補完を追加した。以下の v0.2.1 時点の観測・未実装事項は書き換えない。
 
 v0.2.1 に含まれる内部 API。0.2.0 の正式 Release、Phase 2B-1 の source foundation、
-Phase 1 の Series 修正を基点とする。Release 前の検証は [検証記録](validation.md) を参照。
+Phase 1 の Series 修正を基点とする。Release 前の検証は [検証履歴](validation_history.md#v021-release-前の再検証) を参照。
 目的は同一資料の対応関係と Series の一致・不一致を観測すること。
 値の採用、上書き、GenericMetadata / ComicInfo.xml への MADB mapping は含まない。
 
@@ -175,7 +175,7 @@ Phase 1 回帰と provenance を検証する。既存 `test_madb_boundary.py` �
 M381096 / C334830 と Phase 1 の R100000002-I023440575 の ISBN / Series。
 候補件数は dataset 更新で変わり得るため、複数化したら ambiguity を検証する。
 通常 `python -m pytest -m "not network"` は外部 endpoint にアクセスしない。
-実行結果と build 検証は [validation.md](validation.md) を参照する。
+実行結果と build 検証は [検証履歴](validation_history.md#021-development--phase-2b-2) を参照する。
 
 Phase 2C に進むには、次を確認する。
 

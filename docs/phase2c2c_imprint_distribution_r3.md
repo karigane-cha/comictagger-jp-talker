@@ -3,7 +3,7 @@
 2026-10-26。採用する方式は既存 Wheel を専用 Python 仮想環境へ導入し、
 `python -m comictagger_jp_talker.imprint_diagnostics` で独立実行する方式。
 R3 の正式受入・公開はユーザー レビュー待ち。検証の詳細と暫定判定は
-[validation.md の R3 記録](validation.md#phase-2c-2c-4r3wheel--python--m-配布実環境利用の受入2026-10-26) を参照する。
+[検証履歴の R3 記録](validation_history.md#phase-2c-2c-4r3wheel--python--m-配布実環境利用の受入2026-10-26) を参照する。
 
 ## 1. 二つの配布物と必要環境
 
@@ -17,8 +17,14 @@ R3 の正式受入・公開はユーザー レビュー待ち。検証の詳細�
 ZIP 内に診断 module が存在しても、ComicTagger.exe 内から起動できることを保証しない。
 独立 exe、専用 console_scripts、pipx 専用導入、pyz、GUI メニューは追加しない。
 
-- package metadata の Python 要件は **3.10 以上**。R3 の独立導入実測は **3.12.14**。
+- 現在の package metadata の Python 要件は **3.12 以上**。従来の 3.10 / 3.11 からの互換性変更である。
+  R3 の独立導入実測は **3.12.14** だが、今回のセキュリティ最低版を満たさない過去の記録である。
   全 Python バージョンでの動作を実測した意味ではない。
+- 3.12 系は 3.12.16 以上、3.13 系は 3.13.18 以上、3.14 系は 3.14.10 以上、
+  3.15 系は 3.15.2 以上の安定版が必要。Windows では Python 3.14.10 以上の 3.14 系を推奨する。
+  `Requires-Python` はパッチ版を検査しない。ComicTagger 同梱 Python と独立診断用 Python は別環境になり得る。
+- CI のテストには Ubuntu 24.04 / Python 3.12・3.13 と Windows / Python 3.14 を設定する。
+  build / Release は Windows / Python 3.14。新しい CI 構成の GitHub Actions での実行は未確認。
 - 依存指定は `requests>=2.28,<3` と `comictagger>=1.6.0b9,<1.7`。依存解決には通常 package 配布元への接続が必要。
   診断用の導入に GUI / CIX extras は必要ない。
 - Windows では Python の venv と **PowerShell 7** を推奨。
@@ -32,7 +38,9 @@ ZIP 内に診断 module が存在しても、ComicTagger.exe 内から起動で�
 添付がなければ公開済み URL を推測せず、配布者から受け取るか、開発者向けの build 手順で生成する。
 
 以下は手元の Wheel を使う例。`$wheel` を実際に取得したファイルへ変更する。
-`py -3.12` は検証版に合わせた例で、Python が別の場所ならその実行ファイルを指定する。
+`py -3.14` は推奨系列の例で、Python が別の場所ならその実行ファイルを指定する。
+事前に [Python 3.14.10 の公式配布ページ](https://www.python.org/downloads/release/python-31410/) から
+修正版を導入し、以下の確認を通過してからネットワーク経由で依存関係を導入する。
 開発リポジトリや ComicTagger の Python 環境に依存させない。
 
 ```powershell
@@ -40,10 +48,22 @@ $wheel = (Resolve-Path -Path "$HOME\Downloads\comictagger_jp_talker-0.3.0-py3-no
 Get-FileHash -Algorithm SHA256 $wheel
 $venv = Join-Path $HOME 'jpbooks-diagnostics-venv'
 if (Test-Path $venv) { throw '既存環境を上書きしないため、別の venv 名を指定してください。' }
-py -3.12 -m venv $venv
+$pythonCheck = @'
+import sys
+print(sys.version)
+if sys.version_info[:2] != (3, 14) or sys.version_info.micro < 10 or sys.version_info.releaselevel != "final":
+    raise SystemExit("Python 3.14.10 or later, final 3.14 release required")
+'@
+py -3.14 -c $pythonCheck
+if ($LASTEXITCODE -ne 0) { throw 'Python 3.14 のセキュリティ最低版を満たしていません。' }
+py -3.14 -m venv $venv
 if ($LASTEXITCODE -ne 0) { throw 'Python 仮想環境の作成に失敗しました。' }
 $python = Join-Path $venv 'Scripts\python.exe'
 if (-not (Test-Path -LiteralPath $python -PathType Leaf)) { throw '仮想環境内に python.exe が見つかりません。' }
+& $python -c $pythonCheck
+if ($LASTEXITCODE -ne 0) { throw '仮想環境の Python がセキュリティ最低版を満たしていません。' }
+& $python -m pip install --upgrade 'pip>=26.2.2' 'certifi>=2026.10.19'
+if ($LASTEXITCODE -ne 0) { throw 'pip / certifi の更新に失敗しました。' }
 & $python -m pip install $wheel
 if ($LASTEXITCODE -ne 0) { throw 'Wheel の導入に失敗しました。' }
 & $python -m pip check
@@ -252,4 +272,4 @@ Codex は今回 NDL / MADB の追加ライブ通信を行っていない。
 2026-10-26 の独立 venv 試験では Python 3.12.14 を使用し、通常の依存解決で
 ComicTagger 1.6.0b11.dev0 / requests 2.34.2 が導入された。依存 package の外部取得を含む。
 beta9 との共存は開発環境の beta9 loader 試験で別に確認する。
-将来も同じ依存 version に解決される保証ではなく、検証環境と詳細結果は [受入記録](validation.md) を参照する。
+将来も同じ依存 version に解決される保証ではなく、検証環境と詳細結果は [R3 の受入記録](validation_history.md#phase-2c-2c-4r3wheel--python--m-配布実環境利用の受入2026-10-26) を参照する。
