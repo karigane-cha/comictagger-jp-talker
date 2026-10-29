@@ -21,6 +21,7 @@ from comictalker.comictalker import RLCallBack, TalkerDataError, TalkerNetworkEr
 from comictalker.vendor.pyrate_limiter import Limiter, RequestRate
 
 from comictagger_jp_talker import __version__
+from comictagger_jp_talker import http_diagnostics as diagnostics
 from comictagger_jp_talker.isbn import isbn13, normalize_isbn
 from comictagger_jp_talker.models import BookRecord, ContentDates, SearchPage, SearchQuery
 from comictagger_jp_talker.sources.ndl_summary import DETAIL_ENDPOINT, SummaryMode, parse_summary
@@ -327,6 +328,7 @@ class NDLSource:
         self.session.headers["User-Agent"] = f"comictagger-jp-talker/{__version__} (NDL Search SRU)"
         with _LOCK:
             self.cache = ComicCacher(self.cache_folder, "jpbooks-ndl-v1")
+        diagnostics.source_created(self)
 
     def _request(self, query: str, on_rate_limit: RLCallBack | None) -> bytes:
         params = {
@@ -349,8 +351,14 @@ class NDLSource:
         api: str,
         timeout: tuple[int, int],
     ) -> bytes:
+        detail = diagnostics.enabled()
+        failure = None
+        request = {}
         try:
+            waiting = time.monotonic() if detail else None
             with _LIMITER.ratelimit("ndlsearch", delay=True, on_rate_limit=on_rate_limit):
+                if detail:
+                    request = diagnostics.start_request(self, api, time.monotonic() - waiting)
                 # Exclude limiter/lock waits; Session.get includes receiving the body.
                 started = time.monotonic()
                 response = None
@@ -360,66 +368,88 @@ class NDLSource:
                     content = response.content  # XML bytes determine encoding, not guessed .text.
                 except requests.RequestException as exc:
                     failed_response = exc.response if exc.response is not None else response
+                    elapsed = time.monotonic() - started
+                    failure = diagnostics.result_fields(api, failed_response, elapsed, timeout, request)
+                    failure["error"] = diagnostics.exception_name(exc)
                     # Public error reporting / optional-summary warnings own higher-level logs.
                     # Keep timing diagnostics at DEBUG to avoid duplicate warning/error reports.
-                    logger.debug(
-                        "NDL %s request failed: status=%s error=%s elapsed=%.2fs timeout=(%s,%s)",
-                        api,
-                        failed_response.status_code if failed_response is not None else None,
-                        type(exc).__name__,
-                        time.monotonic() - started,
-                        *timeout,
-                    )
+                    if detail:
+                        diagnostics.emit(f"{api} request failed", **failure)
+                    else:
+                        logger.debug(
+                            "NDL %s request failed: status=%s error=%s elapsed=%.2fs timeout=(%s,%s)",
+                            api,
+                            failed_response.status_code if failed_response is not None else None,
+                            type(exc).__name__,
+                            elapsed,
+                            *timeout,
+                        )
                     raise
                 elapsed = time.monotonic() - started
-            logger.debug(
-                "NDL %s request completed: status=%s elapsed=%.2fs timeout=(%s,%s)",
-                api,
-                response.status_code,
-                elapsed,
-                *timeout,
-            )
+                if detail:
+                    completed = diagnostics.result_fields(api, response, elapsed, timeout, request)
+            if detail:
+                diagnostics.emit(f"{api} request completed", **completed)
+            else:
+                logger.debug(
+                    "NDL %s request completed: status=%s elapsed=%.2fs timeout=(%s,%s)",
+                    api,
+                    response.status_code,
+                    elapsed,
+                    *timeout,
+                )
             return content
         except requests.Timeout as exc:
-            raise TalkerNetworkError("NDL Search", 4) from exc
+            raise diagnostics.annotate(TalkerNetworkError("NDL Search", 4), failure) from exc
         except requests.ConnectionError as exc:
-            raise TalkerNetworkError(
-                "NDL Search", 1, "Connection error: NDL Search に接続できません。"
+            raise diagnostics.annotate(
+                TalkerNetworkError("NDL Search", 1, "Connection error: NDL Search に接続できません。"),
+                failure,
             ) from exc
         except requests.HTTPError as exc:
             status = exc.response.status_code if exc.response is not None else 0
-            raise TalkerNetworkError(
-                "NDL Search", 3 if status == 429 else 0, f"HTTP error: {status}"
+            raise diagnostics.annotate(
+                TalkerNetworkError("NDL Search", 3 if status == 429 else 0, f"HTTP error: {status}"),
+                failure,
             ) from exc
         except requests.RequestException as exc:
-            raise TalkerNetworkError("NDL Search", 0, f"Request error: {type(exc).__name__}") from exc
+            raise diagnostics.annotate(
+                TalkerNetworkError("NDL Search", 0, f"Request error: {type(exc).__name__}"), failure
+            ) from exc
 
     def _with_summary(
         self, record: BookRecord, on_rate_limit: RLCallBack | None, mode: SummaryMode
     ) -> BookRecord:
         if mode == "none" or any(text.strip() for text in record.abstracts):
+            with diagnostics.cache_result(self, "Summary", "BYPASS", layer="summary", reason="not_needed"):
+                pass
             return record
         cached = (
             []
             if record.id in self._refresh_summaries
             else self.cache.get_search_results(SUMMARY_CACHE, record.id)
         )
+        cache_state = "HIT" if cached else "REFRESH" if record.id in self._refresh_summaries else "MISS"
         if not cached:
             if mode == "cache" or self._summary_failures.get(record.id, 0) > time.monotonic():
+                reason = "cache_only" if mode == "cache" else "failure_suppressed"
+                with diagnostics.cache_result(self, "Summary", cache_state, layer="summary", reason=reason):
+                    pass
                 return record
             self._summary_failures.pop(record.id, None)
         try:
-            content = (
-                cached[0].data.data
-                if cached
-                else self._get(
-                    DETAIL_ENDPOINT,
-                    {"cs": "bib", "f-token": record.id},
-                    on_rate_limit,
-                    api="Summary",
-                    timeout=SUMMARY_TIMEOUT,
+            with diagnostics.cache_result(self, "Summary", cache_state, layer="summary"):
+                content = (
+                    cached[0].data.data
+                    if cached
+                    else self._get(
+                        DETAIL_ENDPOINT,
+                        {"cs": "bib", "f-token": record.id},
+                        on_rate_limit,
+                        api="Summary",
+                        timeout=SUMMARY_TIMEOUT,
+                    )
                 )
-            )
             try:
                 data = json.loads(content)
             except (ValueError, UnicodeDecodeError) as exc:
@@ -433,14 +463,19 @@ class NDLSource:
             retry_after = response.headers.get("Retry-After") if response is not None else None
             if not cached:
                 self._suppress_summary(record.id, retry_after)
+            elif isinstance(exc, TalkerDataError):
+                with diagnostics.cache_result(
+                    self, "Summary", "INVALID", layer="summary", reason="invalid_data"
+                ):
+                    pass
             logger.warning(
                 "Optional NDL summary failed; retaining base metadata: id=%s endpoint=%s "
                 "status=%s Retry-After=%s error=%s",
                 record.id,
                 DETAIL_ENDPOINT,
                 status,
-                retry_after,
-                exc,
+                diagnostics.safe_retry_after(retry_after),
+                diagnostics.exception_name(exc),
             )
             return record
         if not cached:
@@ -474,21 +509,29 @@ class NDLSource:
             self._summary_failures.pop(next(iter(self._summary_failures)))
         self._summary_failures[record_id] = now + delay
 
+    @diagnostics.observed("search")
     def search(
         self, query: SearchQuery, *, refresh: bool = False, on_rate_limit: RLCallBack | None = None
     ) -> SearchPage:
         cql = build_cql(query)
         cache_key = hashlib.sha256(f"{self.maximum_records}:{cql}".encode()).hexdigest()
-        with _LOCK:  # Serialize requests across Talker instances and protect SQLite connection handover.
+        # Same RLock and acquisition order; diagnostics only observes its wait.
+        with diagnostics.source_lock(_LOCK, self, time.monotonic):
             cached = [] if refresh else self.cache.get_search_results(SEARCH_CACHE, cache_key)
+            cache_state = "REFRESH" if refresh else "HIT" if cached else "MISS"
             if cached:
                 try:
                     page = parse_sru(cached[0].data.data)
                 except TalkerDataError:
                     logger.warning("Invalid cached NDL search response; refreshing %s", cache_key)
                     cached = []
+                    cache_state = "INVALID"
+            if cached:
+                with diagnostics.cache_result(self, "SRU", "HIT", layer="search"):
+                    pass
             if not cached:
-                content = self._request(cql, on_rate_limit)
+                with diagnostics.cache_result(self, "SRU", cache_state, layer="search"):
+                    content = self._request(cql, on_rate_limit)
                 page = parse_sru(content)
                 # Store even zero-result pages; ComicCacher otherwise has no negative-cache marker.
                 self.cache.add_search_results(
@@ -503,6 +546,7 @@ class NDLSource:
                 self._refresh_summaries = {record.id for record in page.records}
             return page
 
+    @diagnostics.observed("get")
     def get(
         self, record_id: str, *, summary_mode: SummaryMode = "fetch", on_rate_limit: RLCallBack | None = None
     ) -> BookRecord:
@@ -511,15 +555,21 @@ class NDLSource:
             raise ValueError("Unknown NDL summary mode")
         if not re.fullmatch(r"[A-Za-z0-9_-]+", record_id):
             raise TalkerDataError("NDL Search", 2, "不正な NDL 書誌 ID です。")
-        with _LOCK:
+        with diagnostics.source_lock(_LOCK, self, time.monotonic):
             cached = self.cache.get_series_info(record_id, RECORD_CACHE)
+            cache_state = "HIT" if cached else "MISS"
             if cached:
                 try:
                     record = parse_record(ET.fromstring(cached.data.data))
                 except (ET.ParseError, TalkerDataError):
                     logger.warning("Invalid cached NDL record; refreshing %s", record_id)
+                    cache_state = "INVALID"
                 else:
+                    with diagnostics.cache_result(self, "SRU", "HIT", layer="record"):
+                        pass
                     return self._with_summary(record, on_rate_limit, summary_mode)
+            with diagnostics.cache_result(self, "SRU", cache_state, layer="record"):
+                pass
             page = self.search(
                 SearchQuery(itemno=record_id, mediatype=""), refresh=True, on_rate_limit=on_rate_limit
             )
@@ -528,6 +578,11 @@ class NDLSource:
                 raise TalkerDataError("NDL Search", 3, "指定した NDL 書誌が見つかりません。")
             return self._with_summary(matches[0], on_rate_limit, summary_mode)
 
+    @diagnostics.observed("check_status")
     def check_status(self, *, on_rate_limit: RLCallBack | None = None) -> None:
-        with _LOCK:
-            parse_sru(self._request(build_cql(SearchQuery(isbn="488594287X", mediatype="")), on_rate_limit))
+        with diagnostics.source_lock(_LOCK, self, time.monotonic):
+            with diagnostics.cache_result(self, "SRU", "BYPASS", layer="search", reason="check_status"):
+                content = self._request(
+                    build_cql(SearchQuery(isbn="488594287X", mediatype="")), on_rate_limit
+                )
+            parse_sru(content)

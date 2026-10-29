@@ -14,6 +14,7 @@ import settngs
 from comicapi.genericmetadata import ComicSeries, GenericMetadata
 from comictalker.comictalker import ComicTalker, RLCallBack, TalkerDataError, TalkerError
 
+from comictagger_jp_talker import http_diagnostics as diagnostics
 from comictagger_jp_talker.errors import copyable_errors, report_error
 from comictagger_jp_talker.isbn import isbn_from_gtin, normalize_isbn
 from comictagger_jp_talker.mapping import infer_volume, resolve_record_number, to_metadata, to_series
@@ -163,6 +164,7 @@ class JapaneseBooksTalker(ComicTalker):
         self._source = None
         return settings
 
+    @diagnostics.observed("check_status", public=True)
     def check_status(self, settings: dict[str, Any]) -> tuple[str, bool]:
         try:
             self._validate_settings(settings)
@@ -174,6 +176,7 @@ class JapaneseBooksTalker(ComicTalker):
                 source.session.close()
                 source.cache.close()
         except (ValueError, TalkerError) as exc:
+            diagnostics.mark_error(exc)
             return report_error(exc, self.cache_folder, "check_status"), False
         return "NDL Search SRU に接続できました（API キー不要）。", True
 
@@ -210,8 +213,18 @@ class JapaneseBooksTalker(ComicTalker):
         if query.creator:
             attempts.append(replace(query, issue=""))
         attempts.append(replace(query, issue="", creator=""))
-        for attempt in dict.fromkeys(attempts):
-            page = self.source.search(attempt, refresh=refresh, on_rate_limit=on_rate_limit)
+        for index, attempt in enumerate(dict.fromkeys(attempts)):
+            stage = (
+                "initial"
+                if index == 0
+                else "relaxed_both"
+                if query.issue and query.creator and not attempt.issue and not attempt.creator
+                else "relaxed_issue"
+                if query.issue and not attempt.issue
+                else "relaxed_creator"
+            )
+            with diagnostics.query_stage(stage):
+                page = self.source.search(attempt, refresh=refresh, on_rate_limit=on_rate_limit)
             if page.records:
                 return page
         return page
