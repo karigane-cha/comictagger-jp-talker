@@ -9,8 +9,8 @@ R3 の正式受入・公開はユーザー レビュー待ち。検証の詳細�
 
 | 配布物 | 用途・導入先 |
 |---|---|
-| `jpbooks_talker-plugin-0.3.0.zip` | ComicTagger beta9 の plugins フォルダー。通常の NDL 検索・書誌取得・既存 Series 補完 |
-| `comictagger_jp_talker-0.3.0-py3-none-any.whl` | 専用 Python 仮想環境へ pip で導入。読み取り専用 Imprint 診断 |
+| `jpbooks_talker-plugin-0.4.0.zip` | ComicTagger beta9 の plugins フォルダー。通常の NDL 検索・書誌取得・既存 Series 補完 |
+| `comictagger_jp_talker-0.4.0-py3-none-any.whl` | 専用 Python 仮想環境へ pip で導入。読み取り専用 Imprint 診断 |
 
 診断 CLI に ComicTagger.exe は不要。依存する **Python package の comictagger** は pip が導入する。
 一方、通常の ComicTagger 利用に診断用 Wheel のインストールは必須ではない。
@@ -35,6 +35,7 @@ ZIP 内に診断 module が存在しても、ComicTagger.exe 内から起動で�
 [GitHub Releases 一覧](https://github.com/karigane-cha/comictagger-jp-talker/releases) で
 対象版の添付 `.whl` と案内された SHA-256 を確認する。
 **この R3 では Release を作成・公開していない。0.3.0 の Wheel が公開済みとは主張しない。**
+以下の 0.4.0 の例も準備中の版を示すものであり、公開済みを意味しない。
 添付がなければ公開済み URL を推測せず、配布者から受け取るか、開発者向けの build 手順で生成する。
 
 以下は手元の Wheel を使う例。`$wheel` を実際に取得したファイルへ変更する。
@@ -44,7 +45,7 @@ ZIP 内に診断 module が存在しても、ComicTagger.exe 内から起動で�
 開発リポジトリや ComicTagger の Python 環境に依存させない。
 
 ```powershell
-$wheel = (Resolve-Path -Path "$HOME\Downloads\comictagger_jp_talker-0.3.0-py3-none-any.whl" -ErrorAction Stop).Path
+$wheel = (Resolve-Path -Path "$HOME\Downloads\comictagger_jp_talker-0.4.0-py3-none-any.whl" -ErrorAction Stop).Path
 Get-FileHash -Algorithm SHA256 $wheel
 $venv = Join-Path $HOME 'jpbooks-diagnostics-venv'
 if (Test-Path $venv) { throw '既存環境を上書きしないため、別の venv 名を指定してください。' }
@@ -74,7 +75,7 @@ if ($LASTEXITCODE -ne 0) { throw '診断 CLI のヘルプ表示に失敗しま�
 if ($LASTEXITCODE -ne 0) { throw '診断 CLI のバージョン確認に失敗しました。' }
 ```
 
-version の期待値は `0.3.0`。環境の activate は不要で、毎回 `$python` を指定すると導入先の取り違えを避けられる。
+この例の version の期待値は `0.4.0`。環境の activate は不要で、毎回 `$python` を指定すると導入先の取り違えを避けられる。
 別の PowerShell を開いた場合は `$venv` と `$python` を再設定する。
 独立性の追加確認には以下を使用できる。`-I` は正式な起動必須条件ではない。
 

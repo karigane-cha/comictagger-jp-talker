@@ -195,7 +195,7 @@ def test_json_raw_unicode_whitespace_and_controls_are_lossless(case):
     assert term["candidate"]["label_indices"] == [0]
     assert term["candidate"]["evidence"]["predicate_or_path"] == SCHEMA_NS + "brand"
     assert data["schema_version"] == "imprint-report-v1"
-    assert data["plugin_version"] == "0.3.0"
+    assert data["plugin_version"] == "0.4.0"
     assert data["identity_algorithm_version"] == "phase2b2-v1"
     assert data["evaluator_version"] == "phase2c2b-v1"
     assert data["books"][0]["evaluation"]["selected_candidate"] is None

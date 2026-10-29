@@ -256,7 +256,7 @@ with patch.object(requests.Session, "request", side_effect=AssertionError("No re
         assert "日本語𠮷📚" in output and "Existing Imprint: not assessed" in output
         assert "\x1b" not in output and "\u202e" not in output and not result.stderr
     elif mode in ("help", "version"):
-        assert "--allow-network" in output if mode == "help" else output.strip() == "0.3.0"
+        assert "--allow-network" in output if mode == "help" else output.strip() == "0.4.0"
         assert not result.stderr
     else:
         assert result.stderr and "Imprint diagnostics error" in result.stderr.decode("utf-8")
