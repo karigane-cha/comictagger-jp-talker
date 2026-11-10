@@ -1,3 +1,4 @@
+<!-- fmt:off -->
 # ComicTagger GUI 列ソート・詳細更新・書誌 ID 整合性の調査
 
 調査日: 2026-10-31（Asia/Tokyo）。状態: **調査・非破壊的実験完了／Production code の修正未着手**。
@@ -715,3 +716,4 @@ print("CLEANUP",not root.exists(),"QT_WARNINGS",len(qt_warnings),"LOGGER_DELETED
 [H-series-ui]: https://github.com/comictagger/comictagger/blob/57e5571c91c7515ee2cd594da6c780e61b056b15/comictaggerlib/ui/seriesselectionwindow.ui#L279
 [H-archive]: https://github.com/comictagger/comictagger/blob/57e5571c91c7515ee2cd594da6c780e61b056b15/comicapi/comicarchive.py#L236
 [H-autotag]: https://github.com/comictagger/comictagger/blob/57e5571c91c7515ee2cd594da6c780e61b056b15/comictaggerlib/autotagprogresswindow.py#L173
+<!-- fmt:on -->

@@ -1,3 +1,4 @@
+<!-- fmt:off -->
 # Phase I1: ComicTagger upstream 検証と GUI 整合性修正の詳細設計
 
 調査日: 2026-10-31（Asia/Tokyo）。対象: **develop の固定コミット fa11a3456cbe5aa9f54f47bdc374ba26b2b946f3**。状態: **I1 調査・設計完了、I2 実装未着手**。
@@ -775,3 +776,4 @@ R2 は前工程の Event / QThread シナリオを range(3) にした。R3 は c
 [U-849]: https://github.com/comictagger/comictagger/pull/849
 [U-847]: https://github.com/comictagger/comictagger/pull/847
 [U-775]: https://github.com/comictagger/comictagger/pull/775
+<!-- fmt:on -->

@@ -1,3 +1,4 @@
+<!-- fmt:off -->
 # NDL Search と ComicTagger GUI の検索結果順序：調査・実装仕様
 
 調査日: 2026-10-30（Asia/Tokyo）。状態: **調査完了／実装未着手**。
@@ -689,3 +690,4 @@ I1 以降は今回実施しない。upstream への issue / PR 送信も行っ�
 [H-cv]: https://github.com/comictagger/comictagger/blob/57e5571c91c7515ee2cd594da6c780e61b056b15/comictalker/talkers/comicvine.py#L271
 [H-issues]: https://github.com/comictagger/comictagger/blob/57e5571c91c7515ee2cd594da6c780e61b056b15/comictaggerlib/issueselectionwindow.py#L118
 [H-identifier]: https://github.com/comictagger/comictagger/blob/57e5571c91c7515ee2cd594da6c780e61b056b15/comictaggerlib/issueidentifier.py#L599
+<!-- fmt:on -->
