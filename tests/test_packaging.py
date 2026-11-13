@@ -2,18 +2,77 @@ from __future__ import annotations
 
 import json
 import os
+import posixpath
+import re
+import shutil
 import subprocess
 import sys
 import tarfile
+import unicodedata
 import zipfile
 from email.parser import BytesParser
 from importlib.metadata import entry_points
 from pathlib import Path
+from urllib.parse import unquote, urlsplit
 
 import pytest
 from comictalker import get_talkers
 
 from comictagger_jp_talker import __version__
+
+
+def _markdown_anchors(body):
+    anchors = set(re.findall(r'<a\s+id=["\']([^"\']+)', body, re.IGNORECASE))
+    counts = {}
+    fenced = False
+    for line in body.splitlines():
+        if re.match(r"^\s*(```|~~~)", line):
+            fenced = not fenced
+            continue
+        match = None if fenced else re.match(r"^#{1,6}\s+(.*?)\s*#*$", line)
+        if not match:
+            continue
+        title = re.sub(r"\[([^]]+)\]\([^)]+\)", r"\1", match.group(1)).lower()
+        title = "".join(c for c in title if c in "-_ " or unicodedata.category(c)[0] not in "PS")
+        slug = re.sub(r"\s", "-", title)
+        count = counts.get(slug, 0)
+        counts[slug] = count + 1
+        anchors.add(slug if not count else f"{slug}-{count}")
+    return anchors
+
+
+def _assert_public_markdown_links(archive):
+    members = archive.getmembers()
+    prefix = members[0].name.split("/", 1)[0] + "/"
+    paths = {m.name[len(prefix) :].rstrip("/") for m in members if m.name.startswith(prefix)}
+    files = {
+        m.name[len(prefix) :]: archive.extractfile(m).read().decode("utf-8")
+        for m in members
+        if m.isfile() and m.name.startswith(prefix) and m.name.endswith(".md")
+    }
+    broken = []
+    for name, body in files.items():
+        fenced = False
+        for number, line in enumerate(body.splitlines(), 1):
+            if re.match(r"^\s*(```|~~~)", line):
+                fenced = not fenced
+                continue
+            if fenced:
+                continue
+            for match in re.finditer(r"!?\[[^\]]+\]\(([^)]+)\)", line):
+                raw = match.group(1).strip().split(" ", 1)[0].strip("<>")
+                target = urlsplit(raw)
+                if target.scheme or target.netloc or target.path.startswith("/"):
+                    continue
+                path = unquote(target.path)
+                path = posixpath.normpath(posixpath.join(posixpath.dirname(name), path)) if path else name
+                anchor = unquote(target.fragment)
+                if path not in paths:
+                    broken.append(f"{name}:{number}: {raw}")
+                elif anchor and path in files and not re.fullmatch(r"L\d+(?:-L\d+)?", anchor):
+                    if anchor not in _markdown_anchors(files[path]):
+                        broken.append(f"{name}:{number}: {raw}")
+    assert not broken, "Broken relative Markdown links:\n" + "\n".join(broken)
 
 
 def test_installed_entry_point(tmp_path):
@@ -57,12 +116,72 @@ def test_sdist_contains_imprint_fixture_and_its_source():
             "tests/test_imprint_report.py",
             "tests/test_imprint_diagnostics.py",
             "docs/phase2c2c_imprint_diagnostics.md",
+            "docs/phase2c2c_imprint_distribution_r3.md",
+            "docs/validation.md",
             "tests/fixtures/madb/imprint_measured.json",
+            "docs/research/madb/evidence.json",
             "docs/research/madb/imprint_evidence.json",
+            "docs/research/madb/queries/isbn_exact.rq",
         ):
             member = archive.extractfile(prefix + path)
             assert member is not None
             assert member.read() == (root / path).read_bytes()
+
+
+def test_sdist_excludes_local_reports_even_if_present(tmp_path):
+    root = Path(__file__).resolve().parents[1]
+    source = tmp_path / "source"
+    shutil.copytree(
+        root,
+        source,
+        ignore=shutil.ignore_patterns(
+            ".git",
+            ".venv",
+            ".tools",
+            ".research",
+            ".pytest_cache",
+            ".ruff_cache",
+            "__pycache__",
+            "*.egg-info",
+            "build",
+            "dist",
+        ),
+    )
+    local_reports = (
+        "docs/madb-ndl-publisher-comparison-research.md",
+        "docs/publisher-shadow-p2-verification.md",
+        "docs/validation_history.md",
+        "docs/research.md",
+        "docs/ndl_http_diagnostics_i1.md",
+        "docs/future-local-investigation.md",
+        "docs/research/madb/future-local-investigation.md",
+    )
+    for name in local_reports:
+        path = source / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("Local report sentinel.\n", encoding="utf-8")
+
+    output = tmp_path / "artifacts"
+    result = subprocess.run(
+        [sys.executable, "-m", "build", "--sdist", "--no-isolation", "--outdir", str(output)],
+        cwd=source,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        timeout=120,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+    (artifact,) = output.glob("*.tar.gz")
+    with tarfile.open(artifact) as archive:
+        names = {name.split("/", 1)[1] for name in archive.getnames() if "/" in name}
+        _assert_public_markdown_links(archive)
+    assert names.isdisjoint(local_reports)
+    assert {
+        "docs/validation.md",
+        "docs/phase2c2c_imprint_distribution_r3.md",
+        "docs/research/madb/imprint_evidence.json",
+        "tests/fixtures/madb/imprint_measured.json",
+    } <= names
 
 
 def test_built_wheel_report_api_and_entry_points(tmp_path):

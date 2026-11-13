@@ -524,7 +524,7 @@ python scripts/build_plugin.py $wheels[0].FullName
 ```
 
 テストは実際の ComicTagger beta.9 の型・ローダー・タグ writer を利用します。
-fixture は公式の要素構造をもとに作った架空の書誌です。通常のテストは HTTP を mock し、実アクセスを禁止します。
+fixture の多くは公式の要素構造をもとに作った架空の書誌です。Imprint の実測 fixture は保存済みの MADB / NDL データを出典とし、取得・照合の一部は synthetic な条件として区別します。通常のテストは HTTP を mock し、実アクセスを禁止します。
 GUI テストは PyQt6 の offscreen モードで標準ウィンドウを使用します。
 成果物の ZIP テストは、上記ビルド後に `python -m pytest` を再実行すると実行されます。
 
@@ -537,8 +537,7 @@ python -m pytest -m network
 Remove-Item Env:JPBOOKS_RUN_NETWORK_TESTS
 ```
 
-CI ではこの環境変数を設定しません。詳細な確認元と制約は [調査記録](docs/research.md)、
-検証結果と手動確認事項は [検証記録](docs/validation.md) を参照してください。
+CI ではこの環境変数を設定しません。確認元、検証手順と制約は [検証案内](docs/validation.md) を参照してください。
 
 ## 既知の制限と今後の予定
 
@@ -558,7 +557,8 @@ v0.3.0 / Phase 2C-1 の Series comparison は表示名と読みを分類し、
 別 Series URI、異なる表示値、未対応の名称による ambiguity は保持します。
 実験的な Series 補完以外の MADB metadata mapping、自動 merge、不一致解決は未実装です。
 Imprint / Credits / Publisher / Date の補完、MangaWork lookup、title fuzzy search、電子／紙判定も未実装です。
-Phase 2C-2 以降の候補は Imprint candidate policy、Credits comparison / supplement、Publisher / Date comparison、
+Publisher の [読み取り専用 shadow 診断](docs/phase2c2b_imprint_candidates.md#publisher-shadow-p2) は独立した内部 API であり、通常取得や採用判定には接続していません。
+Phase 2C-2 以降の候補は Imprint candidate policy、Credits comparison / supplement、Publisher / Date の採用判定、
 broader provenance-aware merge、利用者向け diagnostics / source visibility、根拠がある場合の weak linkage 調査です。
 その後 **openBD**、**Google Books API**、**Rakuten Books** を取得元に追加することを検討します。
 

@@ -2,8 +2,8 @@
 
 2026-10-26。採用する方式は既存 Wheel を専用 Python 仮想環境へ導入し、
 `python -m comictagger_jp_talker.imprint_diagnostics` で独立実行する方式。
-R3 の正式受入・公開はユーザー レビュー待ち。検証の詳細と暫定判定は
-[検証履歴の R3 記録](validation_history.md#phase-2c-2c-4r3wheel--python--m-配布実環境利用の受入2026-10-26) を参照する。
+R3 の正式受入・公開はユーザー レビュー待ち。検証範囲と暫定判定は
+[検証要約](validation.md#validation-imprint) を参照する。
 
 ## 1. 二つの配布物と必要環境
 
@@ -273,4 +273,4 @@ Codex は今回 NDL / MADB の追加ライブ通信を行っていない。
 2026-10-26 の独立 venv 試験では Python 3.12.14 を使用し、通常の依存解決で
 ComicTagger 1.6.0b11.dev0 / requests 2.34.2 が導入された。依存 package の外部取得を含む。
 beta9 との共存は開発環境の beta9 loader 試験で別に確認する。
-将来も同じ依存 version に解決される保証ではなく、検証環境と詳細結果は [R3 の受入記録](validation_history.md#phase-2c-2c-4r3wheel--python--m-配布実環境利用の受入2026-10-26) を参照する。
+将来も同じ依存 version に解決される保証ではなく、検証範囲と判定は [検証要約](validation.md#validation-imprint) を参照する。

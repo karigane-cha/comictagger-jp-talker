@@ -2,7 +2,41 @@ include LICENSE README.md
 include .github/scripts/verify-python-runtime.py .github/scripts/verify-python-security.py
 include .github/scripts/bootstrap-pip.ps1
 include .github/workflows/test.yml .github/workflows/release.yml
-recursive-include docs *.md
+# Public documentation and its explicitly referenced, already public evidence.
+include docs/phase2_madb_spec.md
+include docs/phase2b1_madb_source.md
+include docs/phase2b2_linkage.md
+include docs/phase2c1_series_supplement.md
+include docs/phase2c2a_imprint_research.md
+include docs/phase2c2b_imprint_candidates.md
+include docs/phase2c2c_host_imprint_boundary.md
+include docs/phase2c2c_imprint_delivery_design.md
+include docs/phase2c2c_imprint_diagnostics.md
+include docs/phase2c2c_imprint_distribution_r3.md
+include docs/phase2c2c_imprint_report.md
+include docs/phase2c2c_integration_design.md
+include docs/validation.md
+include docs/research/madb/examples.md
+include docs/research/madb/imprint_examples.md
+include docs/research/madb/evidence.json
 include docs/research/madb/imprint_evidence.json
+include docs/research/madb/queries/direct_ndl.rq
+include docs/research/madb/queries/examples.rq
+include docs/research/madb/queries/graph.rq
+include docs/research/madb/queries/id_lookup.rq
+include docs/research/madb/queries/isbn_exact.rq
+include docs/research/madb/queries/isbn_variants.rq
+include docs/research/madb/queries/linked_details.rq
+include docs/research/madb/queries/namespace.rq
+include docs/research/madb/queries/probe.rq
+include docs/research/madb/queries/resource_get.rq
+include docs/research/madb/queries/sample.rq
+include docs/research/madb/queries/series.rq
+include docs/research/madb/queries/series_books.rq
+include docs/research/madb/queries/title_bounded.rq
+include docs/research/madb/queries/title_exact.rq
+include docs/research/madb/queries/title_page2.rq
+include docs/research/madb/queries/work.rq
+include docs/research/madb/queries/work_presence.rq
 recursive-include scripts *.py
 recursive-include tests *.py *.xml *.json

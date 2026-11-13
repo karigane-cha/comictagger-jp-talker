@@ -1,6 +1,15 @@
 .venv/
 .tools/
 .research/
+# Local Phase P1 research report.
+/docs/madb-ndl-publisher-comparison-research.md
+# Local Phase P2 verification report; keep its existing contents in place.
+/docs/publisher-shadow-p2-verification.md
+# Keep the detailed validation history local if it is untracked later.
+/docs/validation_history.md
+# Phase 1 research and the environment-specific I1 verification guide.
+/docs/research.md
+/docs/ndl_http_diagnostics_i1.md
 .pytest_cache/
 .ruff_cache/
 __pycache__/
