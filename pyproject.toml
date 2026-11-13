@@ -13,7 +13,7 @@ license-files = ["LICENSE"]
 dependencies = ["requests>=2.28,<3", "comictagger>=1.6.0b9,<1.7"]
 
 [project.optional-dependencies]
-dev = ["pytest>=8", "build>=1", "ruff>=0.9", "comictagger[gui,cix]==1.6.0b9"]
+dev = ["pytest>=8", "build>=1", "setuptools>=77", "ruff>=0.9", "comictagger[gui,cix]==1.6.0b9"]
 
 [project.entry-points."comictagger.talker"]
 jpbooks = "comictagger_jp_talker.talker:JapaneseBooksTalker"

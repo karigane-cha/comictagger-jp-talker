@@ -304,5 +304,5 @@ Windows 配布版 `ComicTagger.exe` の操作確認は未実施。利用者の�
 推奨順序は、診断 / host 契約の方式選択 → 保存境界の追加受入、並行して D の供給実証 →
 両方の NO-GO 解除レビュー → F → G。今回どの production 機能も追加していない。
 
-専用・関連・全回帰・Ruff・packaging・差分検証の実行結果と既知の権限問題は
-[検証履歴の E0 記録](validation_history.md#phase-2c-2c-3e0comictagger-の-imprint-保存境界2026-10-20) を参照。
+保存境界と未確認条件は
+[検証要約](validation.md#validation-host) を参照。

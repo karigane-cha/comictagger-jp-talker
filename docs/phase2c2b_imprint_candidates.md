@@ -253,7 +253,7 @@ NDL の保存済み 11 書誌の選択フィールドと、M1032568 / M1032569 �
 取得完全性、identity / snapshot / authority 条件、XML、入力不変、ネットワーク / ファイル I/O の禁止、
 GenericMetadata 不変、既存 Series 補完の出力維持を検証した。
 
-最終の実行結果と再現コマンドは [検証履歴の Phase 2C-2B 記録](validation_history.md#phase-2c-2b-imprint-候補評価-api-の検証) に掲載する。
+実測と fixture の扱いは [検証案内](validation.md#validation-madb)、再現手順は [検証の再現](validation.md#validation-reproduction) を参照する。
 最終結果は専用単体 **235 passed**、全回帰 **1,612 passed / 13 skipped / 1 xfailed**。
 新規の sdist 検証 1 件を含む packaging 3 件も通過し、Ruff check / format check、sdist → wheel → ZIP のビルドが成功した。
 ビルド後に既存 packaging テストを実行し、実際の ZIP から内部評価 API を import できることを追加確認する。
@@ -289,3 +289,24 @@ parser で失われた Book の重複出現、取得原応答、query 間の sna
 
 意味確認を継続供給できない場合、一般的な本番補完へ進まない。Series-only、汎用 metadata merge は有効化しない。
 commit / merge / push / tag / GitHub Release は実行していない。
+
+<a id="publisher-shadow-p2"></a>
+
+## 17. 独立した Publisher shadow 診断
+
+[publisher_comparison.py](../comictagger_jp_talker/publisher_comparison.py) の
+`compare_publisher_observations` は、取得済みの `MADBRecordBundle`、
+`NDLInputSnapshot` または `BookRecord`、`AcquisitionContext` を受け取り、
+不変の `PublisherComparisonDiagnostic` を返す内部 API である。
+取得、XML の再解析、ネットワーク通信、ファイル操作、メタデータの変更は行わない。
+入力の取得と、必要な snapshot が同じ時点に対応することの確認は呼び出し元の責務である。
+
+- raw 値、Book / Series / NDL の区別、出典、取得完全性と、確認できた明示的な Agent 関連を保持する。未取得・不完全・未確認を一致とみなさない。
+- 文字列の N0 は raw の完全一致、N1 は NFC と外周空白の除去による比較であり、policy は `publisher-shadow-p2-v1`、正規化は `nfc-strip-v1` とする。NFKC、読み・法人格の除去、区切り文字による分割は適用しない。
+- 明示的な構造上の関連は法人同一性の証明ではない。cross-source の Publisher identity は `UNVERIFIED` であり、P2 は検証済み identity を生成しない。
+- `legacy` の `ContextComparison` は任意の読み取り専用 snapshot として保持する。`conflict` と `unresolved` は別の診断理由であり、採用可否ではない。
+- この API は既存の Talker、CLI、`imprint-report-v1`、Imprint eligibility、Authority、書き込み経路に接続しない。P4 / P5 は HOLD、Publisher / Imprint 自動補完は NO-GO を維持する。
+
+[test_publisher_comparison.py](../tests/test_publisher_comparison.py) は synthetic な境界と、
+出典を固定した実測値を区別して検証する。実測値から現在の endpoint の状態や
+実在する主体の同一性を保証しない。
