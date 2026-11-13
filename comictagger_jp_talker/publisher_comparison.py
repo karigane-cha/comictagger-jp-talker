@@ -564,6 +564,15 @@ class _Collector:
             unsupported = tuple(oid for oid in publishers if _key(observed[oid]) is None)
             if unsupported:
                 self.issue("publisher_uncomparable", (group_id,), unsupported)
+            for oid in unsupported:
+                observation = observed[oid]
+                if observation.provenance_verified and isinstance(observation.raw_value, RDFTerm):
+                    reason = {
+                        ImprintTermRole.OTHER_LANGUAGE: "publisher_other_language",
+                        ImprintTermRole.INVALID: "publisher_invalid_term",
+                    }.get(_role(observation.raw_value))
+                    if reason is not None:
+                        self.issue(reason, (group_id,), (oid,))
         return PublisherGroup(
             group_id=group_id,
             origin=origin,
