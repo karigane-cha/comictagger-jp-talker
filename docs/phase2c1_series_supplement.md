@@ -1,6 +1,6 @@
 # Phase 2C-1: controlled MADB Series supplement
 
-v0.3.0 に含まれる実装。正式な直前 Release は v0.2.1、基点 commit は `ec9ad62`。
+Phase 2C-1 の初期実装は v0.3.0 に含まれる。初期実装時の直前 Release は v0.2.1、基点 commit は `ec9ad62`。
 目的は NDL から Series が得られない場合だけ、利用者の明示的な opt-in と十分な照合根拠の下で補完すること。
 MADB 全体の GenericMetadata mapping や source 優先順位は導入しない。
 [Phase 2A](phase2_madb_spec.md)、[Phase 2B-1](phase2b1_madb_source.md)、
@@ -143,15 +143,24 @@ ISBN discovery coverage、候補集合に依存する一意性、異版・媒体
 
 ## Release-blocker 修正の performance boundary
 
+この節の更新失敗時の旧 Summary へのフォールバックは今回の未コミット実装であり、正式リリース v0.4.0 には含まれない。
+v0.4.0 は Refresh 時に有効な Summary キャッシュも読み飛ばし、更新失敗時には基本書誌だけを返す。
+以下の Summary の保守仕様は未リリースの変更を含み、Phase 2C-1 の当初の検証結果を変更するものではない。
+
 NDLSource.get の `summary_mode` は `none` / `cache` / `fetch`。直接呼び出しの既定値は従来の `fetch`。
 候補検索では summary enrichment をしない。`fetch_series()`、`fetch_issues_in_series()`、
 `fetch_issues_by_series_issue_num_and_year()` は `cache`、最終 `fetch_comic_data()` は `fetch` を明示する。
-必要な SRU 書誌を取得した後、概要キャッシュが空の場合だけ最終取得で最大 1 回追加要求する。
+必要な SRU 書誌を取得した後、概要キャッシュが空または更新待ちの場合に、抑止期間外の最終取得で最大 1 回追加要求する。
 概要 HTTP 429 / 503、timeout、ConnectionError、requests transport error、不正 JSON / envelope / item / ID は
-warning と NDL base metadata へ fail-open。内部の AttributeError / TypeError / assertion は隠さない。
+warning を残し、期限内・ID 一致・現行 parser で検証済みの旧要約があれば本文・提供元・媒体・item ID を返す。
+旧要約がなければ NDL base metadata へ fail-open。内部の AttributeError / TypeError / assertion は隠さない。
 SRU 本体の HTTP 429 / timeout / invalid XML は従来どおり fatal。
 
 正常な概要あり・概要なし応答の 7 日キャッシュ、SRU の Refresh 連動は維持する。
+更新待ちでも旧キャッシュを独立して参照し、候補の `cache` モードと失敗抑止中の `fetch` は追加 HTTP なしで返す。
+フォールバックでは TTL・更新待ち・失敗抑止期限を変更しない。抑止期限後の明示取得で新しい正常応答を保存した場合だけ更新待ちを解除する。
+正常な「要約なし」の HTTP 200 も成功として保存し、旧本文へ戻さない。キャッシュ形式の変更はない。
+未取得はキャッシュなし、要約あり・なしは検証結果、取得失敗は既存の抑止期限で区別し、更新待ちと旧要約の有無は独立して扱う。
 失敗は正常キャッシュへ保存しない。即時の手動再取得による重複を防ぐため、同一 source に最大 128 ID の
 メモリ上の抑止期限を保持する。通常 30 秒、妥当な Retry-After の秒数 / HTTP-date が長ければそれを尊重する。
 これはローカルの重複抑止であり、安全な再試行時刻の保証ではない。期限後も自動再試行はしない。

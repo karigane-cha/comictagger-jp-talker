@@ -24,7 +24,7 @@ from comictagger_jp_talker import __version__
 from comictagger_jp_talker import http_diagnostics as diagnostics
 from comictagger_jp_talker.isbn import isbn13, normalize_isbn
 from comictagger_jp_talker.models import BookRecord, ContentDates, SearchPage, SearchQuery
-from comictagger_jp_talker.sources.ndl_summary import DETAIL_ENDPOINT, SummaryMode, parse_summary
+from comictagger_jp_talker.sources.ndl_summary import DETAIL_ENDPOINT, Summary, SummaryMode, parse_summary
 
 ENDPOINT = "https://ndlsearch.ndl.go.jp/api/sru"
 SRU_TIMEOUT = (5, 60)
@@ -52,6 +52,14 @@ RDFS_LABEL = "{" + NS["rdfs"] + "}label"
 _LOCK = threading.RLock()
 _LIMITER = Limiter(RequestRate(1, 2))  # Local policy, not an NDL-published quota.
 logger = logging.getLogger(__name__)
+
+
+def _parse_summary_response(content: bytes, record_id: str) -> Summary | None:
+    try:
+        data = json.loads(content)
+    except (ValueError, UnicodeDecodeError) as exc:
+        raise TalkerDataError("NDL Search", 2, "Invalid JSON: 要約の応答を解析できません。") from exc
+    return parse_summary(data, record_id)
 
 
 def cql_quote(value: str) -> str:
@@ -424,70 +432,76 @@ class NDLSource:
             with diagnostics.cache_result(self, "Summary", "BYPASS", layer="summary", reason="not_needed"):
                 pass
             return record
-        cached = (
-            []
-            if record.id in self._refresh_summaries
-            else self.cache.get_search_results(SUMMARY_CACHE, record.id)
-        )
-        cache_state = "HIT" if cached else "REFRESH" if record.id in self._refresh_summaries else "MISS"
-        if not cached:
-            if mode == "cache" or self._summary_failures.get(record.id, 0) > time.monotonic():
-                reason = "cache_only" if mode == "cache" else "failure_suppressed"
-                with diagnostics.cache_result(self, "Summary", cache_state, layer="summary", reason=reason):
-                    pass
-                return record
+        # ComicCacher filters expired entries. Read without rewriting their TTL,
+        # even when an explicit refresh makes a new HTTP response necessary.
+        cached = self.cache.get_search_results(SUMMARY_CACHE, record.id)
+        refresh = record.id in self._refresh_summaries
+        cache_state = "REFRESH" if refresh else "HIT" if cached else "MISS"
+        summary = None
+        if cached:
+            try:
+                summary = _parse_summary_response(cached[0].data.data, record.id)
+            except TalkerDataError:
+                cached = []
+                cache_state = "INVALID"
+                logger.warning("Invalid cached NDL summary: id=%s", record.id)
+                if not refresh:
+                    # Preserve the normal cache-read budget. Only an explicit
+                    # pending refresh may fetch after rejecting cached data.
+                    with diagnostics.cache_result(
+                        self, "Summary", "INVALID", layer="summary", reason="invalid_data"
+                    ):
+                        pass
+                    return record
+
+        if cached and not refresh:
+            with diagnostics.cache_result(self, "Summary", "HIT", layer="summary"):
+                pass
+        elif mode == "cache" or self._summary_failures.get(record.id, 0) > time.monotonic():
+            reason = "cache_only" if mode == "cache" else "failure_suppressed"
+            with diagnostics.cache_result(self, "Summary", cache_state, layer="summary", reason=reason):
+                pass
+        else:
             self._summary_failures.pop(record.id, None)
-        try:
-            with diagnostics.cache_result(self, "Summary", cache_state, layer="summary"):
-                content = (
-                    cached[0].data.data
-                    if cached
-                    else self._get(
+            try:
+                with diagnostics.cache_result(self, "Summary", cache_state, layer="summary"):
+                    content = self._get(
                         DETAIL_ENDPOINT,
                         {"cs": "bib", "f-token": record.id},
                         on_rate_limit,
                         api="Summary",
                         timeout=SUMMARY_TIMEOUT,
                     )
-                )
-            try:
-                data = json.loads(content)
-            except (ValueError, UnicodeDecodeError) as exc:
-                raise TalkerDataError("NDL Search", 2, "Invalid JSON: 要約の応答を解析できません。") from exc
-            summary = parse_summary(data, record.id)
-        except (TalkerNetworkError, TalkerDataError) as exc:
-            # Only optional acquisition/parser errors fail open. SRU and programming
-            # errors still escape, and failed responses never enter the success cache.
-            response = getattr(exc.__cause__, "response", None)
-            status = response.status_code if response is not None else None
-            retry_after = response.headers.get("Retry-After") if response is not None else None
-            if not cached:
+                # None means a valid, absent Summary, not a transient failure.
+                summary = _parse_summary_response(content, record.id)
+            except (TalkerNetworkError, TalkerDataError) as exc:
+                # Optional failures retain a validated old Summary and pending refresh.
+                # SRU and programming errors still escape; failed bytes aren't cached.
+                response = getattr(exc.__cause__, "response", None)
+                status = response.status_code if response is not None else None
+                retry_after = response.headers.get("Retry-After") if response is not None else None
                 self._suppress_summary(record.id, retry_after)
-            elif isinstance(exc, TalkerDataError):
-                with diagnostics.cache_result(
-                    self, "Summary", "INVALID", layer="summary", reason="invalid_data"
-                ):
-                    pass
-            logger.warning(
-                "Optional NDL summary failed; retaining base metadata: id=%s endpoint=%s "
-                "status=%s Retry-After=%s error=%s",
-                record.id,
-                DETAIL_ENDPOINT,
-                status,
-                diagnostics.safe_retry_after(retry_after),
-                diagnostics.exception_name(exc),
-            )
-            return record
-        if not cached:
-            # Cache valid 'no summary' responses too; never cache malformed data.
-            self.cache.add_search_results(SUMMARY_CACHE, record.id, [CachedSeries(record.id, content)], True)
+                logger.warning(
+                    "Optional NDL summary failed; retaining base metadata: id=%s endpoint=%s "
+                    "status=%s Retry-After=%s error=%s",
+                    record.id,
+                    DETAIL_ENDPOINT,
+                    status,
+                    diagnostics.safe_retry_after(retry_after),
+                    diagnostics.exception_name(exc),
+                )
+            else:
+                # Cache valid 'no summary' responses too, replacing any old text.
+                self.cache.add_search_results(
+                    SUMMARY_CACHE, record.id, [CachedSeries(record.id, content)], True
+                )
+                self._refresh_summaries.discard(record.id)
+                self._summary_failures.pop(record.id, None)
         if summary:
             record.abstracts = summary.texts
             record.summary_provider = summary.provider
             record.summary_medium = summary.medium
             record.summary_item_id = summary.item_id
-        self._refresh_summaries.discard(record.id)
-        self._summary_failures.pop(record.id, None)
         return record
 
     def _suppress_summary(self, record_id: str, retry_after: str | None) -> None:
