@@ -8,9 +8,20 @@
 - Give each public document a clear purpose and audience. When a formal specification changes, update the existing public specification as appropriate.
 - In Japanese prose, put a half-width space between Japanese and alphanumeric characters. Separate consecutive katakana words when their combined length is at least eight characters.
 
+## Git Branch and Workspace Policy
+
+- Perform development work in the existing local Git repository.
+- Create a new branch with `git switch -c <branch-name>` when isolation is required.
+- Do not create a new repository inside the existing repository.
+- Do not run `git clone` or `git init` inside the existing repository.
+- Do not create nested Git repositories.
+- Do not create additional Git worktrees unless explicitly requested.
+- Check the current branch and `git status` before switching branches.
+- Preserve all uncommitted changes and untracked files.
+
 ## Git staging and publication
 
-- Do not run `git add` or `git commit` without explicit instruction. Pushing, creating tags, releases, or pull requests also requires explicit permission.
+- Do not run `git add` or `git commit` without explicit instruction. Pushing, merging branches or pull requests, deleting branches, and creating tags, releases, or pull requests also require explicit permission.
 - Avoid `git add .`, `git add -A`, and `git add --all`. When authorized to stage, name each approved file individually.
 - Check `git status --short` before staging and `git diff --cached --name-status` afterward; verify that the index contains no unrelated files.
 - Do not stage research or verification reports for convenience, and never use `git add -f` on ignored files. If an ignored file needs publication, ask the user to approve an exception and adjust the ignore rules.
